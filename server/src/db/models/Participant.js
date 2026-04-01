@@ -1,0 +1,42 @@
+"use strict";
+
+const { Model } = require("sequelize");
+
+module.exports = (sequelize, DataTypes) => {
+  class Participant extends Model {
+    static associate(models) {
+      Participant.belongsTo(models.Contest, { foreignKey: "contestId", as: "contest" });
+      Participant.hasMany(models.Score, { foreignKey: "participantId", as: "scores" });
+    }
+  }
+
+  Participant.init(
+    {
+      id: {
+        type: DataTypes.INTEGER,
+        autoIncrement: true,
+        primaryKey: true
+      },
+      fullName: {
+        type: DataTypes.STRING,
+        allowNull: false
+      },
+      age: {
+        type: DataTypes.INTEGER,
+        allowNull: false
+      },
+      contestId: {
+        type: DataTypes.INTEGER,
+        allowNull: false
+      }
+    },
+    {
+      sequelize,
+      modelName: "Participant",
+      tableName: "participants",
+      timestamps: true
+    }
+  );
+
+  return Participant;
+};

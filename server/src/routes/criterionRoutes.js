@@ -1,11 +1,12 @@
 const { Router } = require("express");
-const criterionController = require("../controllers/criterionController");
+const CriterionController = require("../controllers/criterionController");
 const verifyAccessToken = require("../middleware/verifyAccessToken");
 
 const router = Router();
 
 router.use(verifyAccessToken);
-router.post("/", criterionController.createCriterion);
-router.get("/:contestId", criterionController.getCriteria);
+
+router.post("/", CriterionController.createCriterion);
+router.get("/:contestId", CriterionController.getCriteria);
 
 module.exports = router;

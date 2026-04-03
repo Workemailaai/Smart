@@ -1,11 +1,12 @@
 const { Router } = require("express");
-const participantController = require("../controllers/participantController");
+const ParticipantController = require("../controllers/participantController");
 const verifyAccessToken = require("../middleware/verifyAccessToken");
 
 const router = Router();
 
 router.use(verifyAccessToken);
-router.post("/", participantController.createParticipant);
-router.get("/:contestId", participantController.getParticipants);
+
+router.post("/", ParticipantController.createParticipant);
+router.get("/:contestId", ParticipantController.getParticipants);
 
 module.exports = router;

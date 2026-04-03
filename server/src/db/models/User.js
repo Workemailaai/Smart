@@ -7,6 +7,38 @@ module.exports = (sequelize, DataTypes) => {
     static associate(models) {
       User.hasMany(models.Contest, { foreignKey: "organizerId", as: "organizedContests" });
       User.hasMany(models.Jury, { foreignKey: "userId", as: "juryAssignments" });
+      User.hasMany(models.EventTemplate, {
+        foreignKey: "organizerId",
+        as: "eventTemplates"
+      });
+    }
+
+    /** Валидация регистрации организатора (логин = email) */
+    static validateSignUpData({ fullName, login, password }) {
+      const name = fullName != null ? String(fullName).trim() : "";
+      if (!name) {
+        return { isValid: false, error: "Укажите ФИО" };
+      }
+      const lg = login != null ? String(login).trim().toLowerCase() : "";
+      if (!lg) {
+        return { isValid: false, error: "Укажите email (логин)" };
+      }
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(lg)) {
+        return { isValid: false, error: "Некорректный email" };
+      }
+      if (!password || String(password).length < 6) {
+        return { isValid: false, error: "Пароль не короче 6 символов" };
+      }
+      return { isValid: true, error: null };
+    }
+
+    /** Валидация входа (логин = email) */
+    static validateSignInData({ login, password }) {
+      const lg = login != null ? String(login).trim() : "";
+      if (!lg || password == null || String(password) === "") {
+        return { isValid: false, error: "Укажите логин (email) и пароль" };
+      }
+      return { isValid: true, error: null };
     }
   }
 

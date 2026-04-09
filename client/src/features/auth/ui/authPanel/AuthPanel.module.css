@@ -1,0 +1,182 @@
+.panel {
+  display: grid;
+  grid-template-columns: minmax(240px, 400px) minmax(340px, 1fr);
+  min-height: 530px;
+  border: 1px solid rgba(143, 156, 167, 0.16);
+  border-radius: 26px;
+  background: linear-gradient(180deg, rgba(17, 25, 33, 0.9), rgba(11, 16, 23, 0.86));
+  backdrop-filter: blur(8px);
+  overflow: hidden;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.32);
+}
+
+.brandCard {
+  padding: 52px 30px;
+  border-right: 1px solid rgba(143, 156, 167, 0.14);
+  background: linear-gradient(180deg, rgba(6, 13, 20, 0.45) 0%, rgba(6, 13, 20, 0.2) 100%);
+}
+
+.logo {
+  color: #ffffff;
+  font-size: clamp(40px, 5vw, 58px);
+  line-height: 0.95;
+  letter-spacing: -0.03em;
+  max-width: 250px;
+}
+
+.subtitle {
+  margin-top: 14px;
+  color: rgba(232, 240, 245, 0.82);
+  font-size: 22px;
+}
+
+.formCard {
+  display: flex;
+  flex-direction: column;
+  padding: 28px 30px 24px;
+}
+
+.topButtons {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.navButton,
+.activeNavButton {
+  border-radius: 999px;
+  padding: 8px 14px;
+  font-size: 13px;
+  transition: 0.2s ease;
+}
+
+.navButton {
+  color: rgba(210, 221, 228, 0.8);
+  background: rgba(78, 91, 102, 0.2);
+}
+
+.activeNavButton {
+  color: #ffffff;
+  background: rgba(0, 133, 255, 0.82);
+}
+
+.formTitle {
+  margin-top: 24px;
+  color: #ffffff;
+  font-size: 40px;
+  line-height: 1.05;
+}
+
+.form {
+  margin-top: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.input {
+  height: 46px;
+  border: 1px solid rgba(121, 132, 141, 0.2);
+  border-radius: 14px;
+  padding: 0 16px;
+  color: #e4edf3;
+  background: rgba(50, 60, 69, 0.35);
+  outline: none;
+}
+
+.input::placeholder {
+  color: rgba(225, 235, 241, 0.48);
+}
+
+.input:focus {
+  border-color: rgba(0, 173, 204, 0.56);
+}
+
+.actionArea {
+  margin-top: auto;
+  padding-top: 22px;
+}
+
+.primaryButton,
+.secondaryButton {
+  width: 100%;
+  height: 48px;
+  border-radius: 999px;
+  font-size: 24px;
+  font-weight: 600;
+}
+
+.primaryButton {
+  color: #08121b;
+  background: #ffffff;
+}
+
+.primaryButton:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.secondaryButton {
+  margin-top: 10px;
+  color: #ffffff;
+  background: #0082ff;
+}
+
+.errorText,
+.successText {
+  margin-top: 10px;
+  font-size: 16px;
+  text-align: center;
+}
+
+.errorText {
+  color: #ff8a8a;
+}
+
+.successText {
+  color: #8feab1;
+}
+
+.bottomText {
+  margin-top: 14px;
+  text-align: center;
+  color: rgba(220, 229, 235, 0.78);
+  font-size: 20px;
+}
+
+.linkButton {
+  color: #16a4c9;
+  background: transparent;
+  font-size: 20px;
+  text-decoration: underline;
+}
+
+@media (max-width: 980px) {
+  .panel {
+    grid-template-columns: 1fr;
+  }
+
+  .brandCard {
+    border-right: none;
+    border-bottom: 1px solid rgba(143, 156, 167, 0.14);
+    padding-bottom: 30px;
+  }
+}
+
+@media (max-width: 640px) {
+  .formCard,
+  .brandCard {
+    padding: 20px;
+  }
+
+  .formTitle {
+    font-size: 28px;
+  }
+
+  .primaryButton,
+  .secondaryButton,
+  .bottomText,
+  .linkButton {
+    font-size: 18px;
+  }
+}

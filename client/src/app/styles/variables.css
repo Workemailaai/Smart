@@ -1,0 +1,21 @@
+:root {
+    /* background-colors */
+    --background-primary: rgb(41, 39, 39);
+    --background-secondary: rgb(0, 0, 0);
+    --btn-primary-bg: rgba(200, 200, 200, 0.2);
+    --btn-primary-hover-bg: rgba(200, 200, 200, 0.1);
+    /* text-colors */
+    --text-color-primary: rgb(255, 255, 255);
+    --text-color-secondary: rgb(102, 102, 102);
+    --link-text-color: rgb(77, 77, 250);
+    --button-text-color: rgb(0, 0, 0);
+    /* fonts */
+    --font-size-base: 14px;
+    --font-size-small: 12px;
+    --font-size-large: 20px;
+    --font-weight-base: 400;
+    --font-weight-large: 600;
+    --font-weight-small: 200;
+    /* borders */
+    /* buttons */
+  }

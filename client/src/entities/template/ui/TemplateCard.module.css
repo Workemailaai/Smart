@@ -1,0 +1,26 @@
+.card {
+  border-radius: 20px;
+  border: 2px solid #cfd5df;
+  min-height: 238px;
+  background: #f5f7fa;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+}
+
+.date {
+  font-size: 20px;
+  color: #9ca6b5;
+  margin-bottom: auto;
+}
+
+.name {
+  font-size: 32px;
+}
+
+@media (max-width: 1400px) {
+  .name {
+    font-size: 20px;
+  }
+}

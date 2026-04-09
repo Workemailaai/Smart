@@ -1,0 +1,49 @@
+.card {
+  background: #f8f9fb;
+  border-radius: 18px;
+  padding: 16px 14px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+}
+
+.date {
+  color: #97a0af;
+  font-size: 22px;
+}
+
+.title {
+  font-size: 32px;
+  margin-top: 2px;
+}
+
+.subtitle {
+  color: #8f97a5;
+  font-size: 24px;
+}
+
+.actionCircle,
+.actionText {
+  border-radius: 999px;
+  background: #eaedf3;
+  color: #353d4b;
+  font-size: 24px;
+  height: 50px;
+  min-width: 50px;
+  padding: 0 16px;
+}
+
+@media (max-width: 1400px) {
+  .title {
+    font-size: 22px;
+  }
+
+  .subtitle {
+    font-size: 16px;
+  }
+
+  .date {
+    font-size: 14px;
+  }
+}

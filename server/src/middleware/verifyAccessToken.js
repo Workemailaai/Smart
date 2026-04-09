@@ -1,13 +1,13 @@
 const path = require("path");
 const jwt = require("jsonwebtoken");
 const process = require("process");
-require("dotenv").config({ path: path.resolve(__dirname, "..", "..", ".env") });
+require("dotenv").config({ path: path.resolve(process.cwd(), ".env") });
 const formatResponse = require("../utils/formatResponse");
 
 /** Проверка Bearer access-токена, пользователь в req.user для контроллеров */
 function verifyAccessToken(req, res, next) {
   try {
-    const header = req.headers.authorization;
+    const header = req.headers.authorization;    
     if (!header?.startsWith("Bearer ")) {
       console.log(
         "[Проверка токена] Нет заголовка авторизации или он не в формате Bearer"

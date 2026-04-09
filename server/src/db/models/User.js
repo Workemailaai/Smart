@@ -14,12 +14,12 @@ module.exports = (sequelize, DataTypes) => {
     }
 
     /** Валидация регистрации организатора (логин = email) */
-    static validateSignUpData({ fullName, login, password }) {
+    static validateSignUpData({ fullName, email, password }) {
       const name = fullName != null ? String(fullName).trim() : "";
       if (!name) {
         return { isValid: false, error: "Укажите ФИО" };
       }
-      const lg = login != null ? String(login).trim().toLowerCase() : "";
+      const lg = email != null ? String(email).trim().toLowerCase() : "";
       if (!lg) {
         return { isValid: false, error: "Укажите email (логин)" };
       }
@@ -33,8 +33,8 @@ module.exports = (sequelize, DataTypes) => {
     }
 
     /** Валидация входа (логин = email) */
-    static validateSignInData({ login, password }) {
-      const lg = login != null ? String(login).trim() : "";
+    static validateSignInData({ email, password }) {
+      const lg = email != null ? String(email).trim() : "";
       if (!lg || password == null || String(password) === "") {
         return { isValid: false, error: "Укажите логин (email) и пароль" };
       }

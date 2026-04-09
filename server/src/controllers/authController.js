@@ -83,13 +83,13 @@ class AuthController {
     }
   }
 
-  /** Регистрация только организатора (логин = email) */
+  /** Регистрация только организатора (логин = телефон) */
   static async signUp(req, res) {
-    const { fullName, email, password } = req.body;
+    const { fullName, phone, password } = req.body;
 
     const { isValid, error } = User.validateSignUpData({
       fullName,
-      email,
+      phone,
       password
     });
 
@@ -97,10 +97,10 @@ class AuthController {
       return res.status(422).json(formatResponse(422, error, null, error));
     }
 
-    const normalizedEmail = email.trim().toLowerCase();
+    const normalizedPhone = User.normalizePhone(phone);
     try {
       const userFound = await User.findOne({
-        where: { email: normalizedEmail }
+        where: { phone: normalizedPhone }
       });
 
       if (userFound) {
@@ -109,9 +109,9 @@ class AuthController {
           .json(
             formatResponse(
               409,
-              `Пользователь с email (${email}) уже существует`,
+              `Пользователь с телефоном (${phone}) уже существует`,
               null,
-              `Пользователь с email (${email}) уже существует`
+              `Пользователь с телефоном (${phone}) уже существует`
             )
           );
       }
@@ -119,7 +119,7 @@ class AuthController {
       const hashedPassword = await bcrypt.hash(password, 10);
       const newUser = await User.create({
         fullName: fullName.trim(),
-        email: normalizedEmail,
+        phone: normalizedPhone,
         password: hashedPassword,
         role: "organizer"
       });
@@ -162,10 +162,10 @@ class AuthController {
 
   /** Вход организатора и членов жюри */
   static async signIn(req, res) {
-    const { email, password } = req.body;
+    const { phone, password } = req.body;
 
     const { isValid, error } = User.validateSignInData({
-      email,
+      phone,
       password
     });
 
@@ -173,10 +173,10 @@ class AuthController {
       return res.status(422).json(formatResponse(422, error, null, error));
     }
 
-    const normalizedEmail = email.trim().toLowerCase();
+    const normalizedPhone = User.normalizePhone(phone);
     try {
       const userFound = await User.findOne({
-        where: { email: normalizedEmail }
+        where: { phone: normalizedPhone }
       });
 
       if (!userFound) {
@@ -185,9 +185,9 @@ class AuthController {
           .json(
             formatResponse(
               404,
-              `Пользователь с email (${email}) не найден`,
+              `Пользователь с телефоном (${phone}) не найден`,
               null,
-              `Пользователь с email (${email}) не найден`
+              `Пользователь с телефоном (${phone}) не найден`
             )
           );
       }

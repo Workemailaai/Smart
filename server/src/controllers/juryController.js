@@ -10,7 +10,7 @@ class JuryController {
       if (req.user.role !== "organizer") {
         throw new ApiError(403, "Only organizer can create jury members");
       }
-      requireFields(req.body, ["contestId", "fullName", "email", "password"]);
+      requireFields(req.body, ["contestId", "fullName", "phone", "password"]);
       const data = await JuryService.createJuryMember({
         ...req.body,
         organizerId: req.user.id
@@ -21,7 +21,7 @@ class JuryController {
           user: {
             id: data.user.id,
             fullName: data.user.fullName,
-            email: data.user.email,
+            phone: data.user.phone,
             role: data.user.role
           }
         })

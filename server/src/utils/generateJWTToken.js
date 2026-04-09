@@ -9,7 +9,7 @@ function buildUserPayload(user) {
   const plain = user.get ? user.get({ plain: true }) : { ...user };
   const payloadUser = {
     id: plain.id,
-    email: plain.email,
+    phone: plain.phone,
     fullName: plain.fullName,
     role: plain.role
   };

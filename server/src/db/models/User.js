@@ -13,18 +13,37 @@ module.exports = (sequelize, DataTypes) => {
       });
     }
 
-    /** Валидация регистрации организатора (логин = email) */
-    static validateSignUpData({ fullName, email, password }) {
+    /** Нормализует номер телефона к виду +79991234567 */
+    static normalizePhone(phone) {
+      const raw = phone != null ? String(phone).trim() : "";
+      if (!raw) {
+        return "";
+      }
+
+      let digits = raw.replace(/\D/g, "");
+      if (digits.length === 11 && digits.startsWith("8")) {
+        digits = `7${digits.slice(1)}`;
+      }
+
+      if (digits.length === 10) {
+        digits = `7${digits}`;
+      }
+
+      return `+${digits}`;
+    }
+
+    /** Валидация регистрации организатора (логин = телефон) */
+    static validateSignUpData({ fullName, phone, password }) {
       const name = fullName != null ? String(fullName).trim() : "";
       if (!name) {
-        return { isValid: false, error: "Укажите ФИО" };
+        return { isValid: false, error: "Укажите имя или организацию" };
       }
-      const lg = email != null ? String(email).trim().toLowerCase() : "";
-      if (!lg) {
-        return { isValid: false, error: "Укажите email (логин)" };
+      const normalizedPhone = User.normalizePhone(phone);
+      if (!normalizedPhone || normalizedPhone === "+") {
+        return { isValid: false, error: "Укажите номер телефона" };
       }
-      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(lg)) {
-        return { isValid: false, error: "Некорректный email" };
+      if (!/^\+7\d{10}$/.test(normalizedPhone)) {
+        return { isValid: false, error: "Некорректный номер телефона" };
       }
       if (!password || String(password).length < 6) {
         return { isValid: false, error: "Пароль не короче 6 символов" };
@@ -32,11 +51,15 @@ module.exports = (sequelize, DataTypes) => {
       return { isValid: true, error: null };
     }
 
-    /** Валидация входа (логин = email) */
-    static validateSignInData({ email, password }) {
-      const lg = email != null ? String(email).trim() : "";
+    /** Валидация входа (логин = телефон) */
+    static validateSignInData({ phone, password }) {
+      const normalizedPhone = User.normalizePhone(phone);
+      const lg = normalizedPhone != null ? String(normalizedPhone).trim() : "";
       if (!lg || password == null || String(password) === "") {
-        return { isValid: false, error: "Укажите логин (email) и пароль" };
+        return { isValid: false, error: "Укажите логин (телефон) и пароль" };
+      }
+      if (!/^\+7\d{10}$/.test(lg)) {
+        return { isValid: false, error: "Некорректный номер телефона" };
       }
       return { isValid: true, error: null };
     }
@@ -53,7 +76,7 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.STRING,
         allowNull: false
       },
-      email: {
+      phone: {
         type: DataTypes.STRING,
         allowNull: false,
         unique: true

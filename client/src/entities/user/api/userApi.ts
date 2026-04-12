@@ -1,5 +1,6 @@
 import { axiosInstance, type ServerResponseType } from '@/shared'
 import type { IAuthResponseData, ISignInData, ISignUpData } from '../model/user.types'
+import { setAccessToken } from '@/shared/api/axiosInstance'
 
 export const signUp = async (data: ISignUpData): Promise<ServerResponseType<IAuthResponseData>> => {
     try {
@@ -13,6 +14,7 @@ export const signUp = async (data: ISignUpData): Promise<ServerResponseType<IAut
 export const signIn = async (data: ISignInData): Promise<ServerResponseType<IAuthResponseData>> => {
     try {
         const response = await axiosInstance.post('/auth/sign-in', data)
+        setAccessToken(response.data.data.accessToken)
         return response.data
     } catch (error) {
         throw new Error((error as Error)?.message || 'ошибка при входе')
@@ -21,7 +23,8 @@ export const signIn = async (data: ISignInData): Promise<ServerResponseType<IAut
 
 export const logout = async (): Promise<ServerResponseType<void>> => {
     try {
-        const response = await axiosInstance.post('/auth/logout')
+        const response = await axiosInstance.post('/auth/sign-out')
+        setAccessToken('')
         return response.data
     } catch (error) {
         throw new Error((error as Error)?.message || 'ошибка при выходе из системы')
@@ -31,6 +34,7 @@ export const logout = async (): Promise<ServerResponseType<void>> => {
 export const refreshTokens = async (): Promise<ServerResponseType<IAuthResponseData>> => {
     try {
         const response = await axiosInstance.post('/auth/refresh-tokens')
+        setAccessToken(response.data.data.accessToken)
         return response.data
     } catch (error) {
         throw new Error((error as Error)?.message || 'ошибка при обновлении токенов')

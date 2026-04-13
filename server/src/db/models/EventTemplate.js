@@ -28,6 +28,11 @@ module.exports = (sequelize, DataTypes) => {
         allowNull: false,
         defaultValue: []
       },
+      contestType: {
+        type: DataTypes.STRING(32),
+        allowNull: false,
+        defaultValue: "miss_world"
+      },
       organizerId: {
         type: DataTypes.INTEGER,
         allowNull: false

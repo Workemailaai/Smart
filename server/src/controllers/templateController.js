@@ -18,7 +18,8 @@ class TemplateController {
       const template = await TemplateService.createTemplate({
         name: req.body.name,
         criteria: req.body.criteria,
-        organizerId: req.user.id
+        organizerId: req.user.id,
+        contestType: req.body.contestType
       });
       return res
         .status(201)

@@ -1,4 +1,4 @@
-import axios from 'axios';
+import axios, { AxiosHeaders } from 'axios';
 
 export const axiosInstance = axios.create({
   baseURL: import.meta.env.VITE_API,
@@ -13,6 +13,13 @@ export function setAccessToken(newAccessToken: string) {
 }
 
 axiosInstance.interceptors.request.use((config) => {
+  if (config.data instanceof FormData) {
+    if (config.headers instanceof AxiosHeaders) {
+      config.headers.delete('Content-Type');
+    } else {
+      delete (config.headers as Record<string, unknown>)['Content-Type'];
+    }
+  }
   if (!config.headers.authorization) {
     config.headers.authorization = `Bearer ${accessToken}`;
   }

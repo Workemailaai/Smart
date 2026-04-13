@@ -12,7 +12,12 @@ class JuryController {
       }
       requireFields(req.body, ["contestId", "fullName", "phone", "password"]);
       const data = await JuryService.createJuryMember({
-        ...req.body,
+        contestId: req.body.contestId,
+        fullName: req.body.fullName,
+        phone: req.body.phone,
+        password: req.body.password,
+        position: req.body.position,
+        photoUrl: req.body.photoUrl,
         organizerId: req.user.id
       });
       return res.status(201).json(

@@ -28,6 +28,14 @@ module.exports = (sequelize, DataTypes) => {
       contestId: {
         type: DataTypes.INTEGER,
         allowNull: false
+      },
+      photoUrl: {
+        type: DataTypes.STRING(512),
+        allowNull: true
+      },
+      country: {
+        type: DataTypes.STRING(120),
+        allowNull: true
       }
     },
     {

@@ -108,7 +108,11 @@ export const CabinetPage = observer(({ section }: CabinetPageProps) => {
 
         {section === 'constructor' ? (
           <div className={styles.constructorBlock}>
-            <button className={styles.createRoundButton} type="button">
+            <button
+              className={styles.createRoundButton}
+              type="button"
+              onClick={() => navigate('/cabinet/constructor/new')}
+            >
               +
             </button>
             <h3 className={styles.constructorTitle}>Создать мероприятие</h3>
@@ -120,7 +124,16 @@ export const CabinetPage = observer(({ section }: CabinetPageProps) => {
               {templateStore.isLoading ? <p className={styles.helperText}>Загрузка шаблонов...</p> : null}
               {templateStore.error ? <p className={styles.errorText}>{templateStore.error}</p> : null}
               {!templateStore.isLoading && !templateStore.error
-                ? templates.slice(0, 3).map((template) => <TemplateCard key={template.id} template={template} />)
+                ? templates.slice(0, 3).map((template) => (
+                    <button
+                      key={template.id}
+                      className={styles.templateCardBtn}
+                      type="button"
+                      onClick={() => navigate(`/cabinet/constructor/new?templateId=${template.id}`)}
+                    >
+                      <TemplateCard template={template} />
+                    </button>
+                  ))
                 : null}
             </div>
           </div>

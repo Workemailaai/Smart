@@ -1,6 +1,12 @@
 node_modules
 .env
 uploads
+public/contests/*
+!public/contests/.gitkeep
+public/participants/*
+!public/participants/.gitkeep
+public/jury/*
+!public/jury/.gitkeep
 # Logs
 logs
 *.log

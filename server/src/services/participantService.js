@@ -3,14 +3,29 @@ const ApiError = require("../utils/ApiError");
 
 class ParticipantService {
   /** Добавление участника в конкурс */
-  static async createParticipant({ contestId, organizerId, fullName, age }) {
+  static async createParticipant({
+    contestId,
+    organizerId,
+    fullName,
+    age,
+    country,
+    photoUrl
+  }) {
     const contest = await Contest.findByPk(contestId);
     if (!contest) throw new ApiError(404, "Contest not found");
     if (contest.organizerId !== organizerId) {
       throw new ApiError(403, "Only contest organizer can add participants");
     }
 
-    return Participant.create({ contestId, fullName, age });
+    const countryTrim =
+      country != null && String(country).trim() !== "" ? String(country).trim() : null;
+    return Participant.create({
+      contestId,
+      fullName,
+      age,
+      photoUrl: photoUrl || null,
+      country: countryTrim
+    });
   }
 
   /** Участники конкурса */

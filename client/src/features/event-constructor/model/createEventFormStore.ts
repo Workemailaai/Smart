@@ -1,0 +1,244 @@
+import { makeAutoObservable, runInAction } from 'mobx'
+import type { ITemplate } from '@/entities/template'
+import { normalizeTemplateCriteria } from '@/entities/template'
+
+function newLocalId() {
+  return crypto.randomUUID()
+}
+
+export type DraftCriterion = { localId: string; name: string; maxScore: number }
+
+export type DraftParticipant = {
+  localId: string
+  fullName: string
+  age: string
+  country: string
+  file: File | null
+  previewUrl: string | null
+}
+
+export type DraftJury = {
+  localId: string
+  fullName: string
+  phone: string
+  position: string
+  password: string
+  file: File | null
+  previewUrl: string | null
+}
+
+/** Нормализация телефона к +7XXXXXXXXXX (как на сервере) */
+export function normalizePhoneDigits(input: string): string {
+  let digits = String(input || '').replace(/\D/g, '')
+  if (digits.length === 11 && digits.startsWith('8')) {
+    digits = `7${digits.slice(1)}`
+  }
+  if (digits.length === 10) {
+    digits = `7${digits}`
+  }
+  return digits.length ? `+${digits}` : ''
+}
+
+class CreateEventFormStore {
+  title = ''
+  description = ''
+  contestType = 'miss_world'
+  criteria: DraftCriterion[] = [{ localId: newLocalId(), name: '', maxScore: 10 }]
+  participants: DraftParticipant[] = []
+  jury: DraftJury[] = []
+  coverFile: File | null = null
+  coverPreviewUrl: string | null = null
+  submitError: string | null = null
+  isSubmitting = false
+  templateMessage: string | null = null
+  isSavingTemplate = false
+
+  constructor() {
+    makeAutoObservable(this)
+  }
+
+  reset() {
+    if (this.coverPreviewUrl) URL.revokeObjectURL(this.coverPreviewUrl)
+    this.participants.forEach((p) => {
+      if (p.previewUrl) URL.revokeObjectURL(p.previewUrl)
+    })
+    this.jury.forEach((j) => {
+      if (j.previewUrl) URL.revokeObjectURL(j.previewUrl)
+    })
+    this.title = ''
+    this.description = ''
+    this.contestType = 'miss_world'
+    this.criteria = [{ localId: newLocalId(), name: '', maxScore: 10 }]
+    this.participants = []
+    this.jury = []
+    this.coverFile = null
+    this.coverPreviewUrl = null
+    this.submitError = null
+    this.templateMessage = null
+  }
+
+  setTitle(v: string) {
+    this.title = v
+  }
+
+  setDescription(v: string) {
+    this.description = v
+  }
+
+  setContestType(v: string) {
+    this.contestType = v
+  }
+
+  setCover(file: File | null) {
+    runInAction(() => {
+      if (this.coverPreviewUrl) URL.revokeObjectURL(this.coverPreviewUrl)
+      this.coverFile = file
+      this.coverPreviewUrl = file ? URL.createObjectURL(file) : null
+    })
+  }
+
+  addCriterion() {
+    this.criteria.push({ localId: newLocalId(), name: '', maxScore: 10 })
+  }
+
+  removeCriterion(localId: string) {
+    if (this.criteria.length <= 1) return
+    this.criteria = this.criteria.filter((c) => c.localId !== localId)
+  }
+
+  updateCriterion(localId: string, patch: Partial<Pick<DraftCriterion, 'name' | 'maxScore'>>) {
+    const c = this.criteria.find((x) => x.localId === localId)
+    if (!c) return
+    if (patch.name !== undefined) c.name = patch.name
+    if (patch.maxScore !== undefined) c.maxScore = patch.maxScore
+  }
+
+  addParticipant(draft: Omit<DraftParticipant, 'localId'>) {
+    this.participants.push({
+      ...draft,
+      localId: newLocalId(),
+    })
+  }
+
+  updateParticipant(localId: string, draft: Omit<DraftParticipant, 'localId'>) {
+    const idx = this.participants.findIndex((p) => p.localId === localId)
+    if (idx === -1) return
+    const prev = this.participants[idx]
+    if (prev.previewUrl && prev.previewUrl !== draft.previewUrl) {
+      URL.revokeObjectURL(prev.previewUrl)
+    }
+    this.participants[idx] = { ...draft, localId }
+  }
+
+  removeParticipant(localId: string) {
+    const p = this.participants.find((x) => x.localId === localId)
+    if (p?.previewUrl) URL.revokeObjectURL(p.previewUrl)
+    this.participants = this.participants.filter((x) => x.localId !== localId)
+  }
+
+  addJuryMember(draft: Omit<DraftJury, 'localId'>) {
+    this.jury.push({ ...draft, localId: newLocalId() })
+  }
+
+  updateJuryMember(localId: string, draft: Omit<DraftJury, 'localId'>) {
+    const idx = this.jury.findIndex((j) => j.localId === localId)
+    if (idx === -1) return
+    const prev = this.jury[idx]
+    if (prev.previewUrl && prev.previewUrl !== draft.previewUrl) {
+      URL.revokeObjectURL(prev.previewUrl)
+    }
+    this.jury[idx] = { ...draft, localId }
+  }
+
+  removeJuryMember(localId: string) {
+    const j = this.jury.find((x) => x.localId === localId)
+    if (j?.previewUrl) URL.revokeObjectURL(j.previewUrl)
+    this.jury = this.jury.filter((x) => x.localId !== localId)
+  }
+
+  applyTemplate(t: ITemplate) {
+    this.contestType = t.contestType || 'miss_world'
+    const rows = normalizeTemplateCriteria(t.criteria).map((c) => ({
+      localId: newLocalId(),
+      name: c.name,
+      maxScore: c.maxScore,
+    }))
+    this.criteria = rows.length ? rows : [{ localId: newLocalId(), name: '', maxScore: 10 }]
+  }
+
+  /** Валидация перед отправкой */
+  validate(): string | null {
+    if (!this.title.trim()) return 'Укажите название мероприятия'
+    const filledCriteria = this.criteria.filter((c) => c.name.trim())
+    if (filledCriteria.length === 0) return 'Добавьте хотя бы один критерий с названием'
+    for (const c of filledCriteria) {
+      const m = Math.round(Number(c.maxScore))
+      if (!Number.isFinite(m) || m < 1) return `Некорректная верхняя граница у критерия «${c.name}»`
+    }
+    for (const p of this.participants) {
+      if (!p.fullName.trim()) return 'У всех участников должно быть ФИО'
+      const age = Math.round(Number(p.age))
+      if (!Number.isInteger(age) || age < 1 || age > 150) return 'Проверьте возраст участников'
+    }
+    for (const j of this.jury) {
+      if (!j.fullName.trim()) return 'У всех членов жюри укажите ФИО'
+      const ph = normalizePhoneDigits(j.phone)
+      if (!/^\+7\d{10}$/.test(ph)) return 'Проверьте телефоны жюри (+7 и 10 цифр)'
+      if (!j.password || j.password.length < 6) return 'Пароль жюри не короче 6 символов'
+    }
+    const juryPhones = new Set<string>()
+    for (const j of this.jury) {
+      const ph = normalizePhoneDigits(j.phone)
+      if (juryPhones.has(ph)) return 'В списке жюри телефон повторяется'
+      juryPhones.add(ph)
+    }
+    return null
+  }
+
+  buildFormData(): FormData {
+    const filledCriteria = this.criteria.filter((c) => c.name.trim())
+    const payload = {
+      title: this.title.trim(),
+      description: this.description.trim() || null,
+      contestType: this.contestType,
+      criteria: filledCriteria.map((c) => ({
+        name: c.name.trim(),
+        maxScore: Math.round(Number(c.maxScore)),
+      })),
+      participants: this.participants.map((p) => ({
+        fullName: p.fullName.trim(),
+        age: Math.round(Number(p.age)),
+        country: p.country.trim() || null,
+      })),
+      jury: this.jury.map((j) => ({
+        fullName: j.fullName.trim(),
+        phone: normalizePhoneDigits(j.phone),
+        password: j.password,
+        position: j.position.trim() || null,
+      })),
+    }
+    const fd = new FormData()
+    fd.append('payload', JSON.stringify(payload))
+    if (this.coverFile) fd.append('cover', this.coverFile)
+    this.participants.forEach((p, i) => {
+      if (p.file) fd.append(`participantPhoto_${i}`, p.file)
+    })
+    this.jury.forEach((j, i) => {
+      if (j.file) fd.append(`juryPhoto_${i}`, j.file)
+    })
+    return fd
+  }
+
+  getSkeletonForTemplate(): { contestType: string; criteria: { name: string; maxScore: number }[] } {
+    const filledCriteria = this.criteria.filter((c) => c.name.trim())
+    return {
+      contestType: this.contestType,
+      criteria: filledCriteria.map((c) => ({
+        name: c.name.trim(),
+        maxScore: Math.round(Number(c.maxScore)),
+      })),
+    }
+  }
+}
+
+export const createEventFormStore = new CreateEventFormStore()

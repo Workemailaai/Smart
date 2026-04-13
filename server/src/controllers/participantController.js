@@ -12,7 +12,11 @@ class ParticipantController {
       }
       requireFields(req.body, ["contestId", "fullName", "age"]);
       const participant = await ParticipantService.createParticipant({
-        ...req.body,
+        contestId: req.body.contestId,
+        fullName: req.body.fullName,
+        age: req.body.age,
+        country: req.body.country,
+        photoUrl: req.body.photoUrl,
         organizerId: req.user.id
       });
       return res

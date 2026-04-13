@@ -1,6 +1,6 @@
 import { Navigate, createBrowserRouter } from 'react-router'
 import { Layout } from './Layout'
-import { CabinetPage, MainPage } from '@/pages'
+import { CabinetPage, CreateEventPage, MainPage } from '@/pages'
 
 export const routerConfig = createBrowserRouter([
   {
@@ -25,6 +25,10 @@ export const routerConfig = createBrowserRouter([
           {
             path: 'constructor',
             element: <CabinetPage section="constructor" />,
+          },
+          {
+            path: 'constructor/new',
+            element: <CreateEventPage />,
           },
           {
             path: 'settings',

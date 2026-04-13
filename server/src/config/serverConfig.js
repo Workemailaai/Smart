@@ -19,6 +19,8 @@ function serverConfig(app) {
   app.use(morgan("dev"));
   app.use(cookieParser());
   app.use("/uploads", express.static(path.resolve(process.cwd(), "uploads")));
+  /** Статика загруженных файлов конструктора (обложки, фото) */
+  app.use("/media", express.static(path.resolve(process.cwd(), "public")));
 }
 
 module.exports = serverConfig;

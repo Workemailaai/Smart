@@ -9,7 +9,11 @@ class CriterionService {
     if (contest.organizerId !== organizerId) {
       throw new ApiError(403, "Only contest organizer can add criteria");
     }
-    return Criterion.create({ contestId, name, maxScore: maxScore || 10 });
+    const max = maxScore != null ? Number(maxScore) : 10;
+    if (!Number.isInteger(max) || max < 1) {
+      throw new ApiError(422, "Верхняя граница критерия — целое число не меньше 1");
+    }
+    return Criterion.create({ contestId, name, maxScore: max });
   }
 
   /** Критерии конкурса */

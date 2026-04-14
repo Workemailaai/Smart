@@ -11,6 +11,28 @@ class ContestStore {
     makeAutoObservable(this)
   }
 
+  get juryPendingContests() {
+    return this.contests.filter((contest) => !contest.mySubmitted && contest.status !== 'archived')
+  }
+
+  get juryRatedContests() {
+    return this.contests.filter((contest) => contest.mySubmitted && contest.status !== 'archived')
+  }
+
+  get organizerInProgressContests() {
+    return this.contests.filter(
+      (contest) => contest.status === 'in_progress' || contest.status === 'judging_completed',
+    )
+  }
+
+  get organizerCompletedContests() {
+    return this.contests.filter((contest) => contest.status === 'completed')
+  }
+
+  get organizerArchivedContests() {
+    return this.contests.filter((contest) => contest.status === 'archived')
+  }
+
   fetchContests = async () => {
     this.isLoading = true
     this.error = null

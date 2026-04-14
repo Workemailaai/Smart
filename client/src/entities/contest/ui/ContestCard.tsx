@@ -4,6 +4,7 @@ import styles from './ContestCard.module.css'
 type ContestCardProps = {
   contest: IContest
   actionLabel?: string
+  onOpen?: () => void
 }
 
 const formatDate = (date: string) =>
@@ -13,7 +14,7 @@ const formatDate = (date: string) =>
     year: 'numeric',
   })
 
-export function ContestCard({ contest, actionLabel }: ContestCardProps) {
+export function ContestCard({ contest, actionLabel, onOpen }: ContestCardProps) {
   return (
     <article className={styles.card}>
       <div>
@@ -22,11 +23,11 @@ export function ContestCard({ contest, actionLabel }: ContestCardProps) {
         <p className={styles.subtitle}>{contest.description || 'Оценка конкурса'}</p>
       </div>
       {actionLabel ? (
-        <button className={styles.actionText} type="button">
+        <button className={styles.actionText} type="button" onClick={onOpen}>
           {actionLabel}
         </button>
       ) : (
-        <button className={styles.actionCircle} type="button">
+        <button className={styles.actionCircle} type="button" onClick={onOpen}>
           →
         </button>
       )}

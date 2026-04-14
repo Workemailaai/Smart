@@ -16,5 +16,9 @@ router.post(
   ContestController.createContestFull
 );
 router.get("/", ContestController.getContests);
+router.get("/:id/jury-view", ContestController.getJuryContestView);
+router.get("/:id/organizer-view", ContestController.getOrganizerContestView);
+router.post("/:id/jury-submit", ContestController.submitJuryScores);
+router.post("/:id/complete", ContestController.completeContest);
 
 module.exports = router;

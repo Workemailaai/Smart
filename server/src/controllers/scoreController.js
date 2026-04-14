@@ -21,6 +21,24 @@ class ScoreController {
     }
   }
 
+  /** Пакетное сохранение оценок членом жюри */
+  static async putScoresBatch(req, res, next) {
+    try {
+      if (req.user.role !== "jury") {
+        throw new ApiError(403, "Only jury can put scores");
+      }
+      requireFields(req.body, ["contestId", "scores"]);
+      const scores = await ScoreService.putScoresBatch({
+        contestId: req.body.contestId,
+        scores: req.body.scores,
+        userId: req.user.id
+      });
+      return res.status(200).json(formatResponse(200, "Scores saved", scores));
+    } catch (error) {
+      return next(error);
+    }
+  }
+
   /** Получение оценок конкурса */
   static async getScores(req, res, next) {
     try {

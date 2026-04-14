@@ -82,7 +82,75 @@ class ContestController {
       const contests = await ContestService.listContests(req.user);
       return res
         .status(200)
-        .json(formatResponse(200, "Contests list", contests));
+        .json(formatResponse(200, "Список мероприятий", contests));
+    } catch (error) {
+      return next(error);
+    }
+  }
+
+  /** Детальная страница мероприятия для жюри */
+  static async getJuryContestView(req, res, next) {
+    try {
+      if (req.user.role !== "jury") {
+        throw new ApiError(403, "Только жюри может открывать этот раздел");
+      }
+      const data = await ContestService.getJuryContestView({
+        contestId: Number(req.params.id),
+        userId: req.user.id
+      });
+      return res
+        .status(200)
+        .json(formatResponse(200, "Данные мероприятия для жюри", data));
+    } catch (error) {
+      return next(error);
+    }
+  }
+
+  /** Детальная страница мероприятия для организатора */
+  static async getOrganizerContestView(req, res, next) {
+    try {
+      if (req.user.role !== "organizer") {
+        throw new ApiError(403, "Только организатор может открывать этот раздел");
+      }
+      const data = await ContestService.getOrganizerContestView({
+        contestId: Number(req.params.id),
+        userId: req.user.id
+      });
+      return res
+        .status(200)
+        .json(formatResponse(200, "Данные мероприятия для организатора", data));
+    } catch (error) {
+      return next(error);
+    }
+  }
+
+  /** Финальная отправка оценок жюри */
+  static async submitJuryScores(req, res, next) {
+    try {
+      if (req.user.role !== "jury") {
+        throw new ApiError(403, "Только жюри может отправить оценки");
+      }
+      const data = await ContestService.submitJuryScores({
+        contestId: Number(req.params.id),
+        userId: req.user.id
+      });
+      return res.status(200).json(formatResponse(200, "Оценки отправлены", data));
+    } catch (error) {
+      return next(error);
+    }
+  }
+
+  /** Завершение мероприятия организатором */
+  static async completeContest(req, res, next) {
+    try {
+      if (req.user.role !== "organizer") {
+        throw new ApiError(403, "Только организатор может завершить мероприятие");
+      }
+      const contest = await ContestService.completeContestByOrganizer({
+        contestId: Number(req.params.id),
+        userId: req.user.id
+      });
+      return res.status(200).json(formatResponse(200, "Мероприятие завершено", contest));
     } catch (error) {
       return next(error);
     }

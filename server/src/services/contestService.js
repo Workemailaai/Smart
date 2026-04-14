@@ -1,5 +1,13 @@
 const fs = require("fs");
-const { sequelize, Contest, Jury, Criterion, Participant, User } = require("../db/models");
+const {
+  sequelize,
+  Contest,
+  Jury,
+  Criterion,
+  Participant,
+  Score,
+  User
+} = require("../db/models");
 const ApiError = require("../utils/ApiError");
 const { CONTEST_TYPES } = require("../constants/contestTypes");
 const JuryService = require("./juryService");
@@ -18,6 +26,64 @@ function unlinkUploadedFiles(filesByField) {
 }
 
 class ContestService {
+  static contestStatuses = {
+    inProgress: "in_progress",
+    judgingCompleted: "judging_completed",
+    completed: "completed",
+    archived: "archived"
+  };
+
+  static getExpectedScoreCount(criteriaCount, participantsCount) {
+    return criteriaCount * participantsCount;
+  }
+
+  static countSubmittedJury({ scoreCountByJuryId, juryMembers, expectedScoreCount }) {
+    if (expectedScoreCount === 0 || juryMembers.length === 0) {
+      return 0;
+    }
+    let submitted = 0;
+    for (const member of juryMembers) {
+      const key = String(member.id);
+      const count = Number(scoreCountByJuryId[key] || 0);
+      if (count >= expectedScoreCount) submitted += 1;
+    }
+    return submitted;
+  }
+
+  static async getContestWithDependencies(contestId) {
+    const contest = await Contest.findByPk(contestId, {
+      include: [
+        { model: Criterion, as: "criteria" },
+        { model: Participant, as: "participants" },
+        {
+          model: Jury,
+          as: "juryMembers",
+          include: [{ model: User, as: "user", attributes: ["id", "fullName", "phone", "role"] }]
+        }
+      ]
+    });
+    if (!contest) {
+      throw new ApiError(404, "Мероприятие не найдено");
+    }
+    return contest;
+  }
+
+  static async getScoreCountByJury(contestId) {
+    const rows = await Score.findAll({
+      where: { contestId },
+      attributes: [
+        "juryId",
+        [sequelize.fn("COUNT", sequelize.col("id")), "count"]
+      ],
+      group: ["juryId"],
+      raw: true
+    });
+    return rows.reduce((acc, row) => {
+      acc[String(row.juryId)] = Number(row.count || 0);
+      return acc;
+    }, {});
+  }
+
   /** Создание конкурса */
   static async createContest({ title, description, organizerId, contestType, coverImageUrl }) {
     const contest = await Contest.create({
@@ -25,7 +91,8 @@ class ContestService {
       description,
       organizerId,
       contestType: contestType || "miss_world",
-      coverImageUrl: coverImageUrl || null
+      coverImageUrl: coverImageUrl || null,
+      status: ContestService.contestStatuses.inProgress
     });
     return contest;
   }
@@ -33,20 +100,236 @@ class ContestService {
   /** Список конкурсов для организатора или жюри */
   static async listContests(user) {
     if (user.role === "organizer") {
-      return Contest.findAll({ where: { organizerId: user.id } });
+      const contests = await Contest.findAll({ where: { organizerId: user.id } });
+      const result = [];
+      for (const contest of contests) {
+        const criteriaCount = await Criterion.count({ where: { contestId: contest.id } });
+        const participantsCount = await Participant.count({ where: { contestId: contest.id } });
+        const juryMembers = await Jury.findAll({ where: { contestId: contest.id }, attributes: ["id"] });
+        const expectedScoreCount = ContestService.getExpectedScoreCount(criteriaCount, participantsCount);
+        const scoreCountByJuryId = await ContestService.getScoreCountByJury(contest.id);
+        const submittedJuryCount = ContestService.countSubmittedJury({
+          scoreCountByJuryId,
+          juryMembers,
+          expectedScoreCount
+        });
+        result.push({
+          ...contest.get({ plain: true }),
+          submittedJuryCount,
+          totalJuryCount: juryMembers.length
+        });
+      }
+      return result;
     }
     if (user.role === "jury") {
       const rows = await Jury.findAll({
         where: { userId: user.id },
-        attributes: ["contestId"]
+        attributes: ["id", "contestId"]
       });
       const ids = [...new Set(rows.map((r) => r.contestId))];
       if (ids.length === 0) {
         return [];
       }
-      return Contest.findAll({ where: { id: ids } });
+      const contests = await Contest.findAll({ where: { id: ids } });
+      const byContestId = new Map(rows.map((item) => [item.contestId, item]));
+      const result = [];
+      for (const contest of contests) {
+        const myAssignment = byContestId.get(contest.id);
+        const criteriaCount = await Criterion.count({ where: { contestId: contest.id } });
+        const participantsCount = await Participant.count({ where: { contestId: contest.id } });
+        const expectedScoreCount = ContestService.getExpectedScoreCount(criteriaCount, participantsCount);
+        const myScoreCount = myAssignment
+          ? await Score.count({ where: { contestId: contest.id, juryId: myAssignment.id } })
+          : 0;
+        result.push({
+          ...contest.get({ plain: true }),
+          mySubmitted: expectedScoreCount > 0 && myScoreCount >= expectedScoreCount
+        });
+      }
+      return result;
     }
     return [];
+  }
+
+  static async getJuryContestView({ contestId, userId }) {
+    const contest = await ContestService.getContestWithDependencies(contestId);
+    const myAssignment = contest.juryMembers.find((item) => item.userId === userId);
+    if (!myAssignment) {
+      throw new ApiError(403, "Это мероприятие недоступно для данного жюри");
+    }
+
+    const myScores = await Score.findAll({
+      where: { contestId, juryId: myAssignment.id },
+      attributes: ["participantId", "criterionId", "value"]
+    });
+    const criteriaCount = contest.criteria.length;
+    const participantTotals = {};
+    for (const score of myScores) {
+      const key = String(score.participantId);
+      participantTotals[key] = Number(participantTotals[key] || 0) + Number(score.value || 0);
+    }
+    const averageByParticipant = contest.participants.map((participant) => {
+      const sum = Number(participantTotals[String(participant.id)] || 0);
+      return {
+        participantId: participant.id,
+        average: criteriaCount > 0 ? Number((sum / criteriaCount).toFixed(2)) : 0
+      };
+    });
+
+    const expectedScoreCount = ContestService.getExpectedScoreCount(
+      contest.criteria.length,
+      contest.participants.length
+    );
+    const mySubmitted = expectedScoreCount > 0 && myScores.length >= expectedScoreCount;
+
+    return {
+      contest: contest.get({ plain: true }),
+      criteria: contest.criteria,
+      participants: contest.participants,
+      myScores,
+      averageByParticipant,
+      mySubmitted
+    };
+  }
+
+  static async submitJuryScores({ contestId, userId }) {
+    const contest = await ContestService.getContestWithDependencies(contestId);
+    const myAssignment = contest.juryMembers.find((item) => item.userId === userId);
+    if (!myAssignment) {
+      throw new ApiError(403, "Это мероприятие недоступно для данного жюри");
+    }
+
+    const expectedScoreCount = ContestService.getExpectedScoreCount(
+      contest.criteria.length,
+      contest.participants.length
+    );
+    if (expectedScoreCount === 0) {
+      throw new ApiError(422, "Невозможно отправить оценки: нет критериев или участников");
+    }
+    const myScoreCount = await Score.count({
+      where: { contestId, juryId: myAssignment.id }
+    });
+    if (myScoreCount < expectedScoreCount) {
+      throw new ApiError(422, "Заполните оценки по всем критериям для каждого участника");
+    }
+
+    const scoreCountByJuryId = await ContestService.getScoreCountByJury(contestId);
+    const submittedJuryCount = ContestService.countSubmittedJury({
+      scoreCountByJuryId,
+      juryMembers: contest.juryMembers,
+      expectedScoreCount
+    });
+
+    if (
+      contest.juryMembers.length > 0 &&
+      submittedJuryCount >= contest.juryMembers.length &&
+      contest.status === ContestService.contestStatuses.inProgress
+    ) {
+      await contest.update({ status: ContestService.contestStatuses.judgingCompleted });
+    }
+
+    return {
+      submittedJuryCount,
+      totalJuryCount: contest.juryMembers.length,
+      status:
+        submittedJuryCount >= contest.juryMembers.length
+          ? ContestService.contestStatuses.judgingCompleted
+          : ContestService.contestStatuses.inProgress
+    };
+  }
+
+  static async getOrganizerContestView({ contestId, userId }) {
+    const contest = await ContestService.getContestWithDependencies(contestId);
+    if (contest.organizerId !== userId) {
+      throw new ApiError(403, "Только организатор может просматривать этот раздел");
+    }
+
+    const scores = await Score.findAll({ where: { contestId } });
+    const scoreMap = new Map();
+    for (const row of scores) {
+      scoreMap.set(`${row.juryId}_${row.participantId}_${row.criterionId}`, Number(row.value));
+    }
+
+    const participants = contest.participants.map((participant) => {
+      let participantSum = 0;
+      let participantCount = 0;
+      const juryCards = contest.juryMembers.map((juryMember) => {
+        let juryTotal = 0;
+        const criteria = contest.criteria.map((criterion) => {
+          const value =
+            scoreMap.get(`${juryMember.id}_${participant.id}_${criterion.id}`) ?? null;
+          if (typeof value === "number") {
+            juryTotal += value;
+            participantSum += value;
+            participantCount += 1;
+          }
+          return {
+            criterionId: criterion.id,
+            name: criterion.name,
+            maxScore: criterion.maxScore,
+            value
+          };
+        });
+        return {
+          juryId: juryMember.id,
+          userId: juryMember.userId,
+          fullName: juryMember.user?.fullName || "Жюри",
+          phone: juryMember.user?.phone || "",
+          position: juryMember.position,
+          photoUrl: juryMember.photoUrl,
+          criteria,
+          total: Number(juryTotal.toFixed(2))
+        };
+      });
+
+      return {
+        id: participant.id,
+        fullName: participant.fullName,
+        age: participant.age,
+        country: participant.country,
+        photoUrl: participant.photoUrl,
+        juryCards,
+        overallTotal: participantCount > 0 ? Number(participantSum.toFixed(2)) : 0,
+        overallAverage: participantCount > 0 ? Number((participantSum / participantCount).toFixed(2)) : 0
+      };
+    });
+
+    const expectedScoreCount = ContestService.getExpectedScoreCount(
+      contest.criteria.length,
+      contest.participants.length
+    );
+    const scoreCountByJuryId = await ContestService.getScoreCountByJury(contestId);
+    const submittedJuryCount = ContestService.countSubmittedJury({
+      scoreCountByJuryId,
+      juryMembers: contest.juryMembers,
+      expectedScoreCount
+    });
+
+    return {
+      contest: contest.get({ plain: true }),
+      participants,
+      canComplete:
+        contest.status === ContestService.contestStatuses.judgingCompleted &&
+        contest.juryMembers.length > 0 &&
+        submittedJuryCount >= contest.juryMembers.length,
+      submittedJuryCount,
+      totalJuryCount: contest.juryMembers.length
+    };
+  }
+
+  static async completeContestByOrganizer({ contestId, userId }) {
+    const contest = await ContestService.getContestWithDependencies(contestId);
+    if (contest.organizerId !== userId) {
+      throw new ApiError(403, "Только организатор может завершить мероприятие");
+    }
+    if (contest.status !== ContestService.contestStatuses.judgingCompleted) {
+      throw new ApiError(422, "Мероприятие нельзя завершить до полной сдачи оценок жюри");
+    }
+    await contest.update({
+      status: ContestService.contestStatuses.completed,
+      completedAt: new Date()
+    });
+    return contest;
   }
 
   /** Конкурс по id или 404 */

@@ -7,6 +7,7 @@ const router = Router();
 router.use(verifyAccessToken);
 
 router.put("/", ScoreController.putScore);
+router.put("/batch", ScoreController.putScoresBatch);
 router.get("/:contestId", ScoreController.getScores);
 
 module.exports = router;

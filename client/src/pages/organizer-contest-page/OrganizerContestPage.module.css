@@ -1,0 +1,136 @@
+.page {
+  min-height: 100vh;
+  background: #f0f2f6;
+  color: #1d2430;
+  padding: 16px 18px 28px;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.title {
+  font-size: 40px;
+}
+
+.backButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 40px;
+  padding: 0 16px;
+  border-radius: 999px;
+  background: #fff;
+  color: #1c2432;
+  text-decoration: none;
+}
+
+.content {
+  display: grid;
+  gap: 14px;
+}
+
+.contestCard {
+  background: #fff;
+  border-radius: 18px;
+  padding: 16px;
+}
+
+.contestTitle {
+  font-size: 36px;
+}
+
+.contestSubtitle {
+  color: #7d8798;
+  font-size: 22px;
+}
+
+.progress {
+  margin-top: 6px;
+  font-size: 18px;
+  color: #16a6ad;
+}
+
+.participantSections {
+  display: grid;
+  gap: 10px;
+}
+
+.participantSection {
+  background: #d9dde4;
+  border-radius: 18px;
+  padding: 10px 12px;
+}
+
+.participantSummary {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  font-size: 28px;
+}
+
+.juryCards {
+  margin-top: 12px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 10px;
+}
+
+.juryCard {
+  background: #fff;
+  border-radius: 12px;
+  padding: 12px;
+}
+
+.juryName {
+  font-size: 20px;
+}
+
+.juryPhone {
+  font-size: 14px;
+  color: #8f97a5;
+  margin-bottom: 8px;
+}
+
+.criterionRow {
+  display: flex;
+  justify-content: space-between;
+  font-size: 14px;
+  margin-bottom: 4px;
+}
+
+.totalRow {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid #e2e5ec;
+  display: flex;
+  justify-content: space-between;
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.primaryButton {
+  border-radius: 999px;
+  height: 44px;
+  padding: 0 22px;
+  font-size: 18px;
+  background: #071324;
+  color: #fff;
+}
+
+.infoText,
+.errorText {
+  padding: 8px 2px;
+  font-size: 16px;
+}
+
+.errorText {
+  color: #b73a45;
+}

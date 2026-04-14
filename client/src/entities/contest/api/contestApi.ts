@@ -1,5 +1,11 @@
 import { axiosInstance, type ServerResponseType } from '@/shared'
-import type { IContest, IContestTypeOption } from '../model/contest.types'
+import type {
+  IContest,
+  IContestTypeOption,
+  IJuryContestView,
+  IOrganizerContestView,
+  IScoreItem,
+} from '../model/contest.types'
 
 export const getContests = async (): Promise<ServerResponseType<IContest[]>> => {
   try {
@@ -30,5 +36,37 @@ export const createContestFull = async (
       (error as { response?: { data?: { message?: string } } })?.response?.data?.message
     throw new Error(msg || (error as Error)?.message || 'Ошибка при создании мероприятия')
   }
+}
+
+export const getJuryContestView = async (
+  contestId: number,
+): Promise<ServerResponseType<IJuryContestView>> => {
+  const response = await axiosInstance.get(`/contests/${contestId}/jury-view`)
+  return response.data
+}
+
+export const getOrganizerContestView = async (
+  contestId: number,
+): Promise<ServerResponseType<IOrganizerContestView>> => {
+  const response = await axiosInstance.get(`/contests/${contestId}/organizer-view`)
+  return response.data
+}
+
+export const putScoresBatch = async (
+  contestId: number,
+  scores: IScoreItem[],
+): Promise<ServerResponseType<IScoreItem[]>> => {
+  const response = await axiosInstance.put('/scores/batch', { contestId, scores })
+  return response.data
+}
+
+export const submitJuryContest = async (contestId: number): Promise<ServerResponseType<null>> => {
+  const response = await axiosInstance.post(`/contests/${contestId}/jury-submit`)
+  return response.data
+}
+
+export const completeContest = async (contestId: number): Promise<ServerResponseType<IContest>> => {
+  const response = await axiosInstance.post(`/contests/${contestId}/complete`)
+  return response.data
 }
 

@@ -47,9 +47,12 @@ export const CabinetPage = observer(({ section }: CabinetPageProps) => {
   const fullName = user.fullName || 'Пользователь'
   const roleTitle = isOrganizer ? 'Организатор' : 'Жюри'
   const pageTitle = section === 'constructor' ? 'Конструктор' : 'Мероприятия'
-  const contests = contestStore.contests
-  const activeContests = contests.slice(0, 4)
-  const archiveContests = contests.slice(4)
+  const pendingContests = isOrganizer
+    ? contestStore.organizerInProgressContests
+    : contestStore.juryPendingContests
+  const ratedContests = isOrganizer
+    ? contestStore.organizerCompletedContests
+    : contestStore.juryRatedContests
   const templates = templateStore.templates
 
   const onLogout = async () => {
@@ -141,33 +144,58 @@ export const CabinetPage = observer(({ section }: CabinetPageProps) => {
           <div className={styles.eventsLayout}>
             <section className={styles.eventsCard}>
               <div className={styles.sectionHeader}>
-                <h3 className={styles.sectionTitle}>Ждут оценки (4)</h3>
+                <h3 className={styles.sectionTitle}>
+                  {isOrganizer ? 'В процессе оценивания' : 'Ждут оценки'} ({pendingContests.length})
+                </h3>
                 <button className={styles.filterButton} type="button">
                   Все
                 </button>
               </div>
               {contestStore.isLoading ? <p className={styles.helperText}>Загрузка мероприятий...</p> : null}
               {contestStore.error ? <p className={styles.errorText}>{contestStore.error}</p> : null}
-              {!contestStore.isLoading && !contestStore.error && activeContests.length === 0 ? (
+              {!contestStore.isLoading && !contestStore.error && pendingContests.length === 0 ? (
                 <p className={styles.helperText}>Пока нет мероприятий</p>
               ) : null}
-              {activeContests.map((contest) => (
-                <ContestCard contest={contest} key={contest.id} />
+              {pendingContests.map((contest) => (
+                <ContestCard
+                  contest={contest}
+                  key={contest.id}
+                  onOpen={() =>
+                    navigate(
+                      isOrganizer
+                        ? `/cabinet/events/${contest.id}/organizer`
+                        : `/cabinet/events/${contest.id}/jury`,
+                    )
+                  }
+                />
               ))}
             </section>
 
             <section className={styles.eventsCard}>
               <div className={styles.sectionHeader}>
-                <h3 className={styles.sectionTitle}>Архив (2)</h3>
+                <h3 className={styles.sectionTitle}>
+                  {isOrganizer ? 'Завершённые' : 'Оцененные'} ({ratedContests.length})
+                </h3>
                 <button className={styles.filterButton} type="button">
                   Все
                 </button>
               </div>
-              {!contestStore.isLoading && !contestStore.error && archiveContests.length === 0 ? (
+              {!contestStore.isLoading && !contestStore.error && ratedContests.length === 0 ? (
                 <p className={styles.helperText}>Архив пуст</p>
               ) : null}
-              {archiveContests.map((contest) => (
-                <ContestCard actionLabel="Результаты" contest={contest} key={contest.id} />
+              {ratedContests.map((contest) => (
+                <ContestCard
+                  actionLabel={isOrganizer ? 'Открыть' : 'Открыть'}
+                  contest={contest}
+                  key={contest.id}
+                  onOpen={() =>
+                    navigate(
+                      isOrganizer
+                        ? `/cabinet/events/${contest.id}/organizer`
+                        : `/cabinet/events/${contest.id}/jury`,
+                    )
+                  }
+                />
               ))}
             </section>
           </div>

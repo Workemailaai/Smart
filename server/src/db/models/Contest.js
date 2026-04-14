@@ -40,6 +40,15 @@ module.exports = (sequelize, DataTypes) => {
       coverImageUrl: {
         type: DataTypes.STRING(512),
         allowNull: true
+      },
+      status: {
+        type: DataTypes.STRING(32),
+        allowNull: false,
+        defaultValue: "in_progress"
+      },
+      completedAt: {
+        type: DataTypes.DATE,
+        allowNull: true
       }
     },
     {

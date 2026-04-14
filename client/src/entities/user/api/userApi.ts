@@ -5,6 +5,7 @@ import { setAccessToken } from '@/shared/api/axiosInstance'
 export const signUp = async (data: ISignUpData): Promise<ServerResponseType<IAuthResponseData>> => {
     try {
         const response = await axiosInstance.post('/auth/sign-up', data)
+        setAccessToken(response.data.data.accessToken)
         return response.data
     } catch (error) {
         throw new Error((error as Error)?.message || 'ошибка при регистрации')

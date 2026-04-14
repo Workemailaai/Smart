@@ -140,13 +140,18 @@ class AuthController {
       const plain = newUser.get({ plain: true });
       delete plain.password;
 
+      const { accessToken, refreshToken } = generateJWTTokens({
+        user: newUser
+      });
+
       return res
         .status(201)
+        .cookie("refreshToken", refreshToken, cookieConfig.refreshToken)
         .json(
           formatResponse(
             201,
             "Организатор успешно зарегистрирован",
-            { accessToken: "", user: plain },
+            { accessToken, user: plain },
             null
           )
         );

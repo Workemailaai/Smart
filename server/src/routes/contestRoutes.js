@@ -18,6 +18,7 @@ router.post(
 router.get("/", ContestController.getContests);
 router.get("/:id/jury-view", ContestController.getJuryContestView);
 router.get("/:id/organizer-view", ContestController.getOrganizerContestView);
+router.get("/:id/results-view", ContestController.getContestResultsView);
 router.post("/:id/jury-submit", ContestController.submitJuryScores);
 router.post("/:id/complete", ContestController.completeContest);
 

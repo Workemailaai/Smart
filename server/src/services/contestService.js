@@ -319,6 +319,84 @@ class ContestService {
     };
   }
 
+  static async getContestResultsView({ contestId, user }) {
+    const contest = await ContestService.getContestWithDependencies(contestId);
+
+    if (user.role === "organizer") {
+      if (contest.organizerId !== user.id) {
+        throw new ApiError(403, "Только организатор может просматривать результаты этого мероприятия");
+      }
+      if (
+        contest.status !== ContestService.contestStatuses.completed &&
+        contest.status !== ContestService.contestStatuses.archived
+      ) {
+        throw new ApiError(422, "Результаты доступны после завершения мероприятия");
+      }
+    } else if (user.role === "jury") {
+      const assignment = contest.juryMembers.find((item) => item.userId === user.id);
+      if (!assignment) {
+        throw new ApiError(403, "Это мероприятие недоступно для данного жюри");
+      }
+      if (contest.status !== ContestService.contestStatuses.archived) {
+        throw new ApiError(422, "Жюри может смотреть результаты только в архиве");
+      }
+    } else {
+      throw new ApiError(403, "Недостаточно прав для просмотра результатов");
+    }
+
+    const scores = await Score.findAll({ where: { contestId } });
+    const valuesByParticipantId = new Map();
+    for (const score of scores) {
+      const participantId = Number(score.participantId);
+      const value = Number(score.value);
+      if (!Number.isFinite(value)) continue;
+      const list = valuesByParticipantId.get(participantId) || [];
+      list.push(value);
+      valuesByParticipantId.set(participantId, list);
+    }
+
+    const ranked = contest.participants
+      .map((participant) => {
+        const values = valuesByParticipantId.get(participant.id) || [];
+        const sum = values.reduce((acc, current) => acc + current, 0);
+        const average = values.length > 0 ? Number((sum / values.length).toFixed(2)) : 0;
+        return {
+          participantId: participant.id,
+          fullName: participant.fullName,
+          age: participant.age,
+          country: participant.country,
+          photoUrl: participant.photoUrl,
+          score: average,
+          place: 0
+        };
+      })
+      .sort((a, b) => {
+        if (b.score !== a.score) return b.score - a.score;
+        return a.participantId - b.participantId;
+      });
+
+    let previousScore = null;
+    let previousPlace = 0;
+    const withPlaces = ranked.map((item, index) => {
+      const currentPlace =
+        previousScore !== null && item.score === previousScore ? previousPlace : index + 1;
+      previousScore = item.score;
+      previousPlace = currentPlace;
+      return { ...item, place: currentPlace };
+    });
+
+    return {
+      contest: {
+        id: contest.id,
+        title: contest.title,
+        coverImageUrl: contest.coverImageUrl,
+        status: contest.status
+      },
+      topThree: withPlaces.slice(0, 3),
+      others: withPlaces.slice(3)
+    };
+  }
+
   static async completeContestByOrganizer({ contestId, userId }) {
     const contest = await ContestService.getContestWithDependencies(contestId);
     if (contest.organizerId !== userId) {

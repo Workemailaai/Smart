@@ -1,14 +1,16 @@
 .wrap {
-  padding: 20px 22px 32px;
-  max-width: 1200px;
+  padding: 24px 12px 32px;
+  width: min(1152px, 100%);
   margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
 }
 
 .grid2 {
   display: grid;
-  grid-template-columns: 1fr 280px;
-  gap: 18px;
-  margin-bottom: 18px;
+  grid-template-columns: 714px 1fr;
+  gap: 16px;
 }
 
 @media (max-width: 900px) {
@@ -18,17 +20,28 @@
 }
 
 .card {
-  background: #fff;
-  border-radius: 18px;
-  padding: 18px 20px;
-  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.04);
+  background: #e0e5eb;
+  border-radius: 28px;
+  padding: 12px;
+}
+
+.cardMuted {
+  background: #e0e5eb;
+}
+
+.cardHeader {
+  padding: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 }
 
 .cardTitle {
-  font-size: 20px;
-  font-weight: 600;
-  margin: 0 0 14px;
-  color: #242b38;
+  font-size: 24px;
+  font-weight: 500;
+  margin: 0;
+  color: #0a0f15;
+  line-height: 24px;
 }
 
 .field {
@@ -47,23 +60,49 @@
 .textarea {
   width: 100%;
   border: none;
-  border-radius: 14px;
-  background: #eef1f6;
-  padding: 12px 14px;
-  font-size: 15px;
-  color: #1e2430;
+  border-radius: 16px;
+  background: #fff;
+  padding: 16px;
+  font-size: 18px;
+  color: #0a0f15;
+  line-height: 24px;
 }
 
 .textarea {
-  min-height: 72px;
+  min-height: 88px;
   resize: vertical;
 }
 
-.coverBox {
-  aspect-ratio: 16 / 10;
+.descriptionBlock {
+  background: #fff;
   border-radius: 16px;
-  background: #eef1f6;
-  border: 1px dashed #c5cedc;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.descriptionRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  color: #0a0f15;
+  font-size: 18px;
+  line-height: 24px;
+}
+
+.descriptionValue {
+  opacity: 0.6;
+  font-size: 14px;
+  text-align: right;
+}
+
+.coverBox {
+  min-height: 260px;
+  border-radius: 16px;
+  background: #fff;
+  border: none;
   display: grid;
   place-items: center;
   cursor: pointer;
@@ -73,9 +112,16 @@
 
 .coverHint {
   text-align: center;
-  color: #6b7588;
-  font-size: 13px;
+  color: rgba(10, 15, 21, 0.5);
+  font-size: 16px;
   padding: 8px;
+}
+
+.coverPlus {
+  font-size: 36px;
+  line-height: 36px;
+  color: #bfc7d4;
+  margin-bottom: 8px;
 }
 
 .coverImg {
@@ -91,28 +137,60 @@
 .criteriaList {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
 }
 
 .criterionRow {
   display: grid;
-  grid-template-columns: 1fr 120px 40px;
-  gap: 10px;
+  grid-template-columns: 48px 1fr 96px 36px;
+  gap: 8px;
   align-items: center;
 }
 
+.criterionIndex {
+  height: 48px;
+  border-radius: 16px;
+  background: #fff;
+  display: grid;
+  place-items: center;
+  font-size: 18px;
+  line-height: 24px;
+  color: #0a0f15;
+}
+
+.maxScoreInput {
+  text-align: center;
+}
+
 .boundHint {
-  font-size: 12px;
-  color: #6b7588;
-  margin-top: 4px;
+  font-size: 16px;
+  color: rgba(10, 15, 21, 0.8);
+  margin: 0 0 8px;
+}
+
+.boundaryRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.boundaryBox {
+  height: 48px;
+  border-radius: 16px;
+  background: #fff;
+  display: grid;
+  place-items: center;
+  font-size: 18px;
+  line-height: 24px;
+  color: rgba(10, 15, 21, 0.9);
 }
 
 .iconBtn {
   width: 36px;
   height: 36px;
-  border-radius: 50%;
+  border-radius: 18px;
   border: none;
-  background: #eef1f6;
+  background: #e0e5eb;
   cursor: pointer;
   font-size: 18px;
   line-height: 1;
@@ -125,19 +203,18 @@
 .addRowBtn {
   margin-top: 8px;
   border: none;
-  background: #111722;
+  background: #0a0f15;
   color: #fff;
   border-radius: 999px;
   padding: 8px 16px;
-  font-size: 14px;
+  font-size: 16px;
   cursor: pointer;
 }
 
 .listsGrid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 18px;
-  margin-bottom: 18px;
+  gap: 16px;
 }
 
 @media (max-width: 800px) {
@@ -150,21 +227,22 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 12px;
+  padding: 12px;
 }
 
 .listTitle {
-  font-size: 18px;
-  font-weight: 600;
+  font-size: 24px;
+  font-weight: 500;
   margin: 0;
+  line-height: 24px;
 }
 
 .addCircle {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  border-radius: 18px;
   border: none;
-  background: #111722;
+  background: #0a0f15;
   color: #fff;
   font-size: 22px;
   cursor: pointer;
@@ -175,15 +253,15 @@
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 10px 8px;
-  border-radius: 12px;
-  background: #f5f7fa;
+  padding: 12px 16px;
+  border-radius: 16px;
+  background: #fff;
   margin-bottom: 8px;
 }
 
 .avatarSm {
-  width: 44px;
-  height: 44px;
+  width: 48px;
+  height: 48px;
   border-radius: 50%;
   background: #dce0e7;
   object-fit: cover;
@@ -196,8 +274,8 @@
 }
 
 .personName {
-  font-weight: 600;
-  font-size: 15px;
+  font-weight: 500;
+  font-size: 18px;
   margin: 0;
   white-space: nowrap;
   overflow: hidden;
@@ -205,65 +283,69 @@
 }
 
 .personSub {
-  font-size: 13px;
-  color: #566074;
+  font-size: 16px;
+  color: rgba(10, 15, 21, 0.5);
   margin: 2px 0 0;
 }
 
 .rowActions {
   display: flex;
-  gap: 6px;
+  gap: 8px;
 }
 
 .footerBar {
   display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
+  gap: 8px;
   align-items: center;
   justify-content: flex-end;
-  margin-top: 8px;
+  margin-top: 16px;
 }
 
 .btnDanger {
-  border-radius: 999px;
+  border-radius: 40px;
   border: none;
-  background: #e14b55;
+  background: #ff383c;
   color: #fff;
-  padding: 12px 20px;
-  font-size: 15px;
+  width: 225px;
+  height: 48px;
+  font-size: 18px;
+  font-weight: 500;
   cursor: pointer;
   margin-right: auto;
 }
 
 .btnSecondary {
-  border-radius: 999px;
-  border: 1px solid #c5cedc;
-  background: #fff;
-  color: #262d3b;
-  padding: 12px 20px;
-  font-size: 15px;
+  border-radius: 40px;
+  border: none;
+  background: #e0e5eb;
+  color: #0a0f15;
+  width: 225px;
+  height: 48px;
+  font-size: 18px;
+  font-weight: 500;
   cursor: pointer;
 }
 
 .btnPrimary {
-  border-radius: 999px;
+  border-radius: 40px;
   border: none;
-  background: #111722;
+  background: #0a0f15;
   color: #fff;
-  padding: 12px 22px;
-  font-size: 15px;
-  font-weight: 600;
+  width: 201px;
+  height: 48px;
+  font-size: 18px;
+  font-weight: 500;
   cursor: pointer;
 }
 
 .error {
   color: #b03a44;
-  font-size: 14px;
+  font-size: 16px;
   margin-top: 8px;
 }
 
 .success {
   color: #1a7d4a;
-  font-size: 14px;
+  font-size: 16px;
   margin-top: 8px;
 }

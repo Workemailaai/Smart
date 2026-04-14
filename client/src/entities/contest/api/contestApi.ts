@@ -1,6 +1,7 @@
 import { axiosInstance, type ServerResponseType } from '@/shared'
 import type {
   IContest,
+  IContestResultsView,
   IContestTypeOption,
   IJuryContestView,
   IOrganizerContestView,
@@ -67,6 +68,13 @@ export const submitJuryContest = async (contestId: number): Promise<ServerRespon
 
 export const completeContest = async (contestId: number): Promise<ServerResponseType<IContest>> => {
   const response = await axiosInstance.post(`/contests/${contestId}/complete`)
+  return response.data
+}
+
+export const getContestResultsView = async (
+  contestId: number,
+): Promise<ServerResponseType<IContestResultsView>> => {
+  const response = await axiosInstance.get(`/contests/${contestId}/results-view`)
   return response.data
 }
 

@@ -79,3 +79,19 @@ export interface IOrganizerContestView {
   submittedJuryCount: number
   totalJuryCount: number
 }
+
+export interface IContestResultsParticipant {
+  participantId: number
+  fullName: string
+  age: number
+  country: string | null
+  photoUrl: string | null
+  score: number
+  place: number
+}
+
+export interface IContestResultsView {
+  contest: Pick<IContest, 'id' | 'title' | 'coverImageUrl' | 'status'>
+  topThree: IContestResultsParticipant[]
+  others: IContestResultsParticipant[]
+}

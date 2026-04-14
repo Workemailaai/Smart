@@ -1,6 +1,6 @@
 import { Navigate, createBrowserRouter } from 'react-router'
 import { Layout } from './Layout'
-import { CabinetPage, CreateEventPage, JuryContestPage, MainPage, OrganizerContestPage } from '@/pages'
+import { CabinetPage, ContestResultsPage, CreateEventPage, JuryContestPage, MainPage, OrganizerContestPage } from '@/pages'
 
 export const routerConfig = createBrowserRouter([
   {
@@ -29,6 +29,10 @@ export const routerConfig = createBrowserRouter([
           {
             path: 'events/:contestId/organizer',
             element: <OrganizerContestPage />,
+          },
+          {
+            path: 'events/:contestId/results',
+            element: <ContestResultsPage />,
           },
           {
             path: 'constructor',

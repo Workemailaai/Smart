@@ -155,6 +155,20 @@ class ContestController {
       return next(error);
     }
   }
+
+  static async getContestResultsView(req, res, next) {
+    try {
+      const data = await ContestService.getContestResultsView({
+        contestId: Number(req.params.id),
+        user: req.user
+      });
+      return res
+        .status(200)
+        .json(formatResponse(200, "Результаты мероприятия", data));
+    } catch (error) {
+      return next(error);
+    }
+  }
 }
 
 module.exports = ContestController;

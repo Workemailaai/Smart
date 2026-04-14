@@ -133,12 +133,11 @@ export const CreateEventForm = observer(function CreateEventForm() {
   return (
     <div className={styles.wrap}>
       <div className={styles.grid2}>
-        <section className={styles.card}>
-          <h3 className={styles.cardTitle}>Общая информация</h3>
+        <section className={`${styles.card} ${styles.cardMuted}`}>
+          <div className={styles.cardHeader}>
+            <h3 className={styles.cardTitle}>Общая информация</h3>
+          </div>
           <div className={styles.field}>
-            <label className={styles.label} htmlFor="evt-title">
-              Название мероприятия
-            </label>
             <input
               className={styles.input}
               id="evt-title"
@@ -149,9 +148,6 @@ export const CreateEventForm = observer(function CreateEventForm() {
             />
           </div>
           <div className={styles.field}>
-            <label className={styles.label} htmlFor="evt-type">
-              Тип конкурса
-            </label>
             <select
               className={styles.select}
               id="evt-type"
@@ -166,9 +162,6 @@ export const CreateEventForm = observer(function CreateEventForm() {
             </select>
           </div>
           <div className={styles.field}>
-            <label className={styles.label} htmlFor="evt-desc">
-              Описание (необязательно)
-            </label>
             <textarea
               className={styles.textarea}
               id="evt-desc"
@@ -177,17 +170,28 @@ export const CreateEventForm = observer(function CreateEventForm() {
               value={store.description}
             />
           </div>
+          {/* <div className={styles.descriptionBlock}>
+            <div className={styles.descriptionRow}>
+              <span>Значимость показателей</span>
+              <span className={styles.descriptionValue}>Используется текущая логика оценки</span>
+            </div>
+            <div className={styles.descriptionRow}>
+              <span>Учитывать предпочтения жюри</span>
+              <span className={styles.descriptionValue}>Не влияет на формулу в текущей версии</span>
+            </div>
+          </div> */}
         </section>
-        <section className={styles.card}>
-          <h3 className={styles.cardTitle}>Обложка</h3>
+        <section className={`${styles.card} ${styles.cardMuted}`}>
+          <div className={styles.cardHeader}>
+            <h3 className={styles.cardTitle}>Обложка</h3>
+          </div>
           <label className={styles.coverBox}>
             {store.coverPreviewUrl ? (
               <img alt="" className={styles.coverImg} src={store.coverPreviewUrl} />
             ) : (
               <div className={styles.coverHint}>
-                <div style={{ fontSize: 28, marginBottom: 6 }}>+</div>
-                <div>Загрузить обложку</div>
-                <div style={{ fontSize: 11, marginTop: 6 }}>рекомендуется 1920×1080</div>
+                <div className={styles.coverPlus}>+</div>
+                <div>1920 × 1080</div>
               </div>
             )}
             <input accept="image/*" className={styles.hidden} onChange={onCoverPick} type="file" />
@@ -195,12 +199,23 @@ export const CreateEventForm = observer(function CreateEventForm() {
         </section>
       </div>
 
-      <section className={styles.card} style={{ marginBottom: 18 }}>
+      {/* <section className={`${styles.card} ${styles.cardMuted}`}>
+        <div className={styles.cardHeader}>
+          <h3 className={styles.cardTitle}>Границы</h3>
+        </div>
+        <div className={styles.boundaryRow}>
+          <div className={styles.boundaryBox}>1</div>
+          <div className={styles.boundaryBox}>{store.criteria[0]?.maxScore || 10}</div>
+        </div>
+      </section> */}
+
+      <section className={`${styles.card} ${styles.cardMuted}`}>
         <h3 className={styles.cardTitle}>Показатели оценивания</h3>
         <p className={styles.boundHint}>Нижняя граница оценки по каждому критерию всегда 1; укажите верхнюю границу.</p>
         <div className={styles.criteriaList}>
-          {store.criteria.map((c) => (
+          {store.criteria.map((c, index) => (
             <div className={styles.criterionRow} key={c.localId}>
+              <div className={styles.criterionIndex}>{index + 1}</div>
               <input
                 className={styles.input}
                 onChange={(e) => store.updateCriterion(c.localId, { name: e.target.value })}
@@ -209,7 +224,7 @@ export const CreateEventForm = observer(function CreateEventForm() {
                 value={c.name}
               />
               <input
-                className={styles.input}
+                className={`${styles.input} ${styles.maxScoreInput}`}
                 min={1}
                 onChange={(e) =>
                   store.updateCriterion(c.localId, { maxScore: Number(e.target.value) || 1 })
@@ -234,7 +249,7 @@ export const CreateEventForm = observer(function CreateEventForm() {
       </section>
 
       <div className={styles.listsGrid}>
-        <section className={styles.card}>
+        <section className={`${styles.card} ${styles.cardMuted}`}>
           <div className={styles.listHeader}>
             <h3 className={styles.listTitle}>Участники</h3>
             <button className={styles.addCircle} onClick={openNewParticipant} type="button" aria-label="Добавить участника">
@@ -271,7 +286,7 @@ export const CreateEventForm = observer(function CreateEventForm() {
           ))}
         </section>
 
-        <section className={styles.card}>
+        <section className={`${styles.card} ${styles.cardMuted}`}>
           <div className={styles.listHeader}>
             <h3 className={styles.listTitle}>Жюри</h3>
             <button className={styles.addCircle} onClick={openNewJury} type="button" aria-label="Добавить жюри">

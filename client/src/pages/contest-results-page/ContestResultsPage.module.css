@@ -1,0 +1,259 @@
+.page {
+  min-height: 100vh;
+  background-color: #0a0f15;
+  background-size: cover;
+  background-position: center;
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 24px;
+  color: #fff;
+  font-family: 'Geist', 'Segoe UI', sans-serif;
+}
+
+.overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(0deg, rgba(10, 15, 21, 0.5) 0%, rgba(10, 15, 21, 0.5) 100%), #00a99d;
+  mix-blend-mode: normal;
+}
+
+.panel {
+  width: 686px;
+  padding: 24px;
+  border-radius: 32px;
+  background: rgba(255, 255, 255, 0.03);
+  box-shadow: inset 0 0 199px 20px rgba(255, 255, 255, 0.05);
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  position: relative;
+  z-index: 1;
+}
+
+.message,
+.error {
+  position: relative;
+  z-index: 1;
+  font-size: 18px;
+}
+
+.error {
+  color: #ffd0d1;
+}
+
+.podium {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}
+
+.topCard,
+.winnerCard {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+.winnerCard {
+  max-width: 214px;
+}
+
+.placeBadge {
+  width: 36px;
+  height: 36px;
+  border-radius: 40px;
+  background: rgba(255, 255, 255, 0.1);
+  display: grid;
+  place-items: center;
+  font-size: 18px;
+  line-height: 18px;
+  font-weight: 500;
+}
+
+.crown {
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  color: #00a99d;
+  font-size: 24px;
+}
+
+.topPhoto,
+.winnerPhoto {
+  border-radius: 999px;
+  object-fit: cover;
+  background: rgba(255, 255, 255, 0.1);
+  display: grid;
+  place-items: center;
+  font-weight: 600;
+}
+
+.topPhoto {
+  width: 136px;
+  height: 136px;
+  font-size: 32px;
+}
+
+.winnerPhoto {
+  width: 214px;
+  height: 214px;
+  border: 4px solid #00a99d;
+  font-size: 44px;
+}
+
+.topMeta {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  text-align: center;
+}
+
+.topName {
+  color: #fff;
+  font-size: 26px;
+  line-height: 30px;
+  font-weight: 500;
+  font-family: 'Golos Text', 'Geist', 'Segoe UI', sans-serif;
+}
+
+.topCountry {
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 16px;
+  line-height: 16px;
+}
+
+.topScore,
+.winnerScore {
+  color: #00a99d;
+  font-weight: 500;
+  text-align: center;
+}
+
+.topScore {
+  font-size: 26px;
+  line-height: 30px;
+  font-family: 'Golos Text', 'Geist', 'Segoe UI', sans-serif;
+}
+
+.winnerScore {
+  font-size: 36px;
+  line-height: 39.6px;
+}
+
+.list {
+  max-height: 256px;
+  overflow: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.listItem {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.listPlace {
+  width: 40px;
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 16px;
+  line-height: 16px;
+}
+
+.listMain {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.listPhoto {
+  width: 48px;
+  height: 48px;
+  border-radius: 999px;
+  object-fit: cover;
+  background: rgba(255, 255, 255, 0.1);
+  display: grid;
+  place-items: center;
+  font-weight: 600;
+}
+
+.listMeta {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.listName {
+  font-size: 18px;
+  line-height: 18px;
+  font-weight: 500;
+}
+
+.listCountry {
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 16px;
+  line-height: 16px;
+}
+
+.listScore {
+  height: 36px;
+  border-radius: 57px;
+  padding: 8px 12px;
+  background: rgba(255, 255, 255, 0.1);
+  color: #00a99d;
+  font-size: 18px;
+  line-height: 18px;
+  font-weight: 500;
+  display: grid;
+  place-items: center;
+}
+
+.footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.backButton,
+.topBackButton,
+.exportButton {
+  border: none;
+  color: #fff;
+}
+
+.backButton,
+.topBackButton {
+  width: 48px;
+  height: 48px;
+  border-radius: 40px;
+  background: rgba(255, 255, 255, 0.1);
+  font-size: 24px;
+  line-height: 24px;
+}
+
+.topBackButton {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  z-index: 2;
+}
+
+.exportButton {
+  width: 225px;
+  height: 48px;
+  border-radius: 40px;
+  background: transparent;
+  border: 1px solid #bfc7d4;
+  font-size: 18px;
+  line-height: 18px;
+  font-weight: 500;
+}

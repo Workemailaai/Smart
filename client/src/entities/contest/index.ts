@@ -1,13 +1,16 @@
 export type {
   IContest,
+  IContestResultsView,
   IContestTypeOption,
   IJuryContestView,
   IOrganizerContestView,
   IScoreItem,
+  IContestResultsParticipant,
 } from './model/contest.types'
 export {
   getContests,
   getContestTypes,
+  getContestResultsView,
   createContestFull,
   getJuryContestView,
   getOrganizerContestView,

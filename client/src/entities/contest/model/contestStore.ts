@@ -16,7 +16,7 @@ class ContestStore {
   }
 
   get juryRatedContests() {
-    return this.contests.filter((contest) => contest.mySubmitted && contest.status !== 'archived')
+    return this.contests.filter((contest) => contest.mySubmitted)
   }
 
   get organizerInProgressContests() {

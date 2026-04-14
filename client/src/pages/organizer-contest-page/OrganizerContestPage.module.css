@@ -1,128 +1,479 @@
 .page {
+  display: flex;
   min-height: 100vh;
-  background: #f0f2f6;
-  color: #1d2430;
-  padding: 16px 18px 28px;
+  background: #f0f1f5;
+  color: #0a0f15;
+  font-family: 'Geist', 'Segoe UI', sans-serif;
 }
 
-.header {
+.sidebar {
+  width: 240px;
+  background: #0a0f15;
+  color: #fff;
+  padding: 0 24px 24px;
   display: flex;
+  flex-direction: column;
   justify-content: space-between;
+}
+
+.sidebarHeader {
+  height: 80px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+  display: flex;
   align-items: center;
+  margin: 0 -24px 24px;
+  padding: 0 24px;
+}
+
+.brand {
+  font-size: 28px;
+  line-height: 28px;
+  font-weight: 600;
+}
+
+.profileCard {
+  background: #222631;
+  border-radius: 28px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
   margin-bottom: 16px;
 }
 
-.title {
-  font-size: 40px;
+.avatarWrap {
+  width: 120px;
+  height: 120px;
+  border: 3px solid #00a99d;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
 }
 
-.backButton {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  height: 40px;
-  padding: 0 16px;
-  border-radius: 999px;
-  background: #fff;
-  color: #1c2432;
+.avatar {
+  width: 112px;
+  height: 112px;
+  border-radius: 50%;
+  background: linear-gradient(145deg, #10acb5, #3184ff);
+  display: grid;
+  place-items: center;
+  font-size: 32px;
+  font-weight: 700;
+}
+
+.name {
+  text-align: center;
+  font-size: 24px;
+  font-weight: 500;
+  line-height: 24px;
+}
+
+.phone {
+  opacity: 0.8;
+  color: #fff;
+  font-size: 18px;
+  line-height: 24px;
+}
+
+.roleBadge {
+  width: 120px;
+  height: 36px;
+  font-size: 16px;
+  color: rgba(255, 255, 255, 0.8);
+  background: rgba(0, 169, 157, 0.3);
+  border-radius: 48px;
+  display: grid;
+  place-items: center;
+  line-height: 16px;
+}
+
+.menu {
+  width: 192px;
+  background: #222631;
+  border-radius: 28px;
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.menuItem,
+.activeItem {
+  color: rgba(255, 255, 255, 0.7);
   text-decoration: none;
+  border-radius: 20px;
+  padding: 12px 20px;
+  font-size: 18px;
+  font-weight: 500;
+  line-height: 18px;
+}
+
+.menuItem:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.activeItem {
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+}
+
+.sidebarFooter {
+  width: 192px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.logoutButton {
+  width: 100%;
+  height: 48px;
+  border-radius: 20px;
+  background: #222631;
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 18px;
+  font-weight: 500;
+  padding: 12px 20px;
+  line-height: 18px;
+  text-align: left;
+}
+
+.versionText {
+  opacity: 0.5;
+  color: #fff;
+  font-size: 16px;
+  line-height: 16px;
+  white-space: pre-line;
 }
 
 .content {
-  display: grid;
-  gap: 14px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.topBar {
+  height: 80px;
+  display: flex;
+  align-items: center;
+  padding: 0 24px;
+  border-bottom: 1px solid rgba(10, 15, 21, 0.15);
+  gap: 24px;
+}
+
+.topTitle {
+  flex: 1 1 0;
+  font-size: 26px;
+  line-height: 30px;
+  font-family: 'Golos Text', 'Geist', 'Segoe UI', sans-serif;
+  font-weight: 500;
+}
+
+.searchWrap {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.searchLabel {
+  width: 422px;
+  height: 48px;
+  background: #fff;
+  border-radius: 24px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 16px;
+}
+
+.searchIcon {
+  width: 24px;
+  height: 24px;
+  color: #0a0f15;
+  opacity: 0.9;
+  font-size: 20px;
+  line-height: 24px;
+}
+
+.search {
+  width: 100%;
+  border: none;
+  background: transparent;
+  font-size: 18px;
+  line-height: 24px;
+  color: #0a0f15;
+  outline: none;
+}
+
+.lang {
+  width: 130px;
+  height: 48px;
+  border-radius: 24px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 4px;
+  background: #fff;
+  font-size: 18px;
+}
+
+.langPrimary {
+  color: #0a0f15;
+  font-weight: 500;
+  line-height: 18px;
+}
+
+.langDivider,
+.langSecondary {
+  opacity: 0.5;
+  color: #0a0f15;
+  font-weight: 400;
+  line-height: 24px;
+}
+
+.main {
+  width: min(1152px, 100%);
+  margin: 24px auto 0;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 0 12px 24px;
 }
 
 .contestCard {
+  width: 100%;
+  padding: 24px;
   background: #fff;
-  border-radius: 18px;
-  padding: 16px;
+  border-radius: 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.contestDate {
+  opacity: 0.5;
+  color: #0a0f15;
+  font-size: 18px;
+  line-height: 24px;
 }
 
 .contestTitle {
+  color: #0a0f15;
   font-size: 36px;
+  font-weight: 500;
+  line-height: 39.6px;
 }
 
 .contestSubtitle {
-  color: #7d8798;
-  font-size: 22px;
+  opacity: 0.5;
+  color: #0a0f15;
+  font-size: 18px;
+  line-height: 24px;
 }
 
 .progress {
   margin-top: 6px;
   font-size: 18px;
   color: #16a6ad;
+  line-height: 24px;
 }
 
 .participantSections {
-  display: grid;
-  gap: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
 }
 
 .participantSection {
-  background: #d9dde4;
-  border-radius: 18px;
-  padding: 10px 12px;
-}
-
-.participantSummary {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  cursor: pointer;
-  font-size: 28px;
-}
-
-.juryCards {
-  margin-top: 12px;
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-  gap: 10px;
-}
-
-.juryCard {
-  background: #fff;
-  border-radius: 12px;
+  background: #e0e5eb;
+  border-radius: 28px;
   padding: 12px;
 }
 
+.participantSummary {
+  list-style: none;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  cursor: pointer;
+  padding: 12px;
+}
+
+.participantSummary::-webkit-details-marker {
+  display: none;
+}
+
+.participantMain {
+  flex: 1 1 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.participantPhoto {
+  width: 48px;
+  height: 48px;
+  border-radius: 999px;
+  object-fit: cover;
+  background: #d0d7e2;
+  display: grid;
+  place-items: center;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.participantMeta {
+  flex: 1 1 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.participantName {
+  color: #0a0f15;
+  font-size: 24px;
+  font-weight: 500;
+  line-height: 24px;
+}
+
+.participantCountry {
+  opacity: 0.5;
+  color: #0a0f15;
+  font-size: 16px;
+  line-height: 16px;
+}
+
+.participantScore {
+  height: 48px;
+  padding: 8px 16px;
+  border-radius: 57px;
+  background: #fff;
+  color: #00a99d;
+  font-size: 26px;
+  font-weight: 500;
+  line-height: 30px;
+  display: grid;
+  place-items: center;
+  min-width: 120px;
+}
+
+.juryCards {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.juryCard {
+  width: 273px;
+  padding: 16px;
+  background: #fff;
+  border-radius: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.juryHeader {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.juryAvatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 999px;
+  object-fit: cover;
+  background: #d0d7e2;
+  display: grid;
+  place-items: center;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.juryMeta {
+  flex: 1 1 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
 .juryName {
-  font-size: 20px;
+  margin: 0;
+  color: #0a0f15;
+  font-size: 18px;
+  font-weight: 500;
+  line-height: 18px;
 }
 
 .juryPhone {
-  font-size: 14px;
-  color: #8f97a5;
-  margin-bottom: 8px;
+  margin: 0;
+  opacity: 0.5;
+  color: #0a0f15;
+  font-size: 16px;
+  line-height: 16px;
+}
+
+.criteriaBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
 
 .criterionRow {
   display: flex;
   justify-content: space-between;
-  font-size: 14px;
-  margin-bottom: 4px;
+  align-items: flex-start;
+  gap: 12px;
+  color: #0a0f15;
+  font-size: 18px;
+  line-height: 24px;
 }
 
 .totalRow {
-  margin-top: 8px;
-  padding-top: 8px;
-  border-top: 1px solid #e2e5ec;
   display: flex;
   justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  color: #0a0f15;
+  font-size: 18px;
+  line-height: 24px;
+}
+
+.totalRow strong {
+  color: #00a99d;
+  font-size: 18px;
+  font-weight: 500;
+  line-height: 18px;
 }
 
 .actions {
+  width: 100%;
   display: flex;
-  justify-content: flex-end;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 8px;
+}
+
+.backButton {
+  width: 48px;
+  height: 48px;
+  border-radius: 40px;
+  background: #e0e5eb;
+  color: #0a0f15;
+  font-size: 24px;
+  line-height: 24px;
 }
 
 .primaryButton {
-  border-radius: 999px;
-  height: 44px;
-  padding: 0 22px;
-  font-size: 18px;
-  background: #071324;
+  width: 225px;
+  height: 48px;
+  border-radius: 40px;
+  background: #0a0f15;
   color: #fff;
+  font-size: 18px;
+  font-weight: 500;
+  line-height: 18px;
 }
 
 .infoText,
@@ -133,4 +484,14 @@
 
 .errorText {
   color: #b73a45;
+}
+
+@media (max-width: 1300px) {
+  .searchLabel {
+    width: 320px;
+  }
+
+  .juryCards {
+    justify-content: center;
+  }
 }

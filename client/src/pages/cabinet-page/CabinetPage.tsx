@@ -218,11 +218,11 @@ export const CabinetPage = observer(({ section }: CabinetPageProps) => {
                 <ContestCard
                   contest={contest}
                   key={contest.id}
-                  variant={isOrganizer ? 'results' : 'pending'}
+                  variant={isOrganizer || contest.status === 'archived' ? 'results' : 'pending'}
                   onOpen={() =>
                     navigate(
-                      isOrganizer
-                        ? `/cabinet/events/${contest.id}/organizer`
+                      isOrganizer || contest.status === 'archived'
+                        ? `/cabinet/events/${contest.id}/results`
                         : `/cabinet/events/${contest.id}/jury`,
                     )
                   }
@@ -255,7 +255,7 @@ export const CabinetPage = observer(({ section }: CabinetPageProps) => {
                     contest={contest}
                     key={contest.id}
                     variant="results"
-                    onOpen={() => navigate(`/cabinet/events/${contest.id}/organizer`)}
+                    onOpen={() => navigate(`/cabinet/events/${contest.id}/results`)}
                   />
                 ))}
               </section>

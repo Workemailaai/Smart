@@ -3,7 +3,8 @@ import styles from './ContestCard.module.css'
 
 type ContestCardProps = {
   contest: IContest
-  actionLabel?: string
+  variant?: 'pending' | 'results'
+  withAlertStripe?: boolean
   onOpen?: () => void
 }
 
@@ -14,22 +15,25 @@ const formatDate = (date: string) =>
     year: 'numeric',
   })
 
-export function ContestCard({ contest, actionLabel, onOpen }: ContestCardProps) {
+export function ContestCard({ contest, variant = 'pending', withAlertStripe = false, onOpen }: ContestCardProps) {
   return (
     <article className={styles.card}>
-      <div>
+      <div className={styles.content}>
         <p className={styles.date}>{formatDate(contest.updatedAt || contest.createdAt)}</p>
         <p className={styles.title}>{contest.title}</p>
         <p className={styles.subtitle}>{contest.description || 'Оценка конкурса'}</p>
       </div>
-      {actionLabel ? (
-        <button className={styles.actionText} type="button" onClick={onOpen}>
-          {actionLabel}
+      {variant === 'results' ? (
+        <button className={styles.resultsButton} type="button" onClick={onOpen}>
+          Результаты
         </button>
       ) : (
-        <button className={styles.actionCircle} type="button" onClick={onOpen}>
-          →
-        </button>
+        <div className={styles.pendingAction}>
+          <button className={styles.actionCircle} type="button" onClick={onOpen}>
+            →
+          </button>
+          {withAlertStripe ? <span className={styles.alertStripe} /> : null}
+        </div>
       )}
     </article>
   )

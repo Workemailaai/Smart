@@ -69,7 +69,7 @@ export const OrganizerContestPage = observer(() => {
                       ))}
                       <div className={styles.totalRow}>
                         <span>Итого</span>
-                        <strong>{juryCard.total}</strong>
+                        <strong>{juryCard.total} / 10</strong>
                       </div>
                     </article>
                   ))}

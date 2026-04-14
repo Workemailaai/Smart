@@ -255,11 +255,13 @@ class ContestService {
       let participantCount = 0;
       const juryCards = contest.juryMembers.map((juryMember) => {
         let juryTotal = 0;
+        let juryCount = 0;
         const criteria = contest.criteria.map((criterion) => {
           const value =
             scoreMap.get(`${juryMember.id}_${participant.id}_${criterion.id}`) ?? null;
           if (typeof value === "number") {
             juryTotal += value;
+            juryCount += 1;
             participantSum += value;
             participantCount += 1;
           }
@@ -278,7 +280,7 @@ class ContestService {
           position: juryMember.position,
           photoUrl: juryMember.photoUrl,
           criteria,
-          total: Number(juryTotal.toFixed(2))
+          total: juryCount > 0 ? Number((juryTotal / juryCount).toFixed(2)) : 0
         };
       });
 

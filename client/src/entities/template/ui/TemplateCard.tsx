@@ -21,9 +21,17 @@ export function TemplateCard({ template }: TemplateCardProps) {
   const typeLabel = template.contestType ? TYPE_LABELS[template.contestType] || template.contestType : null
   return (
     <article className={styles.card}>
+      <div className={styles.coverPlaceholder} />
       <p className={styles.date}>{formatDate(template.updatedAt || template.createdAt)}</p>
-      <p className={styles.name}>{template.name}</p>
-      {typeLabel ? <p className={styles.typeLine}>{typeLabel}</p> : null}
+      <div className={styles.bottomRow}>
+        <div>
+          <p className={styles.name}>{template.name}</p>
+          {typeLabel ? <p className={styles.typeLine}>{typeLabel}</p> : null}
+        </div>
+        <span aria-hidden className={styles.arrow}>
+          →
+        </span>
+      </div>
     </article>
   )
 }

@@ -53,6 +53,7 @@ export const CabinetPage = observer(({ section }: CabinetPageProps) => {
   const ratedContests = isOrganizer
     ? contestStore.organizerCompletedContests
     : contestStore.juryRatedContests
+  const archivedContests = isOrganizer ? contestStore.organizerArchivedContests : []
   const templates = templateStore.templates
 
   const onLogout = async () => {
@@ -64,9 +65,13 @@ export const CabinetPage = observer(({ section }: CabinetPageProps) => {
     <section className={styles.page}>
       <aside className={styles.sidebar}>
         <div>
-          <h1 className={styles.brand}>СмартОценка</h1>
+          <div className={styles.sidebarHeader}>
+            <h1 className={styles.brand}>СмартОценка</h1>
+          </div>
           <div className={styles.profileCard}>
-            <div className={styles.avatar}>{getInitials(fullName)}</div>
+            <div className={styles.avatarWrap}>
+              <div className={styles.avatar}>{getInitials(fullName)}</div>
+            </div>
             <p className={styles.name}>{fullName}</p>
             <p className={styles.phone}>{user.phone}</p>
             <span className={styles.roleBadge}>{roleTitle}</span>
@@ -93,32 +98,43 @@ export const CabinetPage = observer(({ section }: CabinetPageProps) => {
           </nav>
         </div>
 
-        <button className={styles.logoutButton} onClick={() => void onLogout()} type="button">
-          Выход
-        </button>
+        <div className={styles.sidebarFooter}>
+          <button className={styles.logoutButton} onClick={() => void onLogout()} type="button">
+            Выход
+          </button>
+          <p className={styles.versionText}>v 1.0.0{'\n'}© 2026 СмартОценка</p>
+        </div>
       </aside>
 
       <div className={styles.content}>
         <header className={styles.topBar}>
           <h2 className={styles.title}>{pageTitle}</h2>
           <div className={styles.searchWrap}>
-            <input className={styles.search} placeholder="Поиск" type="text" />
+            <label className={styles.searchLabel}>
+              <span aria-hidden className={styles.searchIcon}>
+                ⌕
+              </span>
+              <input className={styles.search} placeholder="Поиск" type="text" />
+            </label>
           </div>
           <button className={styles.lang} type="button">
-            RU / ENG
+            <span className={styles.langPrimary}>RU</span>
+            <span className={styles.langDivider}>/</span>
+            <span className={styles.langSecondary}>ENG</span>
           </button>
         </header>
 
         {section === 'constructor' ? (
           <div className={styles.constructorBlock}>
-            <button
-              className={styles.createRoundButton}
-              type="button"
-              onClick={() => navigate('/cabinet/constructor/new')}
-            >
-              +
-            </button>
-            <h3 className={styles.constructorTitle}>Создать мероприятие</h3>
+            <div className={styles.constructorHero}>
+              <button className={styles.heroCreateButton} type="button" onClick={() => navigate('/cabinet/constructor/new')}>
+                <span className={styles.heroCreateInner}>
+                  <span className={styles.heroCreatePlusH} />
+                  <span className={styles.heroCreatePlusV} />
+                </span>
+              </button>
+              <h3 className={styles.constructorTitle}>Создать мероприятие</h3>
+            </div>
             <p className={styles.templatesTitle}>Шаблоны</p>
             <div className={styles.templateGrid}>
               <button className={styles.newTemplate} type="button">
@@ -144,11 +160,18 @@ export const CabinetPage = observer(({ section }: CabinetPageProps) => {
           <div className={styles.eventsLayout}>
             <section className={styles.eventsCard}>
               <div className={styles.sectionHeader}>
-                <h3 className={styles.sectionTitle}>
-                  {isOrganizer ? 'В процессе оценивания' : 'Ждут оценки'} ({pendingContests.length})
-                </h3>
+                <div className={styles.sectionTitleWrap}>
+                  <span className={`${styles.sectionDot} ${styles.sectionDotBlue}`}>
+                    <span />
+                  </span>
+                  <h3 className={styles.sectionTitle}>{isOrganizer ? 'Идет процесс оценивания' : 'Ждут оценки'}</h3>
+                  <span className={`${styles.sectionCount} ${styles.sectionCountBlue}`}>({pendingContests.length})</span>
+                </div>
                 <button className={styles.filterButton} type="button">
-                  Все
+                  <span>Все</span>
+                  <span aria-hidden className={styles.filterChevron}>
+                    ˅
+                  </span>
                 </button>
               </div>
               {contestStore.isLoading ? <p className={styles.helperText}>Загрузка мероприятий...</p> : null}
@@ -160,6 +183,7 @@ export const CabinetPage = observer(({ section }: CabinetPageProps) => {
                 <ContestCard
                   contest={contest}
                   key={contest.id}
+                  withAlertStripe={isOrganizer}
                   onOpen={() =>
                     navigate(
                       isOrganizer
@@ -173,11 +197,18 @@ export const CabinetPage = observer(({ section }: CabinetPageProps) => {
 
             <section className={styles.eventsCard}>
               <div className={styles.sectionHeader}>
-                <h3 className={styles.sectionTitle}>
-                  {isOrganizer ? 'Завершённые' : 'Оцененные'} ({ratedContests.length})
-                </h3>
+                <div className={styles.sectionTitleWrap}>
+                  <span className={`${styles.sectionDot} ${styles.sectionDotGreen}`}>
+                    <span />
+                  </span>
+                  <h3 className={styles.sectionTitle}>{isOrganizer ? 'Завершенные' : 'Оцененные'}</h3>
+                  <span className={`${styles.sectionCount} ${styles.sectionCountGreen}`}>({ratedContests.length})</span>
+                </div>
                 <button className={styles.filterButton} type="button">
-                  Все
+                  <span>Все</span>
+                  <span aria-hidden className={styles.filterChevron}>
+                    ˅
+                  </span>
                 </button>
               </div>
               {!contestStore.isLoading && !contestStore.error && ratedContests.length === 0 ? (
@@ -185,9 +216,9 @@ export const CabinetPage = observer(({ section }: CabinetPageProps) => {
               ) : null}
               {ratedContests.map((contest) => (
                 <ContestCard
-                  actionLabel={isOrganizer ? 'Открыть' : 'Открыть'}
                   contest={contest}
                   key={contest.id}
+                  variant={isOrganizer ? 'results' : 'pending'}
                   onOpen={() =>
                     navigate(
                       isOrganizer
@@ -198,6 +229,37 @@ export const CabinetPage = observer(({ section }: CabinetPageProps) => {
                 />
               ))}
             </section>
+
+            {isOrganizer ? (
+              <section className={styles.eventsCard}>
+                <div className={styles.sectionHeader}>
+                  <div className={styles.sectionTitleWrap}>
+                    <span className={`${styles.sectionDot} ${styles.sectionDotOrange}`}>
+                      <span />
+                    </span>
+                    <h3 className={styles.sectionTitle}>Архив</h3>
+                    <span className={`${styles.sectionCount} ${styles.sectionCountOrange}`}>({archivedContests.length})</span>
+                  </div>
+                  <button className={styles.filterButton} type="button">
+                    <span>Все</span>
+                    <span aria-hidden className={styles.filterChevron}>
+                      ˅
+                    </span>
+                  </button>
+                </div>
+                {!contestStore.isLoading && !contestStore.error && archivedContests.length === 0 ? (
+                  <p className={styles.helperText}>Архив пуст</p>
+                ) : null}
+                {archivedContests.map((contest) => (
+                  <ContestCard
+                    contest={contest}
+                    key={contest.id}
+                    variant="results"
+                    onOpen={() => navigate(`/cabinet/events/${contest.id}/organizer`)}
+                  />
+                ))}
+              </section>
+            ) : null}
           </div>
         )}
       </div>

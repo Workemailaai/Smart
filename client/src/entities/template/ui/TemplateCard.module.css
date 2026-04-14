@@ -1,22 +1,29 @@
 .card {
-  border-radius: 20px;
-  border: 2px solid #cfd5df;
-  min-height: 238px;
-  background: #f5f7fa;
-  padding: 16px;
+  width: 276px;
+  height: 276px;
+  border-radius: 28px;
+  background: #fff;
+  padding: 24px;
   display: flex;
   flex-direction: column;
-  justify-content: flex-end;
+  justify-content: space-between;
+  position: relative;
+  overflow: hidden;
 }
 
 .date {
-  font-size: 20px;
-  color: #9ca6b5;
-  margin-bottom: auto;
+  font-size: 16px;
+  color: rgba(10, 15, 21, 0.5);
+  line-height: 16px;
+  position: relative;
+  z-index: 1;
 }
 
 .name {
-  font-size: 32px;
+  font-size: 18px;
+  line-height: 24px;
+  color: #0a0f15;
+  max-width: 170px;
 }
 
 .typeLine {
@@ -25,8 +32,31 @@
   margin: 8px 0 0;
 }
 
-@media (max-width: 1400px) {
-  .name {
-    font-size: 20px;
-  }
+.coverPlaceholder {
+  width: 100px;
+  height: 100px;
+  border-radius: 999px;
+  background: #e0e5eb;
+  position: absolute;
+  left: 88px;
+  top: 88px;
+}
+
+.bottomRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 16px;
+  position: relative;
+  z-index: 1;
+}
+
+.arrow {
+  width: 24px;
+  height: 24px;
+  color: #0a0f15;
+  font-size: 20px;
+  line-height: 24px;
+  display: grid;
+  place-items: center;
 }

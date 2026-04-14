@@ -1,50 +1,81 @@
 .card {
-  background: #f8f9fb;
-  border-radius: 18px;
-  padding: 16px 14px;
+  background: #fff;
+  border-radius: 16px;
+  padding: 16px 16px 16px 16px;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 10px;
+  gap: 16px;
+}
+
+.content {
+  flex: 1 1 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
 .date {
-  color: #97a0af;
-  font-size: 22px;
+  opacity: 0.5;
+  color: #0a0f15;
+  font-size: 16px;
+  line-height: 16px;
 }
 
 .title {
-  font-size: 32px;
-  margin-top: 2px;
+  color: #0a0f15;
+  font-size: 18px;
+  font-weight: 500;
+  line-height: 18px;
 }
 
 .subtitle {
-  color: #8f97a5;
-  font-size: 24px;
+  opacity: 0.5;
+  color: #0a0f15;
+  font-size: 16px;
+  line-height: 16px;
 }
 
-.actionCircle,
-.actionText {
+.pendingAction {
+  height: 68px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.actionCircle {
+  width: 24px;
+  height: 24px;
   border-radius: 999px;
-  background: #eaedf3;
-  color: #353d4b;
+  background: transparent;
+  color: #0a0f15;
   font-size: 24px;
-  height: 50px;
-  min-width: 50px;
-  padding: 0 16px;
-  cursor: pointer;
+  line-height: 24px;
+}
+
+.alertStripe {
+  width: 8px;
+  align-self: stretch;
+  border-top-left-radius: 20px;
+  border-bottom-left-radius: 20px;
+  background: #ff383c;
+}
+
+.resultsButton {
+  height: 36px;
+  padding: 8px 12px;
+  border-radius: 40px;
+  background: #f0f1f5;
+  color: #0a0f15;
+  font-size: 16px;
+  line-height: 16px;
 }
 
 @media (max-width: 1400px) {
-  .title {
-    font-size: 22px;
-  }
-
-  .subtitle {
-    font-size: 16px;
-  }
-
-  .date {
+  .date,
+  .subtitle,
+  .resultsButton {
     font-size: 14px;
   }
 }

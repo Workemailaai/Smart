@@ -1,4 +1,5 @@
 export type AuthView = 'signUpOrg' | 'signInOrg' | 'signInJury'
+export type AuthPanelMode = AuthView
 
 export type SignUpPayload = {
   fullName: string
@@ -34,7 +35,7 @@ export type ViewConfig = {
   fields: string[]
   submitText: string
   secondaryAction?: string
-  bottomText: string
-  bottomLink: string
-  bottomTarget: AuthView
+  bottomText?: string
+  bottomLink?: string
+  bottomTarget?: AuthView
 }

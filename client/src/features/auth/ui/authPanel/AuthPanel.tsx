@@ -1,12 +1,15 @@
 import { observer } from 'mobx-react-lite'
 import { useNavigate } from 'react-router'
 import { userStore } from '@/entities/user'
-import type { AuthView, ViewConfig } from '../../model/authPanel.types'
-import { authViewStore } from '../../model/authViewStore'
+import type { AuthPanelMode, ViewConfig } from '../../model/authPanel.types'
 import { authFormStore } from '../../model/authFormStore'
 import styles from './AuthPanel.module.css'
 
-const views: Record<AuthView, ViewConfig> = {
+type AuthPanelProps = {
+  mode: AuthPanelMode
+}
+
+const views: Record<AuthPanelMode, ViewConfig> = {
   signUpOrg: {
     title: 'Регистрация',
     subtitle: 'Профиль организатора',
@@ -15,7 +18,7 @@ const views: Record<AuthView, ViewConfig> = {
     secondaryAction: 'Быстрый вход через VK',
     bottomText: 'Уже зарегистрированы?',
     bottomLink: 'Войти',
-    bottomTarget: 'signInOrg',
+    bottomTarget: 'signInOrg'
   },
   signInOrg: {
     title: 'Вход в систему',
@@ -25,31 +28,38 @@ const views: Record<AuthView, ViewConfig> = {
     secondaryAction: 'Быстрый вход через VK',
     bottomText: 'Нет аккаунта?',
     bottomLink: 'Зарегистрироваться',
-    bottomTarget: 'signUpOrg',
+    bottomTarget: 'signUpOrg'
   },
   signInJury: {
     title: 'Вход в систему',
     subtitle: 'Профиль жюри',
     fields: ['Телефон', 'Пароль'],
-    submitText: 'Войти как жюри',
-    bottomText: 'Вы организатор?',
-    bottomLink: 'Войти как организатор',
-    bottomTarget: 'signInOrg',
-  },
+    submitText: 'Войти как жюри'
+  }
 }
 
-export const AuthPanel = observer(() => {
+const authModePath: Record<AuthPanelMode, string> = {
+  signUpOrg: '/auth/organizer/sign-up',
+  signInOrg: '/auth/organizer/sign-in',
+  signInJury: '/auth/jury/sign-in'
+}
+
+export const AuthPanel = observer(({ mode }: AuthPanelProps) => {
   const navigate = useNavigate()
   const { signUpForm, signInOrgForm, signInJuryForm } = authFormStore
 
-  const currentView = views[authViewStore.activeView]
-  const changeView = (view: AuthView) => {
-    authViewStore.setActiveView(view)
+  const currentView = views[mode]
+  const isOrganizerMode = mode !== 'signInJury'
+  const canSwitchMode = Boolean(currentView.bottomTarget && currentView.bottomText && currentView.bottomLink)
+  const bottomTarget = currentView.bottomTarget
+
+  const changeView = (targetMode: AuthPanelMode) => {
+    navigate(authModePath[targetMode])
     authFormStore.resetStatus()
   }
 
   const handleSubmit = async () => {
-    if (authViewStore.activeView === 'signUpOrg') {
+    if (mode === 'signUpOrg') {
       if (!signUpForm.fullName || !signUpForm.phone || !signUpForm.password || !signUpForm.repeatPassword) {
         authFormStore.setError('Заполните все поля регистрации')
         return
@@ -71,7 +81,7 @@ export const AuthPanel = observer(() => {
       return
     }
 
-    if (authViewStore.activeView === 'signInOrg') {
+    if (mode === 'signInOrg') {
       if (!signInOrgForm.phone || !signInOrgForm.password) {
         authFormStore.setError('Заполните телефон и пароль')
         return
@@ -102,7 +112,7 @@ export const AuthPanel = observer(() => {
   }
 
   const renderInput = (field: string) => {
-    if (authViewStore.activeView === 'signUpOrg') {
+    if (mode === 'signUpOrg') {
       const mapper: Record<string, keyof typeof signUpForm> = {
         'Имя / Организация': 'fullName',
         '+7 999 999-99-99': 'phone',
@@ -123,7 +133,7 @@ export const AuthPanel = observer(() => {
       )
     }
 
-    if (authViewStore.activeView === 'signInOrg') {
+    if (mode === 'signInOrg') {
       const mapper: Record<string, keyof typeof signInOrgForm> = {
         Телефон: 'phone',
         Пароль: 'password',
@@ -161,77 +171,76 @@ export const AuthPanel = observer(() => {
   }
 
   return (
-    <div className={styles.panel}>
-      <div className={styles.brandCard}>
-        <h1 className={styles.logo}>Смарт Оценка</h1>
-        <p className={styles.subtitle}>{currentView.subtitle}</p>
-      </div>
-
-      <div className={styles.formCard}>
-        <div className={styles.topButtons}>
-          <button
-            className={authViewStore.activeView === 'signUpOrg' ? styles.activeNavButton : styles.navButton}
-            onClick={() => changeView('signUpOrg')}
-            type="button"
-          >
-            Зарегистрироваться
-          </button>
-          <button
-            className={authViewStore.activeView === 'signInOrg' ? styles.activeNavButton : styles.navButton}
-            onClick={() => changeView('signInOrg')}
-            type="button"
-          >
-            Войти как организатор
-          </button>
-          <button
-            className={authViewStore.activeView === 'signInJury' ? styles.activeNavButton : styles.navButton}
-            onClick={() => changeView('signInJury')}
-            type="button"
-          >
-            Войти как жюри
+    <section className={`${styles.page} ${!isOrganizerMode ? styles.pageJury : ''}`}>
+      <div className={styles.overlay} />
+      <div className={styles.panel}>
+        <div className={styles.brandCard}>
+          <div>
+            <h1 className={styles.logo}>
+              Смарт
+              <br />
+              Оценка
+            </h1>
+            <p className={styles.subtitle}>{currentView.subtitle}</p>
+          </div>
+          <button className={styles.backButton} onClick={() => navigate('/')} type="button">
+            <span className={styles.arrow} aria-hidden>
+              ←
+            </span>
           </button>
         </div>
 
-        <h2 className={styles.formTitle}>{currentView.title}</h2>
+        <div className={styles.formCard}>
+          <div className={styles.formHeader}>
+            <h2 className={styles.formTitle}>{currentView.title}</h2>
+          </div>
 
-        <form
-          className={styles.form}
-          onSubmit={(event) => {
-            event.preventDefault()
-            void handleSubmit()
-          }}
-        >
-          {currentView.fields.map((field) => renderInput(field))}
-        </form>
-
-        <div className={styles.actionArea}>
-          <button
-            className={styles.primaryButton}
-            disabled={authFormStore.isLoading}
-            onClick={() => void handleSubmit()}
-            type="button"
+          <form
+            className={styles.form}
+            onSubmit={(event) => {
+              event.preventDefault()
+              void handleSubmit()
+            }}
           >
-            {authFormStore.isLoading ? 'Подождите...' : currentView.submitText}
-          </button>
-          {currentView.secondaryAction ? (
-            <button className={styles.secondaryButton} type="button">
-              {currentView.secondaryAction}
-            </button>
-          ) : null}
-          {authFormStore.error ? <p className={styles.errorText}>{authFormStore.error}</p> : null}
-          {authFormStore.successMessage ? <p className={styles.successText}>{authFormStore.successMessage}</p> : null}
-          <p className={styles.bottomText}>
-            {currentView.bottomText}{' '}
+            {currentView.fields.map((field) => renderInput(field))}
+          </form>
+
+          <div className={styles.actionArea}>
             <button
-              className={styles.linkButton}
-              onClick={() => changeView(currentView.bottomTarget)}
+              className={styles.primaryButton}
+              disabled={authFormStore.isLoading}
+              onClick={() => void handleSubmit()}
               type="button"
             >
-              {currentView.bottomLink}
+              {authFormStore.isLoading ? 'Подождите...' : currentView.submitText}
             </button>
-          </p>
+            {currentView.secondaryAction ? (
+              <button className={styles.secondaryButton} type="button">
+                {currentView.secondaryAction}
+              </button>
+            ) : null}
+            {authFormStore.error ? <p className={styles.errorText}>{authFormStore.error}</p> : null}
+            {authFormStore.successMessage ? <p className={styles.successText}>{authFormStore.successMessage}</p> : null}
+          </div>
+
+          {canSwitchMode ? (
+            <p className={styles.bottomText}>
+              {currentView.bottomText}{' '}
+              <button
+                className={styles.linkButton}
+                onClick={() => {
+                  if (bottomTarget) {
+                    changeView(bottomTarget)
+                  }
+                }}
+                type="button"
+              >
+                {currentView.bottomLink}
+              </button>
+            </p>
+          ) : null}
         </div>
       </div>
-    </div>
+    </section>
   )
 })

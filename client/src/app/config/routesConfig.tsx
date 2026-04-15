@@ -1,6 +1,16 @@
 import { Navigate, createBrowserRouter } from 'react-router'
 import { Layout } from './Layout'
-import { CabinetPage, ContestResultsPage, CreateEventPage, JuryContestPage, MainPage, OrganizerContestPage } from '@/pages'
+import {
+  CabinetPage,
+  ContestResultsPage,
+  CreateEventPage,
+  JuryContestPage,
+  JurySignInPage,
+  MainPage,
+  OrganizerContestPage,
+  OrganizerSignInPage,
+  OrganizerSignUpPage
+} from '@/pages'
 
 export const routerConfig = createBrowserRouter([
   {
@@ -10,6 +20,18 @@ export const routerConfig = createBrowserRouter([
       {
         index: true,
         element: <MainPage />,
+      },
+      {
+        path: 'auth/organizer/sign-up',
+        element: <OrganizerSignUpPage />
+      },
+      {
+        path: 'auth/organizer/sign-in',
+        element: <OrganizerSignInPage />
+      },
+      {
+        path: 'auth/jury/sign-in',
+        element: <JurySignInPage />
       },
       {
         path: 'cabinet',

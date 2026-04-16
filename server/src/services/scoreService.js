@@ -1,5 +1,6 @@
-const { sequelize, Contest, Criterion, Jury, Participant, Score } = require("../db/models");
+const { sequelize, Contest, Criterion, Jury, Participant, Score, JuryParticipantComment } = require("../db/models");
 const ApiError = require("../utils/ApiError");
+const MAX_COMMENT_LENGTH = 500;
 
 class ScoreService {
   static async resolveJuryAssignment({ contestId, userId }) {
@@ -29,6 +30,21 @@ class ScoreService {
     }
   }
 
+  static async assertCommentPayload({ contestId, participantId, comment }) {
+    const participant = await Participant.findByPk(participantId);
+    if (!participant || participant.contestId !== Number(contestId)) {
+      throw new ApiError(400, "Участник не относится к этому мероприятию");
+    }
+
+    if (typeof comment !== "string") {
+      throw new ApiError(400, "Комментарий должен быть строкой");
+    }
+
+    if (comment.length > MAX_COMMENT_LENGTH) {
+      throw new ApiError(400, `Комментарий не должен превышать ${MAX_COMMENT_LENGTH} символов`);
+    }
+  }
+
   /** Сохранение оценки членом жюри */
   static async putScore({ userId, contestId, participantId, criterionId, value }) {
     const { jury } = await ScoreService.resolveJuryAssignment({ contestId, userId });
@@ -48,9 +64,12 @@ class ScoreService {
   }
 
   /** Пакетное сохранение оценок жюри */
-  static async putScoresBatch({ userId, contestId, scores }) {
+  static async putScoresBatch({ userId, contestId, scores, comments = [] }) {
     if (!Array.isArray(scores) || scores.length === 0) {
       throw new ApiError(422, "Передайте непустой массив оценок");
+    }
+    if (!Array.isArray(comments)) {
+      throw new ApiError(422, "Поле comments должно быть массивом");
     }
 
     const { jury } = await ScoreService.resolveJuryAssignment({ contestId, userId });
@@ -70,6 +89,22 @@ class ScoreService {
             participantId: item.participantId,
             criterionId: item.criterionId,
             value: Number(item.value)
+          },
+          { transaction: t }
+        );
+      }
+      for (const item of comments) {
+        await ScoreService.assertCommentPayload({
+          contestId,
+          participantId: item.participantId,
+          comment: item.comment
+        });
+        await JuryParticipantComment.upsert(
+          {
+            contestId,
+            juryId: jury.id,
+            participantId: item.participantId,
+            comment: item.comment
           },
           { transaction: t }
         );

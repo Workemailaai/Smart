@@ -41,11 +41,17 @@ export interface IScoreItem {
   value: number
 }
 
+export interface IParticipantCommentItem {
+  participantId: number
+  comment: string
+}
+
 export interface IJuryContestView {
   contest: IContest
   criteria: ICriterion[]
   participants: IParticipant[]
   myScores: IScoreItem[]
+  myComments: IParticipantCommentItem[]
   averageByParticipant: { participantId: number; average: number }[]
   mySubmitted: boolean
 }

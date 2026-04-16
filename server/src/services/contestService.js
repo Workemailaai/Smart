@@ -6,6 +6,7 @@ const {
   Criterion,
   Participant,
   Score,
+  JuryParticipantComment,
   User
 } = require("../db/models");
 const ApiError = require("../utils/ApiError");
@@ -162,6 +163,10 @@ class ContestService {
       where: { contestId, juryId: myAssignment.id },
       attributes: ["participantId", "criterionId", "value"]
     });
+    const myComments = await JuryParticipantComment.findAll({
+      where: { contestId, juryId: myAssignment.id },
+      attributes: ["participantId", "comment"]
+    });
     const criteriaCount = contest.criteria.length;
     const participantTotals = {};
     for (const score of myScores) {
@@ -187,6 +192,7 @@ class ContestService {
       criteria: contest.criteria,
       participants: contest.participants,
       myScores,
+      myComments,
       averageByParticipant,
       mySubmitted
     };

@@ -8,6 +8,7 @@ module.exports = (sequelize, DataTypes) => {
       Jury.belongsTo(models.Contest, { foreignKey: "contestId", as: "contest" });
       Jury.belongsTo(models.User, { foreignKey: "userId", as: "user" });
       Jury.hasMany(models.Score, { foreignKey: "juryId", as: "scores" });
+      Jury.hasMany(models.JuryParticipantComment, { foreignKey: "juryId", as: "participantComments" });
     }
   }
 

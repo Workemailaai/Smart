@@ -4,6 +4,7 @@ export type {
   IContestTypeOption,
   IJuryContestView,
   IOrganizerContestView,
+  IParticipantCommentItem,
   IScoreItem,
   IContestResultsParticipant,
 } from './model/contest.types'

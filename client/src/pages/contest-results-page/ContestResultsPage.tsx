@@ -6,6 +6,10 @@ import { userStore } from '@/entities/user'
 import styles from './ContestResultsPage.module.css'
 
 const MEDIA_BASE_URL = import.meta.env.VITE_MEDIA_BASE_URL || 'http://localhost:3000'
+const SERVER_RESULTS_FALLBACK_BASE = import.meta.env.VITE_RESULTS_FALLBACK_BASE || '/media/results/default-cover'
+const SERVER_RESULTS_FALLBACK_CANDIDATES = ['.jpg', '.jpeg', '.png', '.webp', '.svg'].map(
+  (ext) => `${MEDIA_BASE_URL}${SERVER_RESULTS_FALLBACK_BASE}${ext}`,
+)
 
 function formatScore(score: number) {
   const normalized = Number(score.toFixed(2))
@@ -30,6 +34,15 @@ function resolveParticipantPhotoUrl(photoUrl: string | null) {
   return `${MEDIA_BASE_URL}${normalized}`
 }
 
+function resolveContestCoverUrl(coverImageUrl: string | null) {
+  if (!coverImageUrl) return null
+  if (coverImageUrl.startsWith('http://') || coverImageUrl.startsWith('https://')) {
+    return coverImageUrl
+  }
+  const normalized = coverImageUrl.startsWith('/') ? coverImageUrl : `/${coverImageUrl}`
+  return `${MEDIA_BASE_URL}${normalized}`
+}
+
 export const ContestResultsPage = observer(() => {
   const navigate = useNavigate()
   const { contestId } = useParams()
@@ -38,6 +51,7 @@ export const ContestResultsPage = observer(() => {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [view, setView] = useState<IContestResultsView | null>(null)
+  const [backgroundImageUrl, setBackgroundImageUrl] = useState(SERVER_RESULTS_FALLBACK_CANDIDATES[0])
 
   useEffect(() => {
     if (!Number.isFinite(numericContestId)) return
@@ -61,6 +75,38 @@ export const ContestResultsPage = observer(() => {
     const [first, second, third] = view.topThree
     return [second, first, third].filter(Boolean) as IContestResultsParticipant[]
   }, [view])
+
+  useEffect(() => {
+    const resolveFirstAvailableImage = async (candidates: string[]) => {
+      for (const candidate of candidates) {
+        const image = new Image()
+        const loaded = await new Promise<boolean>((resolve) => {
+          image.onload = () => resolve(true)
+          image.onerror = () => resolve(false)
+          image.src = candidate
+        })
+        if (loaded) return candidate
+      }
+      return null
+    }
+
+    let isCancelled = false
+
+    const setBackground = async () => {
+      const coverUrl = resolveContestCoverUrl(view?.contest.coverImageUrl ?? null)
+      const candidates = coverUrl ? [coverUrl, ...SERVER_RESULTS_FALLBACK_CANDIDATES] : SERVER_RESULTS_FALLBACK_CANDIDATES
+      const availableBackground = await resolveFirstAvailableImage(candidates)
+      if (!isCancelled && availableBackground) {
+        setBackgroundImageUrl(availableBackground)
+      }
+    }
+
+    void setBackground()
+
+    return () => {
+      isCancelled = true
+    }
+  }, [view?.contest.coverImageUrl])
 
   if (!user) return <Navigate replace to="/" />
   if (user.role !== 'organizer' && user.role !== 'jury') return <Navigate replace to="/cabinet/events" />
@@ -91,8 +137,12 @@ export const ContestResultsPage = observer(() => {
   }
 
   return (
-    <section className={styles.page}>
-      <div className={styles.overlay} />
+    <section
+      className={styles.page}
+      style={{
+        backgroundImage: `linear-gradient(0deg, rgba(10, 15, 21, 0.55) 0%, rgba(10, 15, 21, 0.55) 100%), url("${backgroundImageUrl}")`,
+      }}
+    >
 
       {user.role === 'jury' ? (
         <button className={styles.topBackButton} type="button" onClick={() => navigate('/cabinet/events')}>

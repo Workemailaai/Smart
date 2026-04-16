@@ -7,6 +7,10 @@ module.exports = (sequelize, DataTypes) => {
     static associate(models) {
       Participant.belongsTo(models.Contest, { foreignKey: "contestId", as: "contest" });
       Participant.hasMany(models.Score, { foreignKey: "participantId", as: "scores" });
+      Participant.hasMany(models.JuryParticipantComment, {
+        foreignKey: "participantId",
+        as: "juryComments"
+      });
     }
   }
 

@@ -1,6 +1,7 @@
 import { makeAutoObservable, runInAction } from 'mobx'
 import {
   getJuryContestView,
+  type IParticipantCommentItem,
   putScoresBatch,
   submitJuryContest,
   type IJuryContestView,
@@ -10,6 +11,7 @@ import {
 class JuryContestStore {
   view: IJuryContestView | null = null
   draftScores = new Map<string, number>()
+  draftComments = new Map<number, string>()
   isLoading = false
   isSaving = false
   isSubmitting = false
@@ -22,6 +24,7 @@ class JuryContestStore {
   reset() {
     this.view = null
     this.draftScores.clear()
+    this.draftComments.clear()
     this.error = null
   }
 
@@ -33,8 +36,12 @@ class JuryContestStore {
       runInAction(() => {
         this.view = response.data
         this.draftScores.clear()
+        this.draftComments.clear()
         response.data.myScores.forEach((item) => {
           this.draftScores.set(this.getKey(item.participantId, item.criterionId), item.value)
+        })
+        response.data.myComments.forEach((item) => {
+          this.draftComments.set(item.participantId, item.comment || '')
         })
       })
     } catch (error) {
@@ -60,6 +67,14 @@ class JuryContestStore {
     return this.draftScores.get(this.getKey(participantId, criterionId)) ?? 0
   }
 
+  setComment(participantId: number, comment: string) {
+    this.draftComments.set(participantId, comment.slice(0, 500))
+  }
+
+  getComment(participantId: number) {
+    return this.draftComments.get(participantId) ?? ''
+  }
+
   getParticipantAverage(participantId: number) {
     if (!this.view) return 0
     if (this.view.criteria.length === 0) return 0
@@ -80,11 +95,19 @@ class JuryContestStore {
     )
   }
 
+  buildCommentsPayload(): IParticipantCommentItem[] {
+    if (!this.view) return []
+    return this.view.participants.map((participant) => ({
+      participantId: participant.id,
+      comment: this.getComment(participant.id),
+    }))
+  }
+
   async save(contestId: number) {
     this.isSaving = true
     this.error = null
     try {
-      await putScoresBatch(contestId, this.buildPayload())
+      await putScoresBatch(contestId, this.buildPayload(), this.buildCommentsPayload())
     } catch (error) {
       runInAction(() => {
         this.error = (error as Error)?.message || 'Не удалось сохранить оценки'
@@ -100,7 +123,7 @@ class JuryContestStore {
     this.isSubmitting = true
     this.error = null
     try {
-      await putScoresBatch(contestId, this.buildPayload())
+      await putScoresBatch(contestId, this.buildPayload(), this.buildCommentsPayload())
       await submitJuryContest(contestId)
       await this.loadContest(contestId)
     } catch (error) {

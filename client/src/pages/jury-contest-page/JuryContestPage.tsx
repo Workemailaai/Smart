@@ -6,6 +6,7 @@ import { juryContestStore } from '@/features/jury-contest/model/juryContestStore
 import styles from './JuryContestPage.module.css'
 
 const MEDIA_BASE_URL = import.meta.env.VITE_MEDIA_BASE_URL || 'http://localhost:3000'
+const COMMENT_LIMIT = 500
 
 function getInitials(name: string) {
   return name
@@ -181,6 +182,25 @@ export const JuryContestPage = observer(() => {
                             </label>
                           )
                         })}
+                      </div>
+
+                      <div className={styles.commentCard}>
+                        <label className={styles.commentLabel} htmlFor={`comment-${participant.id}`}>
+                          Комментарий для участника
+                        </label>
+                        <textarea
+                          id={`comment-${participant.id}`}
+                          className={styles.commentInput}
+                          value={juryContestStore.getComment(participant.id)}
+                          maxLength={COMMENT_LIMIT}
+                          placeholder="Оставьте обратную связь по выступлению"
+                          onChange={(event) => juryContestStore.setComment(participant.id, event.target.value)}
+                        />
+                        <div className={styles.commentCounter}>
+                          {juryContestStore.getComment(participant.id).length}
+                          <span className={styles.commentDivider}>/</span>
+                          {COMMENT_LIMIT}
+                        </div>
                       </div>
                     </details>
                   )

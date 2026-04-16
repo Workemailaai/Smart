@@ -3,6 +3,7 @@
   background-color: #0a0f15;
   background-size: cover;
   background-position: center;
+  background-repeat: no-repeat;
   position: relative;
   display: flex;
   justify-content: center;
@@ -10,13 +11,6 @@
   padding: 24px;
   color: #fff;
   font-family: 'Geist', 'Segoe UI', sans-serif;
-}
-
-.overlay {
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(0deg, rgba(10, 15, 21, 0.5) 0%, rgba(10, 15, 21, 0.5) 100%), #00a99d;
-  mix-blend-mode: normal;
 }
 
 .panel {
@@ -30,6 +24,7 @@
   gap: 24px;
   position: relative;
   z-index: 1;
+  backdrop-filter: blur(10px);
 }
 
 .message,

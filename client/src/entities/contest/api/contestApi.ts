@@ -5,6 +5,7 @@ import type {
   IContestTypeOption,
   IJuryContestView,
   IOrganizerContestView,
+  IParticipantCommentItem,
   IScoreItem,
 } from '../model/contest.types'
 
@@ -56,8 +57,9 @@ export const getOrganizerContestView = async (
 export const putScoresBatch = async (
   contestId: number,
   scores: IScoreItem[],
+  comments: IParticipantCommentItem[],
 ): Promise<ServerResponseType<IScoreItem[]>> => {
-  const response = await axiosInstance.put('/scores/batch', { contestId, scores })
+  const response = await axiosInstance.put('/scores/batch', { contestId, scores, comments })
   return response.data
 }
 

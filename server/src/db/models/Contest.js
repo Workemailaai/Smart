@@ -10,6 +10,10 @@ module.exports = (sequelize, DataTypes) => {
       Contest.hasMany(models.Jury, { foreignKey: "contestId", as: "juryMembers" });
       Contest.hasMany(models.Criterion, { foreignKey: "contestId", as: "criteria" });
       Contest.hasMany(models.Score, { foreignKey: "contestId", as: "scores" });
+      Contest.hasMany(models.JuryParticipantComment, {
+        foreignKey: "contestId",
+        as: "juryParticipantComments"
+      });
     }
   }
 

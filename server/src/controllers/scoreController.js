@@ -31,6 +31,7 @@ class ScoreController {
       const scores = await ScoreService.putScoresBatch({
         contestId: req.body.contestId,
         scores: req.body.scores,
+        comments: req.body.comments,
         userId: req.user.id
       });
       return res.status(200).json(formatResponse(200, "Scores saved", scores));

@@ -63,6 +63,7 @@ export interface IOrganizerJuryCard {
   phone: string
   position: string | null
   photoUrl: string | null
+  comment: string
   total: number
   criteria: {
     criterionId: number

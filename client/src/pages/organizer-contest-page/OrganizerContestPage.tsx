@@ -1,5 +1,5 @@
 import { observer } from 'mobx-react-lite'
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { NavLink, Navigate, useNavigate, useParams } from 'react-router'
 import { userStore } from '@/entities/user'
 import { organizerContestStore } from '@/features/organizer-contest/model/organizerContestStore'
@@ -36,11 +36,13 @@ export const OrganizerContestPage = observer(() => {
   const user = userStore.user
   const { contestId } = useParams()
   const numericContestId = Number(contestId)
+  const [expandedComments, setExpandedComments] = useState<Record<string, boolean>>({})
 
   useEffect(() => {
     if (Number.isFinite(numericContestId)) {
       void organizerContestStore.loadContest(numericContestId)
     }
+    setExpandedComments({})
     return () => organizerContestStore.reset()
   }, [numericContestId])
 
@@ -53,6 +55,14 @@ export const OrganizerContestPage = observer(() => {
   const onLogout = async () => {
     await userStore.logout()
     navigate('/')
+  }
+
+  const toggleComment = (participantId: number, juryId: number) => {
+    const key = `${participantId}_${juryId}`
+    setExpandedComments((current) => ({
+      ...current,
+      [key]: !current[key],
+    }))
   }
 
   return (
@@ -153,6 +163,9 @@ export const OrganizerContestPage = observer(() => {
                       <div className={styles.juryCards}>
                         {participant.juryCards.map((juryCard) => {
                           const juryPhoto = resolveMediaUrl(juryCard.photoUrl)
+                          const comment = juryCard.comment.trim()
+                          const commentKey = `${participant.id}_${juryCard.juryId}`
+                          const isCommentExpanded = Boolean(expandedComments[commentKey])
                           return (
                             <article className={styles.juryCard} key={juryCard.juryId}>
                               <div className={styles.juryHeader}>
@@ -182,6 +195,23 @@ export const OrganizerContestPage = observer(() => {
                                 <span>Итого</span>
                                 <strong>{juryCard.total} / 10</strong>
                               </div>
+
+                              {comment ? (
+                                <div className={styles.commentSection}>
+                                  <p
+                                    className={`${styles.commentText} ${isCommentExpanded ? styles.commentTextExpanded : ''}`}
+                                  >
+                                    {comment}
+                                  </p>
+                                  <button
+                                    className={styles.commentToggle}
+                                    type="button"
+                                    onClick={() => toggleComment(participant.id, juryCard.juryId)}
+                                  >
+                                    {isCommentExpanded ? 'Скрыть' : 'Подробнее'}
+                                  </button>
+                                </div>
+                              ) : null}
                             </article>
                           )
                         })}

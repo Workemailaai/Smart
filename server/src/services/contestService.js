@@ -251,9 +251,17 @@ class ContestService {
     }
 
     const scores = await Score.findAll({ where: { contestId } });
+    const comments = await JuryParticipantComment.findAll({
+      where: { contestId },
+      attributes: ["juryId", "participantId", "comment"]
+    });
     const scoreMap = new Map();
     for (const row of scores) {
       scoreMap.set(`${row.juryId}_${row.participantId}_${row.criterionId}`, Number(row.value));
+    }
+    const commentMap = new Map();
+    for (const row of comments) {
+      commentMap.set(`${row.juryId}_${row.participantId}`, String(row.comment || ""));
     }
 
     const participants = contest.participants.map((participant) => {
@@ -285,6 +293,7 @@ class ContestService {
           phone: juryMember.user?.phone || "",
           position: juryMember.position,
           photoUrl: juryMember.photoUrl,
+          comment: commentMap.get(`${juryMember.id}_${participant.id}`) || "",
           criteria,
           total: juryCount > 0 ? Number((juryTotal / juryCount).toFixed(2)) : 0
         };

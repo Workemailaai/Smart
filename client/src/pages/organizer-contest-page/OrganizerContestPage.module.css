@@ -364,7 +364,7 @@
 }
 
 .juryCard {
-  width: 273px;
+  width: 368px;
   padding: 16px;
   background: #fff;
   border-radius: 16px;
@@ -442,6 +442,46 @@
 
 .totalRow strong {
   color: #00a99d;
+  font-size: 18px;
+  font-weight: 500;
+  line-height: 18px;
+}
+
+.commentSection {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.commentText {
+  margin: 0;
+  color: rgba(10, 15, 21, 0.8);
+  font-size: 18px;
+  line-height: 24px;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+  overflow: hidden;
+}
+
+.commentTextExpanded {
+  -webkit-line-clamp: initial;
+  line-clamp: initial;
+  display: block;
+  overflow: visible;
+}
+
+.commentToggle {
+  width: fit-content;
+  padding: 0;
+  border: none;
+  color: #00a99d;
+  background: transparent;
+  cursor: pointer;
   font-size: 18px;
   font-weight: 500;
   line-height: 18px;

@@ -220,3 +220,125 @@
     font-size: 22px;
   }
 }
+
+/* Мобильный макет входа жюри (≤430px): одна карточка, фон как на главной */
+.juryMobileTopBar {
+  display: none;
+}
+
+.juryBackToMain {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: #ffffff;
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 20px;
+  cursor: pointer;
+}
+
+.juryBackArrow {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 40px;
+  background: rgba(255, 255, 255, 0.1);
+  font-size: 20px;
+  line-height: 1;
+}
+
+.juryBackToMainText {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+@media (max-width: 430px) {
+  .page.pageJury {
+    align-items: stretch;
+    justify-content: flex-start;
+    min-height: 100dvh;
+    padding: max(16px, env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px))
+      max(16px, env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px));
+    background:
+      linear-gradient(0deg, rgba(10, 15, 21, 0.5) 0%, rgba(10, 15, 21, 0.5) 100%),
+      #00a99d;
+  }
+
+  .page.pageJury .panel {
+    width: 100%;
+    max-width: 343px;
+    margin: 0 auto;
+    min-height: min(716px, calc(100dvh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px) - 32px));
+    padding: 0;
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+
+  .page.pageJury .brandCard {
+    display: none;
+  }
+
+  .page.pageJury .formCard {
+    flex: 1;
+    width: 100%;
+    min-height: inherit;
+    padding: 16px;
+    border-radius: 32px;
+    align-items: stretch;
+    justify-content: space-between;
+    overflow: hidden;
+    background: transparent;
+    backdrop-filter: none;
+    box-shadow: none;
+  }
+
+  .page.pageJury .juryMobileTopBar {
+    display: flex;
+    align-self: stretch;
+    margin-bottom: 8px;
+  }
+
+  .page.pageJury .formHeader {
+    justify-content: center;
+  }
+
+  .page.pageJury .formTitle {
+    text-align: center;
+    font-family: 'Golos Text', 'Geist', 'Segoe UI', sans-serif;
+    font-size: 24px;
+    font-weight: 500;
+    line-height: 24px;
+  }
+
+  .page.pageJury .form {
+    flex: 1;
+    margin-top: 24px;
+    justify-content: start;
+    gap: 24px;
+    min-height: 0;
+  }
+
+  .page.pageJury .input {
+    flex-shrink: 0;
+  }
+
+  .page.pageJury .actionArea {
+    margin-top: auto;
+    padding-top: 24px;
+    width: 100%;
+  }
+
+  .page.pageJury .primaryButton {
+    min-height: 48px;
+    border-radius: 40px;
+    font-family: 'Geist', 'Segoe UI', sans-serif;
+    font-size: 16px;
+    font-weight: 500;
+    line-height: 20px;
+  }
+}

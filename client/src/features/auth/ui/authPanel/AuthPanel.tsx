@@ -24,7 +24,7 @@ const views: Record<AuthPanelMode, ViewConfig> = {
     title: 'Вход в систему',
     subtitle: 'Профиль организатора',
     fields: ['Телефон', 'Пароль'],
-    submitText: 'Войти как организатор',
+    submitText: 'Войти',
     secondaryAction: 'Быстрый вход через VK',
     bottomText: 'Нет аккаунта?',
     bottomLink: 'Зарегистрироваться',
@@ -34,7 +34,7 @@ const views: Record<AuthPanelMode, ViewConfig> = {
     title: 'Вход в систему',
     subtitle: 'Профиль жюри',
     fields: ['Телефон', 'Пароль'],
-    submitText: 'Войти как жюри'
+    submitText: 'Войти'
   }
 }
 
@@ -191,6 +191,22 @@ export const AuthPanel = observer(({ mode }: AuthPanelProps) => {
         </div>
 
         <div className={styles.formCard}>
+          {mode === 'signInJury' ? (
+            <div className={styles.juryMobileTopBar}>
+              <button
+                className={styles.juryBackToMain}
+                onClick={() => navigate('/')}
+                type="button"
+                aria-label="К выбору роли: организатор или жюри"
+              >
+                <span className={styles.juryBackArrow} aria-hidden>
+                  ←
+                </span>
+                <span className={styles.juryBackToMainText}>К выбору роли</span>
+              </button>
+            </div>
+          ) : null}
+
           <div className={styles.formHeader}>
             <h2 className={styles.formTitle}>{currentView.title}</h2>
           </div>

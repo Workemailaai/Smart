@@ -72,6 +72,10 @@ export const routerConfig = createBrowserRouter([
             path: 'info',
             element: <CabinetPage section="info" />,
           },
+          {
+            path: 'profile',
+            element: <CabinetPage section="profile" />,
+          },
         ],
       },
     ],

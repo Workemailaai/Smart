@@ -6,7 +6,7 @@ import { TemplateCard, templateStore } from '@/entities/template'
 import { userStore } from '@/entities/user'
 import styles from './CabinetPage.module.css'
 
-type CabinetSection = 'events' | 'constructor' | 'settings' | 'info'
+type CabinetSection = 'events' | 'constructor' | 'settings' | 'info' | 'profile'
 
 type CabinetPageProps = {
   section: CabinetSection
@@ -63,9 +63,22 @@ export const CabinetPage = observer(({ section }: CabinetPageProps) => {
     return <Navigate replace to="/cabinet/events" />
   }
 
+  if (section === 'profile' && user.role === 'organizer') {
+    return <Navigate replace to="/cabinet/events" />
+  }
+
   const fullName = user.fullName || 'Пользователь'
   const roleTitle = isOrganizer ? 'Организатор' : 'Жюри'
-  const pageTitle = section === 'constructor' ? 'Конструктор' : 'Мероприятия'
+  const pageTitle =
+    section === 'constructor'
+      ? 'Конструктор'
+      : section === 'settings'
+        ? 'Настройки'
+        : section === 'info'
+          ? 'Информация'
+          : section === 'profile'
+            ? 'Профиль'
+            : 'Мероприятия'
   const pendingContests = isOrganizer
     ? contestStore.organizerInProgressContests
     : contestStore.juryPendingContests
@@ -106,7 +119,10 @@ export const CabinetPage = observer(({ section }: CabinetPageProps) => {
   }
 
   return (
-    <section className={styles.page}>
+    <section
+      className={`${styles.page} ${!isOrganizer ? styles.pageJuryCabinet : ''}`}
+      data-cabinet-section={section}
+    >
       <aside className={styles.sidebar}>
         <div>
           <div className={styles.sidebarHeader}>
@@ -126,6 +142,12 @@ export const CabinetPage = observer(({ section }: CabinetPageProps) => {
               <span aria-hidden className={`${styles.navIcon} ${styles.navIconEvents}`} />
               <span className={styles.menuLabel}>Мероприятия</span>
             </NavLink>
+            {!isOrganizer ? (
+              <NavLink className={({ isActive }) => (isActive ? styles.activeItem : styles.menuItem)} to="/cabinet/profile">
+                <span aria-hidden className={`${styles.navIcon} ${styles.navIconProfile}`} />
+                <span className={styles.menuLabel}>Профиль</span>
+              </NavLink>
+            ) : null}
             {isOrganizer ? (
               <NavLink
                 className={({ isActive }) => (isActive ? styles.activeItem : styles.menuItem)}
@@ -155,6 +177,49 @@ export const CabinetPage = observer(({ section }: CabinetPageProps) => {
         </div>
       </aside>
 
+      {!isOrganizer ? (
+        <nav className={styles.juryBottomNav} aria-label="Основные разделы кабинета жюри">
+          <div className={styles.juryBottomNavInner}>
+            <NavLink
+              className={({ isActive }) =>
+                `${styles.juryBottomNavLink} ${isActive ? styles.juryBottomNavLinkActive : ''}`
+              }
+              to="/cabinet/events"
+              aria-label="Мероприятия"
+            >
+              <span className={`${styles.juryBottomNavIcon} ${styles.juryBottomNavIconEvents}`} aria-hidden />
+            </NavLink>
+            <NavLink
+              className={({ isActive }) =>
+                `${styles.juryBottomNavLink} ${isActive ? styles.juryBottomNavLinkActive : ''}`
+              }
+              to="/cabinet/settings"
+              aria-label="Настройки"
+            >
+              <span className={`${styles.juryBottomNavIcon} ${styles.juryBottomNavIconSettings}`} aria-hidden />
+            </NavLink>
+            <NavLink
+              className={({ isActive }) =>
+                `${styles.juryBottomNavLink} ${isActive ? styles.juryBottomNavLinkActive : ''}`
+              }
+              to="/cabinet/info"
+              aria-label="Информация"
+            >
+              <span className={`${styles.juryBottomNavIcon} ${styles.juryBottomNavIconInfo}`} aria-hidden />
+            </NavLink>
+            <NavLink
+              className={({ isActive }) =>
+                `${styles.juryBottomNavLink} ${isActive ? styles.juryBottomNavLinkActive : ''}`
+              }
+              to="/cabinet/profile"
+              aria-label="Профиль"
+            >
+              <span className={`${styles.juryBottomNavIcon} ${styles.juryBottomNavIconProfile}`} aria-hidden />
+            </NavLink>
+          </div>
+        </nav>
+      ) : null}
+
       <div className={styles.content}>
         <header className={styles.topBar}>
           <h2 className={styles.title}>{pageTitle}</h2>
@@ -173,7 +238,7 @@ export const CabinetPage = observer(({ section }: CabinetPageProps) => {
           </button>
         </header>
 
-        {section === 'constructor' ? (
+        {section === 'constructor' && isOrganizer ? (
           <div className={styles.constructorBlock}>
             <div className={styles.constructorHero}>
               <button className={styles.heroCreateButton} type="button" onClick={() => navigate('/cabinet/constructor/new')}>
@@ -205,7 +270,46 @@ export const CabinetPage = observer(({ section }: CabinetPageProps) => {
                 : null}
             </div>
           </div>
-        ) : (
+        ) : section === 'profile' && !isOrganizer ? (
+          <div className={styles.juryProfilePanel}>
+            <div className={styles.juryProfileRow}>
+              <button
+                className={styles.juryProfileSideBtn}
+                type="button"
+                onClick={() => navigate('/cabinet/events')}
+                aria-label="К списку мероприятий"
+              >
+                <span className={styles.juryProfileSideBtnIcon} aria-hidden>
+                  <img src="/mobile/header-back.svg" alt="" width={18} height={18} />
+                </span>
+              </button>
+              <div className={styles.juryProfileCenter}>
+                <div className={styles.juryProfileAvatarRing}>
+                  <div className={styles.juryProfileAvatar}>{getInitials(fullName)}</div>
+                </div>
+                <div className={styles.juryProfileTextBlock}>
+                  <p className={styles.juryProfileName}>{fullName}</p>
+                  <p className={styles.juryProfilePhone}>{user.phone}</p>
+                </div>
+                <span className={styles.juryProfileBadge}>{roleTitle}</span>
+              </div>
+              <button
+                className={styles.juryProfileSideBtn}
+                type="button"
+                onClick={() => navigate('/cabinet/settings')}
+                aria-label="Открыть настройки"
+              >
+                <span className={styles.juryProfileSideBtnIcon} aria-hidden>
+                  <img src="/nav/setting.svg" alt="" width={18} height={18} />
+                </span>
+              </button>
+            </div>
+            <button className={styles.juryProfileLogout} onClick={() => void onLogout()} type="button">
+              <span aria-hidden className={styles.juryProfileLogoutIcon} />
+              <span>Выйти из аккаунта</span>
+            </button>
+          </div>
+        ) : section === 'events' ? (
           <div className={styles.eventsLayout}>
             <section className={styles.eventsCard}>
               <div className={styles.sectionHeader}>
@@ -409,6 +513,14 @@ export const CabinetPage = observer(({ section }: CabinetPageProps) => {
                 ))}
               </div>
             </section>
+          </div>
+        ) : (
+          <div className={styles.cabinetPlaceholder}>
+            <p>
+              {section === 'settings'
+                ? 'Раздел настроек в разработке.'
+                : 'Раздел информации в разработке.'}
+            </p>
           </div>
         )}
       </div>

@@ -22,12 +22,12 @@ export const MainPage = observer(() => {
 
         <div className={styles.cards}>
           <button className={styles.card} onClick={() => navigate('/auth/organizer/sign-up')} type="button">
-            <div className={styles.avatar}>О</div>
+            <img className={styles.avatar} src="/auth/organizer-icon.png" alt="Иконка организатора" />
             <p className={styles.cardTitle}>Я организатор</p>
           </button>
 
           <button className={styles.card} onClick={() => navigate('/auth/jury/sign-in')} type="button">
-            <div className={styles.avatar}>Ж</div>
+            <img className={styles.avatar} src="/auth/jury-icon.png" alt="Иконка жюри" />
             <p className={styles.cardTitle}>Я жюри</p>
           </button>
         </div>

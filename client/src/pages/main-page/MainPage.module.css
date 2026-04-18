@@ -16,8 +16,8 @@
   position: absolute;
   inset: 0;
   background:
-    radial-gradient(circle at 30% 20%, rgba(255, 255, 255, 0.11), transparent 40%),
-    radial-gradient(circle at 70% 80%, rgba(255, 255, 255, 0.08), transparent 40%),
+    linear-gradient(0deg, rgba(2, 7, 12, 0.5) 0%, rgba(2, 7, 12, 0.5) 100%),
+    url('/auth/deafult-cover-auth.png') center / cover no-repeat,
     rgba(2, 7, 12, 0.35);
   backdrop-filter: blur(2px);
 }
@@ -77,13 +77,8 @@
   width: min(223px, 100%);
   aspect-ratio: 1 / 1;
   border-radius: 999px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #ffffff;
-  font-size: clamp(42px, 7vw, 72px);
-  font-weight: 600;
-  background: radial-gradient(circle at 30% 20%, #36c8bd, #0e5c56);
+  object-fit: cover;
+  display: block;
 }
 
 .cardTitle {

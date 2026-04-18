@@ -1,18 +1,39 @@
 .card {
   background: #fff;
   border-radius: 16px;
-  padding: 16px 16px 16px 16px;
-  display: flex;
-  justify-content: space-between;
+  padding: 12px 16px;
+  display: grid;
+  grid-template-columns: 96px minmax(220px, 1fr) 184px 276px 160px;
   align-items: center;
   gap: 16px;
 }
 
-.content {
-  flex: 1 1 0;
+.coverCell {
+  width: 96px;
   display: flex;
-  flex-direction: column;
-  gap: 8px;
+  align-items: center;
+}
+
+.coverImage,
+.coverPlaceholder {
+  width: 72px;
+  height: 48px;
+  border-radius: 10px;
+}
+
+.coverImage {
+  object-fit: cover;
+  display: block;
+  background: #d3d9e3;
+}
+
+.coverPlaceholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #8390a4;
+  background: #eef1f6;
+  font-size: 18px;
 }
 
 .date {
@@ -29,15 +50,20 @@
   line-height: 18px;
 }
 
-.subtitle {
+.type {
   opacity: 0.5;
   color: #0a0f15;
   font-size: 16px;
   line-height: 16px;
 }
 
+.actionCell {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+}
+
 .pendingAction {
-  height: 68px;
   display: flex;
   align-items: center;
   justify-content: flex-end;
@@ -73,8 +99,19 @@
 }
 
 @media (max-width: 1400px) {
+  .card {
+    grid-template-columns: 84px minmax(200px, 1fr) 150px 220px 130px;
+    gap: 10px;
+  }
+
+  .coverImage,
+  .coverPlaceholder {
+    width: 64px;
+    height: 42px;
+  }
+
   .date,
-  .subtitle,
+  .type,
   .resultsButton {
     font-size: 14px;
   }

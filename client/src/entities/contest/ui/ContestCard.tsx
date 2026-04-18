@@ -1,4 +1,5 @@
 import type { IContest } from '../model/contest.types'
+import { resolveMediaUrl } from '@/shared'
 import styles from './ContestCard.module.css'
 
 type ContestCardProps = {
@@ -16,25 +17,37 @@ const formatDate = (date: string) =>
   })
 
 export function ContestCard({ contest, variant = 'pending', withAlertStripe = false, onOpen }: ContestCardProps) {
+  const contestTypeTitle = contest.contestType || 'Не указан'
+  const coverUrl = resolveMediaUrl(contest.coverImageUrl)
+
   return (
     <article className={styles.card}>
-      <div className={styles.content}>
-        <p className={styles.date}>{formatDate(contest.updatedAt || contest.createdAt)}</p>
-        <p className={styles.title}>{contest.title}</p>
-        <p className={styles.subtitle}>{contest.description || 'Оценка конкурса'}</p>
+      <div className={styles.coverCell}>
+        {coverUrl ? (
+          <img className={styles.coverImage} src={coverUrl} alt={`Обложка конкурса ${contest.title}`} />
+        ) : (
+          <span className={styles.coverPlaceholder}>—</span>
+        )}
       </div>
-      {variant === 'results' ? (
-        <button className={styles.resultsButton} type="button" onClick={onOpen}>
-          Результаты
-        </button>
-      ) : (
-        <div className={styles.pendingAction}>
-          <button className={styles.actionCircle} type="button" onClick={onOpen}>
-            →
+
+      <p className={styles.title}>{contest.title}</p>
+      <p className={styles.date}>{formatDate(contest.updatedAt || contest.createdAt)}</p>
+      <p className={styles.type}>{contestTypeTitle}</p>
+
+      <div className={styles.actionCell}>
+        {variant === 'results' ? (
+          <button className={styles.resultsButton} type="button" onClick={onOpen}>
+            Результаты
           </button>
-          {withAlertStripe ? <span className={styles.alertStripe} /> : null}
-        </div>
-      )}
+        ) : (
+          <div className={styles.pendingAction}>
+            <button className={styles.actionCircle} type="button" onClick={onOpen}>
+              →
+            </button>
+            {withAlertStripe ? <span className={styles.alertStripe} /> : null}
+          </div>
+        )}
+      </div>
     </article>
   )
 }

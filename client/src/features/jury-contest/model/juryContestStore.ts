@@ -7,6 +7,11 @@ import {
   type IJuryContestView,
   type IScoreItem,
 } from '@/entities/contest'
+import {
+  sortCriteriaRows,
+  sortParticipantsRows,
+  weightedTotalsForJury,
+} from '@/shared/lib/weightedScores.js'
 
 class JuryContestStore {
   view: IJuryContestView | null = null
@@ -80,12 +85,30 @@ class JuryContestStore {
 
   getParticipantAverage(participantId: number) {
     if (!this.view) return 0
-    if (this.view.criteria.length === 0) return 0
-    const sum = this.view.criteria.reduce((acc, criterion) => {
-      const lo = criterion.minScore ?? 0
-      return acc + this.getScore(participantId, criterion.id, lo)
-    }, 0)
-    return Number((sum / this.view.criteria.length).toFixed(1))
+    const n = this.view.criteria.length
+    if (n === 0) return 0
+
+    if (!this.view.contest.useCriteriaWeights) {
+      const sum = this.view.criteria.reduce((acc, criterion) => {
+        const lo = criterion.minScore ?? 0
+        return acc + this.getScore(participantId, criterion.id, lo)
+      }, 0)
+      return Number((sum / n).toFixed(1))
+    }
+
+    const criteriaSorted = sortCriteriaRows(this.view.criteria)
+    const participantsSorted = sortParticipantsRows(this.view.participants)
+    const totals = weightedTotalsForJury({
+      criteriaSorted,
+      participantsSorted,
+      getRawScore: (criterionId, pId) => {
+        const lo = this.view!.criteria.find((c) => c.id === criterionId)?.minScore ?? 0
+        return this.getScore(pId, criterionId, lo)
+      },
+    })
+    const idx = participantsSorted.findIndex((p) => p.id === participantId)
+    if (idx < 0) return 0
+    return Number((totals[idx] ?? 0).toFixed(1))
   }
 
   buildPayload(): IScoreItem[] {

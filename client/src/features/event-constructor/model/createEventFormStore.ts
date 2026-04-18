@@ -43,6 +43,8 @@ class CreateEventFormStore {
   isSubmitting = false
   templateMessage: string | null = null
   isSavingTemplate = false
+  /** Учитывать значимость показателей (взвешенный расчёт на сервере) */
+  useCriteriaWeights = true
 
   constructor() {
     makeAutoObservable(this)
@@ -66,6 +68,11 @@ class CreateEventFormStore {
     this.coverPreviewUrl = null
     this.submitError = null
     this.templateMessage = null
+    this.useCriteriaWeights = true
+  }
+
+  setUseCriteriaWeights(v: boolean) {
+    this.useCriteriaWeights = v
   }
 
   setTitle(v: string) {
@@ -207,6 +214,7 @@ class CreateEventFormStore {
       title: this.title.trim(),
       description: this.description.trim() || null,
       contestType: this.contestType,
+      useCriteriaWeights: this.useCriteriaWeights,
       criteria: filledCriteria.map((c) => ({
         name: c.name.trim(),
         minScore: Math.round(Number(c.minScore)),

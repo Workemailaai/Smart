@@ -34,7 +34,6 @@ export const CreateEventForm = observer(function CreateEventForm() {
   const [juryModalOpen, setJuryModalOpen] = useState(false)
   const [juryDraft, setJuryDraft] = useState<DraftJury | null>(null)
   const [juryModalKey, setJuryModalKey] = useState(0)
-  const [isCriteriaWeightEnabled, setIsCriteriaWeightEnabled] = useState(true)
   const [isJuryPreferenceEnabled, setIsJuryPreferenceEnabled] = useState(true)
   /** Строковое состояние полей границ — чтобы можно было стереть ввод и набрать число заново */
   const [boundaryMinStr, setBoundaryMinStr] = useState(() =>
@@ -235,13 +234,13 @@ export const CreateEventForm = observer(function CreateEventForm() {
               <span className={styles.toggleLabel}>Значимость показателей</span>
               <button
                 aria-label="Переключить значимость показателей"
-                aria-pressed={isCriteriaWeightEnabled}
+                aria-pressed={store.useCriteriaWeights}
                 className={styles.switchButton}
-                data-property-1={isCriteriaWeightEnabled ? 'Active' : 'Inactive'}
-                onClick={() => setIsCriteriaWeightEnabled((v) => !v)}
+                data-property-1={store.useCriteriaWeights ? 'Active' : 'Inactive'}
+                onClick={() => store.setUseCriteriaWeights(!store.useCriteriaWeights)}
                 type="button"
               >
-                <span className={`${styles.switchTrack} ${isCriteriaWeightEnabled ? styles.switchTrackOn : styles.switchTrackOff}`}>
+                <span className={`${styles.switchTrack} ${store.useCriteriaWeights ? styles.switchTrackOn : styles.switchTrackOff}`}>
                   <span className={styles.switchThumb} />
                 </span>
               </button>

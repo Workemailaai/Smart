@@ -7,6 +7,8 @@ export interface IContest {
   coverImageUrl: string | null
   status: ContestStatus
   completedAt: string | null
+  /** Взвешенные показатели (новые мероприятия); старые — false */
+  useCriteriaWeights?: boolean
   mySubmitted?: boolean
   submittedJuryCount?: number
   totalJuryCount?: number
@@ -27,6 +29,8 @@ export interface ICriterion {
   /** Нижняя допустимая оценка по критерию (до миграции может отсутствовать — тогда 0) */
   minScore?: number
   maxScore: number
+  /** Порядок значимости (1 — важнее), задаётся при создании мероприятия */
+  sortOrder?: number
 }
 
 export interface IParticipant {

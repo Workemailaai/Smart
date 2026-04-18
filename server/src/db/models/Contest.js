@@ -53,6 +53,11 @@ module.exports = (sequelize, DataTypes) => {
       completedAt: {
         type: DataTypes.DATE,
         allowNull: true
+      },
+      useCriteriaWeights: {
+        type: DataTypes.BOOLEAN,
+        allowNull: false,
+        defaultValue: false
       }
     },
     {

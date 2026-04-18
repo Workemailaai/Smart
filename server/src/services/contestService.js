@@ -12,6 +12,11 @@ const {
 const ApiError = require("../utils/ApiError");
 const { CONTEST_TYPES } = require("../constants/contestTypes");
 const JuryService = require("./juryService");
+const {
+  weightedTotalsForJury,
+  sortCriteriaRows,
+  sortParticipantsRows
+} = require("./weightedScores");
 
 function unlinkUploadedFiles(filesByField) {
   const files = Object.values(filesByField || {}).filter(Boolean);
@@ -54,8 +59,21 @@ class ContestService {
   static async getContestWithDependencies(contestId) {
     const contest = await Contest.findByPk(contestId, {
       include: [
-        { model: Criterion, as: "criteria" },
-        { model: Participant, as: "participants" },
+        {
+          model: Criterion,
+          as: "criteria",
+          separate: true,
+          order: [
+            ["sortOrder", "ASC"],
+            ["id", "ASC"]
+          ]
+        },
+        {
+          model: Participant,
+          as: "participants",
+          separate: true,
+          order: [["id", "ASC"]]
+        },
         {
           model: Jury,
           as: "juryMembers",
@@ -168,18 +186,40 @@ class ContestService {
       attributes: ["participantId", "comment"]
     });
     const criteriaCount = contest.criteria.length;
-    const participantTotals = {};
-    for (const score of myScores) {
-      const key = String(score.participantId);
-      participantTotals[key] = Number(participantTotals[key] || 0) + Number(score.value || 0);
-    }
-    const averageByParticipant = contest.participants.map((participant) => {
-      const sum = Number(participantTotals[String(participant.id)] || 0);
-      return {
+    const useWeights = Boolean(contest.useCriteriaWeights);
+
+    let averageByParticipant;
+    if (useWeights && criteriaCount > 0) {
+      const criteriaSorted = sortCriteriaRows(contest.criteria);
+      const participantsSorted = sortParticipantsRows(contest.participants);
+      const myScoreMap = new Map();
+      for (const s of myScores) {
+        myScoreMap.set(`${s.participantId}_${s.criterionId}`, Number(s.value));
+      }
+      const totals = weightedTotalsForJury({
+        criteriaSorted,
+        participantsSorted,
+        getRawScore: (criterionId, participantId) =>
+          myScoreMap.get(`${participantId}_${criterionId}`)
+      });
+      averageByParticipant = participantsSorted.map((participant, idx) => ({
         participantId: participant.id,
-        average: criteriaCount > 0 ? Number((sum / criteriaCount).toFixed(2)) : 0
-      };
-    });
+        average: totals[idx] ?? 0
+      }));
+    } else {
+      const participantTotals = {};
+      for (const score of myScores) {
+        const key = String(score.participantId);
+        participantTotals[key] = Number(participantTotals[key] || 0) + Number(score.value || 0);
+      }
+      averageByParticipant = contest.participants.map((participant) => {
+        const sum = Number(participantTotals[String(participant.id)] || 0);
+        return {
+          participantId: participant.id,
+          average: criteriaCount > 0 ? Number((sum / criteriaCount).toFixed(2)) : 0
+        };
+      });
+    }
 
     const expectedScoreCount = ContestService.getExpectedScoreCount(
       contest.criteria.length,
@@ -264,53 +304,111 @@ class ContestService {
       commentMap.set(`${row.juryId}_${row.participantId}`, String(row.comment || ""));
     }
 
-    const participants = contest.participants.map((participant) => {
-      let participantSum = 0;
-      let participantCount = 0;
-      const juryCards = contest.juryMembers.map((juryMember) => {
-        let juryTotal = 0;
-        let juryCount = 0;
-        const criteria = contest.criteria.map((criterion) => {
-          const value =
-            scoreMap.get(`${juryMember.id}_${participant.id}_${criterion.id}`) ?? null;
-          if (typeof value === "number") {
-            juryTotal += value;
-            juryCount += 1;
-            participantSum += value;
-            participantCount += 1;
-          }
+    const criteriaSorted = sortCriteriaRows(contest.criteria);
+    const participantsSorted = sortParticipantsRows(contest.participants);
+    const useWeights = Boolean(contest.useCriteriaWeights);
+
+    let participants;
+    if (useWeights && contest.criteria.length > 0) {
+      const perJuryTotals = {};
+      for (const jm of contest.juryMembers) {
+        perJuryTotals[jm.id] = weightedTotalsForJury({
+          criteriaSorted,
+          participantsSorted,
+          getRawScore: (cId, pId) => scoreMap.get(`${jm.id}_${pId}_${cId}`)
+        });
+      }
+      participants = participantsSorted.map((participant, idx) => {
+        const juryCards = contest.juryMembers.map((juryMember) => {
+          const criteria = criteriaSorted.map((criterion) => {
+            const value =
+              scoreMap.get(`${juryMember.id}_${participant.id}_${criterion.id}`) ?? null;
+            return {
+              criterionId: criterion.id,
+              name: criterion.name,
+              minScore: criterion.minScore ?? 0,
+              maxScore: criterion.maxScore,
+              value
+            };
+          });
+          const wt = perJuryTotals[juryMember.id][idx] ?? 0;
           return {
-            criterionId: criterion.id,
-            name: criterion.name,
-            minScore: criterion.minScore ?? 0,
-            maxScore: criterion.maxScore,
-            value
+            juryId: juryMember.id,
+            userId: juryMember.userId,
+            fullName: juryMember.user?.fullName || "Жюри",
+            phone: juryMember.user?.phone || "",
+            position: juryMember.position,
+            photoUrl: juryMember.photoUrl,
+            comment: commentMap.get(`${juryMember.id}_${participant.id}`) || "",
+            criteria,
+            total: wt
           };
         });
+        const vals = contest.juryMembers.map((jm) => perJuryTotals[jm.id][idx] ?? 0);
+        const overallAverage = vals.length
+          ? Number((vals.reduce((a, b) => a + b, 0) / vals.length).toFixed(2))
+          : 0;
+        const overallTotal = Number(vals.reduce((a, b) => a + b, 0).toFixed(2));
         return {
-          juryId: juryMember.id,
-          userId: juryMember.userId,
-          fullName: juryMember.user?.fullName || "Жюри",
-          phone: juryMember.user?.phone || "",
-          position: juryMember.position,
-          photoUrl: juryMember.photoUrl,
-          comment: commentMap.get(`${juryMember.id}_${participant.id}`) || "",
-          criteria,
-          total: juryCount > 0 ? Number((juryTotal / juryCount).toFixed(2)) : 0
+          id: participant.id,
+          fullName: participant.fullName,
+          extraInfo: participant.extraInfo,
+          country: participant.country,
+          photoUrl: participant.photoUrl,
+          juryCards,
+          overallTotal,
+          overallAverage
         };
       });
+    } else {
+      participants = contest.participants.map((participant) => {
+        let participantSum = 0;
+        let participantCount = 0;
+        const juryCards = contest.juryMembers.map((juryMember) => {
+          let juryTotal = 0;
+          let juryCount = 0;
+          const criteriaRows = contest.criteria.map((criterion) => {
+            const value =
+              scoreMap.get(`${juryMember.id}_${participant.id}_${criterion.id}`) ?? null;
+            if (typeof value === "number") {
+              juryTotal += value;
+              juryCount += 1;
+              participantSum += value;
+              participantCount += 1;
+            }
+            return {
+              criterionId: criterion.id,
+              name: criterion.name,
+              minScore: criterion.minScore ?? 0,
+              maxScore: criterion.maxScore,
+              value
+            };
+          });
+          return {
+            juryId: juryMember.id,
+            userId: juryMember.userId,
+            fullName: juryMember.user?.fullName || "Жюри",
+            phone: juryMember.user?.phone || "",
+            position: juryMember.position,
+            photoUrl: juryMember.photoUrl,
+            comment: commentMap.get(`${juryMember.id}_${participant.id}`) || "",
+            criteria: criteriaRows,
+            total: juryCount > 0 ? Number((juryTotal / juryCount).toFixed(2)) : 0
+          };
+        });
 
-      return {
-        id: participant.id,
-        fullName: participant.fullName,
-        extraInfo: participant.extraInfo,
-        country: participant.country,
-        photoUrl: participant.photoUrl,
-        juryCards,
-        overallTotal: participantCount > 0 ? Number(participantSum.toFixed(2)) : 0,
-        overallAverage: participantCount > 0 ? Number((participantSum / participantCount).toFixed(2)) : 0
-      };
-    });
+        return {
+          id: participant.id,
+          fullName: participant.fullName,
+          extraInfo: participant.extraInfo,
+          country: participant.country,
+          photoUrl: participant.photoUrl,
+          juryCards,
+          overallTotal: participantCount > 0 ? Number(participantSum.toFixed(2)) : 0,
+          overallAverage: participantCount > 0 ? Number((participantSum / participantCount).toFixed(2)) : 0
+        };
+      });
+    }
 
     const expectedScoreCount = ContestService.getExpectedScoreCount(
       contest.criteria.length,
@@ -361,35 +459,75 @@ class ContestService {
     }
 
     const scores = await Score.findAll({ where: { contestId } });
-    const valuesByParticipantId = new Map();
-    for (const score of scores) {
-      const participantId = Number(score.participantId);
-      const value = Number(score.value);
-      if (!Number.isFinite(value)) continue;
-      const list = valuesByParticipantId.get(participantId) || [];
-      list.push(value);
-      valuesByParticipantId.set(participantId, list);
-    }
+    const criteriaSorted = sortCriteriaRows(contest.criteria);
+    const participantsSorted = sortParticipantsRows(contest.participants);
+    const useWeights = Boolean(contest.useCriteriaWeights);
 
-    const ranked = contest.participants
-      .map((participant) => {
-        const values = valuesByParticipantId.get(participant.id) || [];
-        const sum = values.reduce((acc, current) => acc + current, 0);
-        const average = values.length > 0 ? Number((sum / values.length).toFixed(2)) : 0;
-        return {
-          participantId: participant.id,
-          fullName: participant.fullName,
-          extraInfo: participant.extraInfo,
-          country: participant.country,
-          photoUrl: participant.photoUrl,
-          score: average,
-          place: 0
-        };
-      })
-      .sort((a, b) => {
-        if (b.score !== a.score) return b.score - a.score;
-        return a.participantId - b.participantId;
-      });
+    let ranked;
+    if (useWeights && contest.criteria.length > 0) {
+      const scoreMap = new Map();
+      for (const row of scores) {
+        scoreMap.set(`${row.juryId}_${row.participantId}_${row.criterionId}`, Number(row.value));
+      }
+      const perJuryTotals = {};
+      for (const jm of contest.juryMembers) {
+        perJuryTotals[jm.id] = weightedTotalsForJury({
+          criteriaSorted,
+          participantsSorted,
+          getRawScore: (cId, pId) => scoreMap.get(`${jm.id}_${pId}_${cId}`)
+        });
+      }
+      ranked = participantsSorted
+        .map((participant, idx) => {
+          const vals = contest.juryMembers.map((jm) => perJuryTotals[jm.id][idx] ?? 0);
+          const average = vals.length
+            ? Number((vals.reduce((a, b) => a + b, 0) / vals.length).toFixed(2))
+            : 0;
+          return {
+            participantId: participant.id,
+            fullName: participant.fullName,
+            extraInfo: participant.extraInfo,
+            country: participant.country,
+            photoUrl: participant.photoUrl,
+            score: average,
+            place: 0
+          };
+        })
+        .sort((a, b) => {
+          if (b.score !== a.score) return b.score - a.score;
+          return a.participantId - b.participantId;
+        });
+    } else {
+      const valuesByParticipantId = new Map();
+      for (const score of scores) {
+        const participantId = Number(score.participantId);
+        const value = Number(score.value);
+        if (!Number.isFinite(value)) continue;
+        const list = valuesByParticipantId.get(participantId) || [];
+        list.push(value);
+        valuesByParticipantId.set(participantId, list);
+      }
+
+      ranked = contest.participants
+        .map((participant) => {
+          const values = valuesByParticipantId.get(participant.id) || [];
+          const sum = values.reduce((acc, current) => acc + current, 0);
+          const average = values.length > 0 ? Number((sum / values.length).toFixed(2)) : 0;
+          return {
+            participantId: participant.id,
+            fullName: participant.fullName,
+            extraInfo: participant.extraInfo,
+            country: participant.country,
+            photoUrl: participant.photoUrl,
+            score: average,
+            place: 0
+          };
+        })
+        .sort((a, b) => {
+          if (b.score !== a.score) return b.score - a.score;
+          return a.participantId - b.participantId;
+        });
+    }
 
     let previousScore = null;
     let previousPlace = 0;
@@ -440,7 +578,7 @@ class ContestService {
     if (!payload || typeof payload !== "object") {
       throw new ApiError(400, "Некорректный JSON в поле payload");
     }
-    const { title, description, contestType, criteria, participants, jury } = payload;
+    const { title, description, contestType, criteria, participants, jury, useCriteriaWeights } = payload;
     const titleTrim = title != null ? String(title).trim() : "";
     if (!titleTrim) {
       throw new ApiError(422, "Укажите название мероприятия");
@@ -500,6 +638,7 @@ class ContestService {
       }
       phonesInPayload.add(norm);
     }
+    const useW = Boolean(useCriteriaWeights);
     return {
       title: titleTrim,
       description:
@@ -509,7 +648,8 @@ class ContestService {
       contestType: String(contestType),
       criteria,
       participants,
-      jury
+      jury,
+      useCriteriaWeights: useW
     };
   }
 
@@ -520,7 +660,7 @@ class ContestService {
    */
   static async createContestFull({ organizerId, payload, filesByField }) {
     const normalized = ContestService.assertCreateFullPayload(payload);
-    const { title, description, contestType, criteria, participants, jury } = normalized;
+    const { title, description, contestType, criteria, participants, jury, useCriteriaWeights } = normalized;
 
     const coverFile = filesByField.cover;
     const coverImageUrl = coverFile ? `/media/contests/${coverFile.filename}` : null;
@@ -533,17 +673,19 @@ class ContestService {
           description,
           organizerId,
           contestType,
-          coverImageUrl
+          coverImageUrl,
+          useCriteriaWeights
         },
         { transaction: t }
       );
 
-      for (const c of criteria) {
+      for (let ci = 0; ci < criteria.length; ci++) {
+        const c = criteria[ci];
         const name = String(c.name).trim();
         const minScore = c.minScore != null ? Number(c.minScore) : 0;
         const maxScore = Number(c.maxScore);
         await Criterion.create(
-          { contestId: contest.id, name, minScore, maxScore },
+          { contestId: contest.id, name, minScore, maxScore, sortOrder: ci + 1 },
           { transaction: t }
         );
       }
@@ -610,8 +752,21 @@ class ContestService {
 
       const full = await Contest.findByPk(contest.id, {
         include: [
-          { model: Criterion, as: "criteria" },
-          { model: Participant, as: "participants" },
+          {
+            model: Criterion,
+            as: "criteria",
+            separate: true,
+            order: [
+              ["sortOrder", "ASC"],
+              ["id", "ASC"]
+            ]
+          },
+          {
+            model: Participant,
+            as: "participants",
+            separate: true,
+            order: [["id", "ASC"]]
+          },
           {
             model: Jury,
             as: "juryMembers",

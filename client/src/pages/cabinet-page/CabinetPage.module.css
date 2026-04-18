@@ -676,7 +676,9 @@
   opacity: 0.55;
 }
 
+/* На белом фоне активной вкладки иконки должны быть чёрными */
 .juryBottomNavLinkActive .juryBottomNavIcon {
+  filter: brightness(0);
   opacity: 1;
 }
 
@@ -863,5 +865,119 @@
 
   .juryBottomNavLink {
     pointer-events: auto;
+  }
+
+  /* Вкладка «Мероприятия» жюри: макет 375 */
+  .pageJuryCabinet[data-cabinet-section='events'] .topBar {
+    height: auto;
+    min-height: 56px;
+    padding: 16px 16px 24px;
+    border-bottom: none;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .pageJuryCabinet[data-cabinet-section='events'] .searchWrap,
+  .pageJuryCabinet[data-cabinet-section='events'] .lang {
+    display: none;
+  }
+
+  .pageJuryCabinet[data-cabinet-section='events'] .title {
+    flex: 1 1 100%;
+    text-align: center;
+    font-family: 'Golos Text', 'Geist', 'Segoe UI', sans-serif;
+    font-size: 24px;
+    font-weight: 500;
+    line-height: 24px;
+    padding-bottom: 0;
+  }
+
+  .pageJuryCabinet[data-cabinet-section='events'] .eventsLayout {
+    width: 100%;
+    max-width: 343px;
+    margin: 0 auto;
+    padding: 0 16px 8px;
+    gap: 12px;
+    box-sizing: border-box;
+  }
+
+  .pageJuryCabinet[data-cabinet-section='events'] .eventsCard {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 8px;
+    background: #e0e5eb;
+    border-radius: 20px;
+  }
+
+  .pageJuryCabinet[data-cabinet-section='events'] .sectionHeader {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+    padding: 0;
+    background: transparent;
+  }
+
+  .pageJuryCabinet[data-cabinet-section='events'] .sectionTitleWrap {
+    flex: 0 0 auto;
+    padding: 8px;
+    margin: 0;
+    justify-content: flex-start;
+    gap: 8px;
+  }
+
+  .pageJuryCabinet[data-cabinet-section='events'] .sectionDot {
+    width: 16px;
+    height: 16px;
+  }
+
+  .pageJuryCabinet[data-cabinet-section='events'] .sectionDot span {
+    width: 8px;
+    height: 8px;
+  }
+
+  .pageJuryCabinet[data-cabinet-section='events'] .sectionTitle {
+    font-family: 'Geist', 'Segoe UI', sans-serif;
+    font-size: 18px;
+    font-weight: 500;
+    line-height: 20px;
+  }
+
+  .pageJuryCabinet[data-cabinet-section='events'] .sectionCount {
+    font-family: 'Geist', 'Segoe UI', sans-serif;
+    font-size: 18px;
+    font-weight: 500;
+    line-height: 20px;
+  }
+
+  .pageJuryCabinet[data-cabinet-section='events'] .filterBox {
+    width: 100%;
+    align-self: stretch;
+  }
+
+  .pageJuryCabinet[data-cabinet-section='events'] .filterButton {
+    width: 100%;
+    height: 48px;
+    border-radius: 12px;
+    border: none;
+    font-family: 'Geist', 'Segoe UI', sans-serif;
+    font-size: 16px;
+    font-weight: 500;
+    line-height: 20px;
+  }
+
+  .pageJuryCabinet[data-cabinet-section='events'] .eventsBody {
+    background: transparent;
+    padding: 0;
+    gap: 8px;
+  }
+
+  .pageJuryCabinet[data-cabinet-section='events'] .tableHeader {
+    display: none;
+  }
+
+  .pageJuryCabinet[data-cabinet-section='events'] .eventsHelperText {
+    border-radius: 12px;
+    font-size: 14px;
   }
 }

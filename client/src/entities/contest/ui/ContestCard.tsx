@@ -6,6 +6,8 @@ type ContestCardProps = {
   contest: IContest
   variant?: 'pending' | 'results'
   withAlertStripe?: boolean
+  /** Компактный список кабинета жюри на узком экране (≤430px, стили в CSS) */
+  juryCabinetCompact?: boolean
   onOpen?: () => void
 }
 
@@ -16,12 +18,34 @@ const formatDate = (date: string) =>
     year: 'numeric',
   })
 
-export function ContestCard({ contest, variant = 'pending', withAlertStripe = false, onOpen }: ContestCardProps) {
+export function ContestCard({
+  contest,
+  variant = 'pending',
+  withAlertStripe = false,
+  juryCabinetCompact = false,
+  onOpen,
+}: ContestCardProps) {
   const contestTypeTitle = contest.contestType || 'Не указан'
   const coverUrl = resolveMediaUrl(contest.coverImageUrl)
 
   return (
-    <article className={styles.card}>
+    <article
+      aria-label={juryCabinetCompact && onOpen ? `Перейти к конкурсу «${contest.title}»` : undefined}
+      className={`${styles.card} ${juryCabinetCompact ? styles.juryCabinetCompact : ''}`}
+      onClick={juryCabinetCompact && onOpen ? () => onOpen() : undefined}
+      onKeyDown={
+        juryCabinetCompact && onOpen
+          ? (event) => {
+              if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault()
+                onOpen()
+              }
+            }
+          : undefined
+      }
+      role={juryCabinetCompact && onOpen ? 'button' : undefined}
+      tabIndex={juryCabinetCompact && onOpen ? 0 : undefined}
+    >
       <div className={styles.coverCell}>
         {coverUrl ? (
           <img className={styles.coverImage} src={coverUrl} alt={`Обложка конкурса ${contest.title}`} />

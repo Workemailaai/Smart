@@ -78,7 +78,9 @@ export const CabinetPage = observer(({ section }: CabinetPageProps) => {
           ? 'Информация'
           : section === 'profile'
             ? 'Профиль'
-            : 'Мероприятия'
+            : section === 'events' && !isOrganizer
+              ? 'Мои мероприятия'
+              : 'Мероприятия'
   const pendingContests = isOrganizer
     ? contestStore.organizerInProgressContests
     : contestStore.juryPendingContests
@@ -368,6 +370,7 @@ export const CabinetPage = observer(({ section }: CabinetPageProps) => {
                 {filteredPendingContests.map((contest) => (
                   <ContestCard
                     contest={contest}
+                    juryCabinetCompact={!isOrganizer}
                     key={contest.id}
                     withAlertStripe={isOrganizer}
                     onOpen={() =>
@@ -437,6 +440,7 @@ export const CabinetPage = observer(({ section }: CabinetPageProps) => {
                 {filteredRatedContests.map((contest) => (
                   <ContestCard
                     contest={contest}
+                    juryCabinetCompact={!isOrganizer}
                     key={contest.id}
                     variant={isOrganizer || contest.status === 'archived' ? 'results' : 'pending'}
                     onOpen={() =>
@@ -506,6 +510,7 @@ export const CabinetPage = observer(({ section }: CabinetPageProps) => {
                 {filteredArchivedContests.map((contest) => (
                   <ContestCard
                     contest={contest}
+                    juryCabinetCompact={!isOrganizer}
                     key={contest.id}
                     variant="results"
                     onOpen={() => navigate(`/cabinet/events/${contest.id}/results`)}

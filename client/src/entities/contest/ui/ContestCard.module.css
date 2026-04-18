@@ -116,3 +116,51 @@
     font-size: 14px;
   }
 }
+
+/* Кабинет жюри: строка списка как в мобильном макете (≤430px) */
+@media (max-width: 430px) {
+  .card.juryCabinetCompact {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+    padding: 12px;
+    border-radius: 12px;
+    cursor: pointer;
+    text-align: left;
+    outline: none;
+  }
+
+  .card.juryCabinetCompact:focus-visible {
+    box-shadow: 0 0 0 2px #00a99d;
+  }
+
+  .card.juryCabinetCompact .coverCell,
+  .card.juryCabinetCompact .actionCell {
+    display: none;
+  }
+
+  .card.juryCabinetCompact .date {
+    order: 1;
+    font-size: 12px;
+    line-height: 12px;
+    opacity: 0.5;
+    margin: 0;
+  }
+
+  .card.juryCabinetCompact .title {
+    order: 2;
+    font-size: 16px;
+    font-weight: 500;
+    line-height: 20px;
+    margin: 0;
+  }
+
+  .card.juryCabinetCompact .type {
+    order: 3;
+    font-size: 12px;
+    line-height: 12px;
+    opacity: 0.5;
+    margin: 0;
+  }
+}

@@ -20,13 +20,20 @@ class TemplateService {
         if (!name) {
           throw new ApiError(400, `Пустое название критерия в позиции ${idx + 1}`);
         }
-        return { name, maxScore: 10 };
+        return { name, minScore: 1, maxScore: 10 };
       }
       if (c && typeof c === "object") {
         const name = c.name != null ? String(c.name).trim() : "";
+        const minScore = c.minScore != null ? Number(c.minScore) : 1;
         const maxScore = Number(c.maxScore);
         if (!name) {
           throw new ApiError(400, `Пустое название критерия в позиции ${idx + 1}`);
+        }
+        if (!Number.isInteger(minScore) || minScore < 0) {
+          throw new ApiError(
+            400,
+            `Некорректная нижняя граница у критерия «${name}» (целое число ≥ 0)`
+          );
         }
         if (!Number.isInteger(maxScore) || maxScore < 1) {
           throw new ApiError(
@@ -34,7 +41,10 @@ class TemplateService {
             `Некорректная верхняя граница у критерия «${name}» (целое число ≥ 1)`
           );
         }
-        return { name, maxScore };
+        if (maxScore <= minScore) {
+          throw new ApiError(400, `У критерия «${name}» верхняя граница должна быть больше нижней`);
+        }
+        return { name, minScore, maxScore };
       }
       throw new ApiError(400, "Некорректный элемент в criteria");
     });

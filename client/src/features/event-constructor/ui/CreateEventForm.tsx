@@ -9,6 +9,20 @@ import { ParticipantProfileModal } from './ParticipantProfileModal'
 import { JuryProfileModal } from './JuryProfileModal'
 import styles from './CreateEventForm.module.css'
 
+/** Общие границы оценки для всех показателей (согласованы с валидацией на сервере) */
+function syncAllCriteriaBounds(
+  store: typeof createEventFormStore,
+  minRaw: number,
+  maxRaw: number,
+) {
+  let m = Math.round(minRaw)
+  let M = Math.round(maxRaw)
+  if (!Number.isFinite(m) || m < 0) m = 0
+  if (!Number.isFinite(M) || M < 1) M = 2
+  if (M <= m) M = m + 1
+  store.criteria.forEach((c) => store.updateCriterion(c.localId, { minScore: m, maxScore: M }))
+}
+
 export const CreateEventForm = observer(function CreateEventForm() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
@@ -20,10 +34,45 @@ export const CreateEventForm = observer(function CreateEventForm() {
   const [juryModalOpen, setJuryModalOpen] = useState(false)
   const [juryDraft, setJuryDraft] = useState<DraftJury | null>(null)
   const [juryModalKey, setJuryModalKey] = useState(0)
+  const [isCriteriaWeightEnabled, setIsCriteriaWeightEnabled] = useState(true)
+  const [isJuryPreferenceEnabled, setIsJuryPreferenceEnabled] = useState(true)
+  /** Строковое состояние полей границ — чтобы можно было стереть ввод и набрать число заново */
+  const [boundaryMinStr, setBoundaryMinStr] = useState(() =>
+    String(store.criteria[0]?.minScore ?? 1),
+  )
+  const [boundaryMaxStr, setBoundaryMaxStr] = useState(() =>
+    String(store.criteria[0]?.maxScore ?? 10),
+  )
 
   useEffect(() => {
     createEventFormStore.reset()
   }, [])
+
+  useEffect(() => {
+    const c = store.criteria[0]
+    if (c) {
+      setBoundaryMinStr(String(c.minScore))
+      setBoundaryMaxStr(String(c.maxScore))
+    }
+  }, [store.criteria[0]?.localId, store.criteria[0]?.minScore, store.criteria[0]?.maxScore])
+
+  const commitBoundaryInputs = () => {
+    const c0 = store.criteria[0]
+    const parsePart = (s: string, fallback: number) => {
+      const t = s.trim()
+      if (t === '') return fallback
+      const n = Number(t)
+      return Number.isFinite(n) ? Math.round(n) : fallback
+    }
+    const m = parsePart(boundaryMinStr, c0?.minScore ?? 0)
+    const M = parsePart(boundaryMaxStr, c0?.maxScore ?? 10)
+    syncAllCriteriaBounds(store, m, M)
+    const c = store.criteria[0]
+    if (c) {
+      setBoundaryMinStr(String(c.minScore))
+      setBoundaryMaxStr(String(c.maxScore))
+    }
+  }
 
   useEffect(() => {
     void getContestTypes().then((r) => {
@@ -133,13 +182,13 @@ export const CreateEventForm = observer(function CreateEventForm() {
   return (
     <div className={styles.wrap}>
       <div className={styles.grid2}>
-        <section className={`${styles.card} ${styles.cardMuted}`}>
-          <div className={styles.cardHeader}>
+        <section className={`${styles.card} ${styles.cardMuted} ${styles.generalCard}`}>
+          <div className={styles.generalTitleRow}>
             <h3 className={styles.cardTitle}>Общая информация</h3>
           </div>
-          <div className={styles.field}>
+          <div className={styles.titleFieldShell}>
             <input
-              className={styles.input}
+              className={styles.generalTitleInput}
               id="evt-title"
               onChange={(e) => store.setTitle(e.target.value)}
               placeholder="Введите название мероприятия"
@@ -147,39 +196,72 @@ export const CreateEventForm = observer(function CreateEventForm() {
               value={store.title}
             />
           </div>
-          <div className={styles.field}>
-            <select
-              className={styles.select}
-              id="evt-type"
-              onChange={(e) => store.setContestType(e.target.value)}
-              value={store.contestType}
-            >
-              {typeOptions.map((t) => (
-                <option key={t.id} value={t.id}>
-                  {t.label}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className={styles.field}>
-            <textarea
-              className={styles.textarea}
-              id="evt-desc"
-              onChange={(e) => store.setDescription(e.target.value)}
-              placeholder="Краткое описание"
-              value={store.description}
-            />
-          </div>
-          {/* <div className={styles.descriptionBlock}>
-            <div className={styles.descriptionRow}>
-              <span>Значимость показателей</span>
-              <span className={styles.descriptionValue}>Используется текущая логика оценки</span>
+          <div className={styles.typeBlock} data-show-list="false" data-type="Normal">
+            <div className={styles.typeRow}>
+              <span className={styles.typeRowLabel}>Тип конкурса</span>
+              <div className={styles.typeValueCluster}>
+                <span className={styles.typeSelectedLabel}>
+                  {typeOptions.find((t) => t.id === store.contestType)?.label ?? ''}
+                </span>
+                <svg
+                  className={styles.typeChevronInline}
+                  aria-hidden
+                  fill="none"
+                  height="24"
+                  viewBox="0 0 24 24"
+                  width="24"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path d="M6 9l6 6 6-6" stroke="currentColor" strokeLinecap="round" strokeWidth="2" />
+                </svg>
+                <select
+                  aria-label="Тип конкурса"
+                  className={styles.typeSelectOverlay}
+                  id="evt-type"
+                  onChange={(e) => store.setContestType(e.target.value)}
+                  value={store.contestType}
+                >
+                  {typeOptions.map((t) => (
+                    <option key={t.id} value={t.id}>
+                      {t.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
             </div>
-            <div className={styles.descriptionRow}>
-              <span>Учитывать предпочтения жюри</span>
-              <span className={styles.descriptionValue}>Не влияет на формулу в текущей версии</span>
+          </div>
+          <div className={styles.optionsCard}>
+            <div className={styles.toggleRow}>
+              <span className={styles.toggleLabel}>Значимость показателей</span>
+              <button
+                aria-label="Переключить значимость показателей"
+                aria-pressed={isCriteriaWeightEnabled}
+                className={styles.switchButton}
+                data-property-1={isCriteriaWeightEnabled ? 'Active' : 'Inactive'}
+                onClick={() => setIsCriteriaWeightEnabled((v) => !v)}
+                type="button"
+              >
+                <span className={`${styles.switchTrack} ${isCriteriaWeightEnabled ? styles.switchTrackOn : styles.switchTrackOff}`}>
+                  <span className={styles.switchThumb} />
+                </span>
+              </button>
             </div>
-          </div> */}
+            <div className={styles.toggleRow}>
+              <span className={styles.toggleLabel}>Учитывать предпочтения жюри</span>
+              <button
+                aria-label="Переключить учет предпочтений жюри"
+                aria-pressed={isJuryPreferenceEnabled}
+                className={styles.switchButton}
+                data-property-1={isJuryPreferenceEnabled ? 'Active' : 'Inactive'}
+                onClick={() => setIsJuryPreferenceEnabled((v) => !v)}
+                type="button"
+              >
+                <span className={`${styles.switchTrack} ${isJuryPreferenceEnabled ? styles.switchTrackOn : styles.switchTrackOff}`}>
+                  <span className={styles.switchThumb} />
+                </span>
+              </button>
+            </div>
+          </div>
         </section>
         <section className={`${styles.card} ${styles.cardMuted}`}>
           <div className={styles.cardHeader}>
@@ -199,126 +281,189 @@ export const CreateEventForm = observer(function CreateEventForm() {
         </section>
       </div>
 
-      {/* <section className={`${styles.card} ${styles.cardMuted}`}>
-        <div className={styles.cardHeader}>
-          <h3 className={styles.cardTitle}>Границы</h3>
+      <section className={`${styles.card} ${styles.cardMuted} ${styles.criteriaPanel}`}>
+        <div className={styles.criteriaPanelBoundariesHeader}>
+          <h3 className={styles.criteriaPanelBoundariesTitle}>Границы</h3>
         </div>
-        <div className={styles.boundaryRow}>
-          <div className={styles.boundaryBox}>1</div>
-          <div className={styles.boundaryBox}>{store.criteria[0]?.maxScore || 10}</div>
+        <div className={styles.criteriaPanelBoundariesRow}>
+          <div className={styles.criteriaPanelBoundaryCell}>
+            <input
+              aria-label="Нижняя граница оценки"
+              className={styles.criteriaPanelBoundaryInput}
+              inputMode="numeric"
+              onBlur={commitBoundaryInputs}
+              onChange={(e) => setBoundaryMinStr(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') (e.target as HTMLInputElement).blur()
+              }}
+              type="text"
+              value={boundaryMinStr}
+            />
+          </div>
+          <div className={styles.criteriaPanelBoundaryCell}>
+            <input
+              aria-label="Верхняя граница оценки"
+              className={styles.criteriaPanelBoundaryInput}
+              inputMode="numeric"
+              onBlur={commitBoundaryInputs}
+              onChange={(e) => setBoundaryMaxStr(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') (e.target as HTMLInputElement).blur()
+              }}
+              type="text"
+              value={boundaryMaxStr}
+            />
+          </div>
         </div>
-      </section> */}
-
-      <section className={`${styles.card} ${styles.cardMuted}`}>
-        <h3 className={styles.cardTitle}>Показатели оценивания</h3>
-        <p className={styles.boundHint}>Нижняя граница оценки по каждому критерию всегда 1; укажите верхнюю границу.</p>
-        <div className={styles.criteriaList}>
+        <div className={styles.criteriaPanelIntro}>
+          <h3 className={styles.criteriaPanelIntroTitle}>Показатели оценивания</h3>
+          <p className={styles.criteriaPanelIntroSubtitle}>Укажите показатели с учетом их значимости</p>
+        </div>
+        <div className={styles.criteriaPanelList}>
           {store.criteria.map((c, index) => (
-            <div className={styles.criterionRow} key={c.localId}>
-              <div className={styles.criterionIndex}>{index + 1}</div>
-              <input
-                className={styles.input}
-                onChange={(e) => store.updateCriterion(c.localId, { name: e.target.value })}
-                placeholder="Название показателя"
-                type="text"
-                value={c.name}
-              />
-              <input
-                className={`${styles.input} ${styles.maxScoreInput}`}
-                min={1}
-                onChange={(e) =>
-                  store.updateCriterion(c.localId, { maxScore: Number(e.target.value) || 1 })
-                }
-                type="number"
-                value={c.maxScore}
-              />
-              <button
-                className={`${styles.iconBtn} ${styles.iconBtnDanger}`}
-                onClick={() => store.removeCriterion(c.localId)}
-                type="button"
-                aria-label="Удалить критерий"
-              >
-                −
-              </button>
+            <div className={styles.criteriaPanelCriterionRow} key={c.localId}>
+              <div className={styles.criteriaPanelOrderBadge}>{index + 1}</div>
+              <div className={styles.criteriaPanelNameShell}>
+                <input
+                  className={styles.criteriaPanelNameInput}
+                  onChange={(e) => store.updateCriterion(c.localId, { name: e.target.value })}
+                  placeholder="Название показателя"
+                  type="text"
+                  value={c.name}
+                />
+                {store.criteria.length > 1 ? (
+                  <button
+                    aria-label="Удалить критерий"
+                    className={styles.criteriaPanelDeleteControl}
+                    onClick={() => store.removeCriterion(c.localId)}
+                    type="button"
+                  >
+                    <img alt="" className={styles.criteriaPanelRowIcon} src="/card-minus-cirlce.svg" />
+                  </button>
+                ) : (
+                  <span className={styles.criteriaPanelDeleteControlSpacer} />
+                )}
+              </div>
             </div>
           ))}
+          {/* Пустой шаблон всегда последний: добавляет новую строку критерия */}
+          <button
+            className={styles.criteriaPanelAddCriterionRow}
+            onClick={() => store.addCriterion()}
+            type="button"
+          >
+            <div className={styles.criteriaPanelOrderBadge}>
+              <span className={styles.criteriaPanelTemplateBadgeDigit}>{store.criteria.length + 1}</span>
+            </div>
+            <div className={styles.criteriaPanelNameShellMuted}>
+              <span className={styles.criteriaPanelAddCriterionHint}>
+                Добавить показатель {store.criteria.length + 1}
+              </span>
+              <span aria-hidden className={styles.criteriaPanelTemplateTick}>
+                <img alt="" className={styles.criteriaPanelRowIcon} src="/card-tick-circle.svg" />
+              </span>
+            </div>
+          </button>
         </div>
-        <button className={styles.addRowBtn} onClick={() => store.addCriterion()} type="button">
-          + показатель
-        </button>
       </section>
 
-      <div className={styles.listsGrid}>
-        <section className={`${styles.card} ${styles.cardMuted}`}>
-          <div className={styles.listHeader}>
-            <h3 className={styles.listTitle}>Участники</h3>
-            <button className={styles.addCircle} onClick={openNewParticipant} type="button" aria-label="Добавить участника">
-              +
+      <div className={styles.listsRow}>
+        <section className={styles.listBlock}>
+          <div className={styles.listBlockHeader}>
+            <h3 className={styles.listBlockTitle}>Участники</h3>
+            <button
+              className={styles.listBlockAdd}
+              onClick={openNewParticipant}
+              type="button"
+              aria-label="Добавить участника"
+            >
+              <img alt="" className={styles.listBlockAddIcon} src="/nav/nav-add-circle.svg" />
             </button>
           </div>
-          {store.participants.map((p) => (
-            <div className={styles.personRow} key={p.localId}>
-              {p.previewUrl ? (
-                <img alt="" className={styles.avatarSm} src={p.previewUrl} />
-              ) : (
-                <div className={styles.avatarSm} />
-              )}
-              <div className={styles.personMeta}>
-                <p className={styles.personName}>{p.fullName || 'Без имени'}</p>
-                <p className={styles.personSub}>
-                  {p.age ? `${p.age} лет` : '—'} · {p.country || '—'}
-                </p>
+          <div className={styles.listBlockBody}>
+            {store.participants.length === 0 ? (
+              <div className={styles.listBlockEmpty}>Нет участников</div>
+            ) : (
+              <div className={styles.listBlockScroll}>
+                {store.participants.map((p) => (
+                  <div className={styles.personRow} key={p.localId}>
+                    {p.previewUrl ? (
+                      <img alt="" className={styles.avatarSm} src={p.previewUrl} />
+                    ) : (
+                      <div className={styles.avatarSm} />
+                    )}
+                    <div className={styles.personMeta}>
+                      <p className={styles.personName}>{p.fullName || 'Без имени'}</p>
+                      <p className={styles.personSub}>
+                        {p.extraInfo?.trim() ? p.extraInfo.trim() : '—'} · {p.country || '—'}
+                      </p>
+                    </div>
+                    <div className={styles.rowActions}>
+                      <button
+                        className={styles.iconBtn}
+                        onClick={() => openEditParticipant(p)}
+                        type="button"
+                        aria-label="Изменить"
+                      >
+                        ✎
+                      </button>
+                      <button
+                        className={`${styles.iconBtn} ${styles.iconBtnDanger}`}
+                        onClick={() => store.removeParticipant(p.localId)}
+                        type="button"
+                        aria-label="Удалить"
+                      >
+                        🗑
+                      </button>
+                    </div>
+                  </div>
+                ))}
               </div>
-              <div className={styles.rowActions}>
-                <button className={styles.iconBtn} onClick={() => openEditParticipant(p)} type="button" aria-label="Изменить">
-                  ✎
-                </button>
-                <button
-                  className={`${styles.iconBtn} ${styles.iconBtnDanger}`}
-                  onClick={() => store.removeParticipant(p.localId)}
-                  type="button"
-                  aria-label="Удалить"
-                >
-                  🗑
-                </button>
-              </div>
-            </div>
-          ))}
+            )}
+          </div>
         </section>
 
-        <section className={`${styles.card} ${styles.cardMuted}`}>
-          <div className={styles.listHeader}>
-            <h3 className={styles.listTitle}>Жюри</h3>
-            <button className={styles.addCircle} onClick={openNewJury} type="button" aria-label="Добавить жюри">
-              +
+        <section className={styles.listBlock}>
+          <div className={styles.listBlockHeader}>
+            <h3 className={styles.listBlockTitle}>Жюри</h3>
+            <button className={styles.listBlockAdd} onClick={openNewJury} type="button" aria-label="Добавить жюри">
+              <img alt="" className={styles.listBlockAddIcon} src="/nav/nav-add-circle.svg" />
             </button>
           </div>
-          {store.jury.map((j) => (
-            <div className={styles.personRow} key={j.localId}>
-              {j.previewUrl ? (
-                <img alt="" className={styles.avatarSm} src={j.previewUrl} />
-              ) : (
-                <div className={styles.avatarSm} />
-              )}
-              <div className={styles.personMeta}>
-                <p className={styles.personName}>{j.fullName || 'Без имени'}</p>
-                <p className={styles.personSub}>{j.phone || '—'}</p>
+          <div className={styles.listBlockBody}>
+            {store.jury.length === 0 ? (
+              <div className={styles.listBlockEmpty}>Нет жюри</div>
+            ) : (
+              <div className={styles.listBlockScroll}>
+                {store.jury.map((j) => (
+                  <div className={styles.personRow} key={j.localId}>
+                    {j.previewUrl ? (
+                      <img alt="" className={styles.avatarSm} src={j.previewUrl} />
+                    ) : (
+                      <div className={styles.avatarSm} />
+                    )}
+                    <div className={styles.personMeta}>
+                      <p className={styles.personName}>{j.fullName || 'Без имени'}</p>
+                      <p className={styles.personSub}>{j.phone || '—'}</p>
+                    </div>
+                    <div className={styles.rowActions}>
+                      <button className={styles.iconBtn} onClick={() => openEditJury(j)} type="button" aria-label="Изменить">
+                        ✎
+                      </button>
+                      <button
+                        className={`${styles.iconBtn} ${styles.iconBtnDanger}`}
+                        onClick={() => store.removeJuryMember(j.localId)}
+                        type="button"
+                        aria-label="Удалить"
+                      >
+                        🗑
+                      </button>
+                    </div>
+                  </div>
+                ))}
               </div>
-              <div className={styles.rowActions}>
-                <button className={styles.iconBtn} onClick={() => openEditJury(j)} type="button" aria-label="Изменить">
-                  ✎
-                </button>
-                <button
-                  className={`${styles.iconBtn} ${styles.iconBtnDanger}`}
-                  onClick={() => store.removeJuryMember(j.localId)}
-                  type="button"
-                  aria-label="Удалить"
-                >
-                  🗑
-                </button>
-              </div>
-            </div>
-          ))}
+            )}
+          </div>
         </section>
       </div>
 

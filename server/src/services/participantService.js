@@ -7,7 +7,7 @@ class ParticipantService {
     contestId,
     organizerId,
     fullName,
-    age,
+    extraInfo,
     country,
     photoUrl
   }) {
@@ -19,10 +19,12 @@ class ParticipantService {
 
     const countryTrim =
       country != null && String(country).trim() !== "" ? String(country).trim() : null;
+    const extraInfoTrim =
+      extraInfo != null && String(extraInfo).trim() !== "" ? String(extraInfo).trim() : null;
     return Participant.create({
       contestId,
       fullName,
-      age,
+      extraInfo: extraInfoTrim,
       photoUrl: photoUrl || null,
       country: countryTrim
     });

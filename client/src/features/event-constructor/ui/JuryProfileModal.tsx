@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import type { DraftJury } from '../model/createEventFormStore'
+import { formatRuPhoneMask, normalizePhoneDigits, ruPhoneMaskOnKeyDown } from '@/shared/lib/ruPhone'
 import styles from './ProfileModal.module.css'
 
 type JuryProfileModalProps = {
@@ -10,7 +11,7 @@ type JuryProfileModalProps = {
 
 export function JuryProfileModal({ initial, onClose, onSave }: JuryProfileModalProps) {
   const [fullName, setFullName] = useState(() => initial?.fullName ?? '')
-  const [phone, setPhone] = useState(() => initial?.phone ?? '')
+  const [phone, setPhone] = useState(() => formatRuPhoneMask(initial?.phone ?? ''))
   const [position, setPosition] = useState(() => initial?.position ?? '')
   const [password, setPassword] = useState(() => initial?.password ?? '')
   const [file, setFile] = useState<File | null>(null)
@@ -32,7 +33,7 @@ export function JuryProfileModal({ initial, onClose, onSave }: JuryProfileModalP
     const nextPassword = password || initial?.password || ''
     onSave({
       fullName,
-      phone,
+      phone: normalizePhoneDigits(phone),
       position,
       password: nextPassword,
       file: nextFile,
@@ -81,9 +82,12 @@ export function JuryProfileModal({ initial, onClose, onSave }: JuryProfileModalP
             />
             <input
               className={styles.input}
-              onChange={(e) => setPhone(e.target.value)}
-              placeholder="+7 999 999-99-99"
+              onChange={(e) => setPhone(formatRuPhoneMask(e.target.value))}
+              onKeyDown={(e) => ruPhoneMaskOnKeyDown(e, phone, setPhone)}
+              placeholder="+7 (999) 656-86-85"
               type="tel"
+              inputMode="numeric"
+              autoComplete="tel-national"
               value={phone}
             />
             <input

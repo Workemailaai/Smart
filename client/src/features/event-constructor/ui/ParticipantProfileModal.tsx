@@ -2,16 +2,6 @@ import { useState } from 'react'
 import type { DraftParticipant } from '../model/createEventFormStore'
 import styles from './ProfileModal.module.css'
 
-const COUNTRIES = [
-  { code: 'Россия', label: 'Россия' },
-  { code: 'Казахстан', label: 'Казахстан' },
-  { code: 'Беларусь', label: 'Беларусь' },
-  { code: 'Украина', label: 'Украина' },
-  { code: 'Австралия', label: 'Австралия' },
-  { code: 'США', label: 'США' },
-  { code: 'Другая', label: 'Другая' },
-]
-
 type ParticipantProfileModalProps = {
   initial: DraftParticipant | null
   onClose: () => void
@@ -20,8 +10,8 @@ type ParticipantProfileModalProps = {
 
 export function ParticipantProfileModal({ initial, onClose, onSave }: ParticipantProfileModalProps) {
   const [fullName, setFullName] = useState(() => initial?.fullName ?? '')
-  const [age, setAge] = useState(() => initial?.age ?? '')
-  const [country, setCountry] = useState(() => initial?.country || 'Россия')
+  const [extraInfo, setExtraInfo] = useState(() => initial?.extraInfo ?? '')
+  const [country, setCountry] = useState(() => initial?.country ?? '')
   const [file, setFile] = useState<File | null>(null)
   const [previewUrl, setPreviewUrl] = useState<string | null>(() => initial?.previewUrl ?? null)
 
@@ -40,7 +30,7 @@ export function ParticipantProfileModal({ initial, onClose, onSave }: Participan
     const nextPreview = file ? previewUrl : initial?.previewUrl ?? null
     onSave({
       fullName,
-      age,
+      extraInfo,
       country,
       file: nextFile,
       previewUrl: nextPreview,
@@ -75,25 +65,24 @@ export function ParticipantProfileModal({ initial, onClose, onSave }: Participan
             <input
               className={styles.input}
               onChange={(e) => setFullName(e.target.value)}
-              placeholder="ФИО"
+              placeholder="Участник"
               type="text"
               value={fullName}
             />
             <input
               className={styles.input}
-              onChange={(e) => setAge(e.target.value)}
-              placeholder="Возраст"
-              type="number"
-              min={1}
-              value={age}
+              onChange={(e) => setExtraInfo(e.target.value)}
+              placeholder="Доп.информация"
+              type="text"
+              value={extraInfo}
             />
-            <select className={styles.input} onChange={(e) => setCountry(e.target.value)} value={country}>
-              {COUNTRIES.map((c) => (
-                <option key={c.code} value={c.code}>
-                  {c.label}
-                </option>
-              ))}
-            </select>
+            <input
+              className={styles.input}
+              onChange={(e) => setCountry(e.target.value)}
+              placeholder="Примечание"
+              type="text"
+              value={country}
+            />
           </div>
         </div>
         <div className={styles.footer}>

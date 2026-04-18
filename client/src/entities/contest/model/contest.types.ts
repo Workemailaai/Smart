@@ -24,13 +24,15 @@ export type ContestStatus = 'in_progress' | 'judging_completed' | 'completed' | 
 export interface ICriterion {
   id: number
   name: string
+  /** Нижняя допустимая оценка по критерию (до миграции может отсутствовать — тогда 0) */
+  minScore?: number
   maxScore: number
 }
 
 export interface IParticipant {
   id: number
   fullName: string
-  age: number
+  extraInfo: string | null
   country: string | null
   photoUrl: string | null
 }
@@ -68,6 +70,7 @@ export interface IOrganizerJuryCard {
   criteria: {
     criterionId: number
     name: string
+    minScore?: number
     maxScore: number
     value: number | null
   }[]
@@ -90,7 +93,7 @@ export interface IOrganizerContestView {
 export interface IContestResultsParticipant {
   participantId: number
   fullName: string
-  age: number
+  extraInfo: string | null
   country: string | null
   photoUrl: string | null
   score: number

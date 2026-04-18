@@ -1,17 +1,20 @@
 import { makeAutoObservable, runInAction } from 'mobx'
 import type { ITemplate } from '@/entities/template'
 import { normalizeTemplateCriteria } from '@/entities/template'
+import { normalizePhoneDigits } from '@/shared/lib/ruPhone'
+
+export { normalizePhoneDigits } from '@/shared/lib/ruPhone'
 
 function newLocalId() {
   return crypto.randomUUID()
 }
 
-export type DraftCriterion = { localId: string; name: string; maxScore: number }
+export type DraftCriterion = { localId: string; name: string; minScore: number; maxScore: number }
 
 export type DraftParticipant = {
   localId: string
   fullName: string
-  age: string
+  extraInfo: string
   country: string
   file: File | null
   previewUrl: string | null
@@ -27,23 +30,11 @@ export type DraftJury = {
   previewUrl: string | null
 }
 
-/** Нормализация телефона к +7XXXXXXXXXX (как на сервере) */
-export function normalizePhoneDigits(input: string): string {
-  let digits = String(input || '').replace(/\D/g, '')
-  if (digits.length === 11 && digits.startsWith('8')) {
-    digits = `7${digits.slice(1)}`
-  }
-  if (digits.length === 10) {
-    digits = `7${digits}`
-  }
-  return digits.length ? `+${digits}` : ''
-}
-
 class CreateEventFormStore {
   title = ''
   description = ''
   contestType = 'miss_world'
-  criteria: DraftCriterion[] = [{ localId: newLocalId(), name: '', maxScore: 10 }]
+  criteria: DraftCriterion[] = [{ localId: newLocalId(), name: '', minScore: 1, maxScore: 10 }]
   participants: DraftParticipant[] = []
   jury: DraftJury[] = []
   coverFile: File | null = null
@@ -68,7 +59,7 @@ class CreateEventFormStore {
     this.title = ''
     this.description = ''
     this.contestType = 'miss_world'
-    this.criteria = [{ localId: newLocalId(), name: '', maxScore: 10 }]
+    this.criteria = [{ localId: newLocalId(), name: '', minScore: 1, maxScore: 10 }]
     this.participants = []
     this.jury = []
     this.coverFile = null
@@ -98,7 +89,9 @@ class CreateEventFormStore {
   }
 
   addCriterion() {
-    this.criteria.push({ localId: newLocalId(), name: '', maxScore: 10 })
+    const minScore = this.criteria.length ? this.criteria[0].minScore : 1
+    const maxScore = this.criteria.length ? this.criteria[0].maxScore : 10
+    this.criteria.push({ localId: newLocalId(), name: '', minScore, maxScore })
   }
 
   removeCriterion(localId: string) {
@@ -106,10 +99,14 @@ class CreateEventFormStore {
     this.criteria = this.criteria.filter((c) => c.localId !== localId)
   }
 
-  updateCriterion(localId: string, patch: Partial<Pick<DraftCriterion, 'name' | 'maxScore'>>) {
+  updateCriterion(
+    localId: string,
+    patch: Partial<Pick<DraftCriterion, 'name' | 'minScore' | 'maxScore'>>,
+  ) {
     const c = this.criteria.find((x) => x.localId === localId)
     if (!c) return
     if (patch.name !== undefined) c.name = patch.name
+    if (patch.minScore !== undefined) c.minScore = patch.minScore
     if (patch.maxScore !== undefined) c.maxScore = patch.maxScore
   }
 
@@ -161,9 +158,17 @@ class CreateEventFormStore {
     const rows = normalizeTemplateCriteria(t.criteria).map((c) => ({
       localId: newLocalId(),
       name: c.name,
+      minScore: c.minScore ?? 1,
       maxScore: c.maxScore,
     }))
-    this.criteria = rows.length ? rows : [{ localId: newLocalId(), name: '', maxScore: 10 }]
+    if (!rows.length) {
+      this.criteria = [{ localId: newLocalId(), name: '', minScore: 1, maxScore: 10 }]
+      return
+    }
+    /* Одни границы для всех показателей — выравниваем по первому критерию */
+    const unifiedMin = rows[0].minScore
+    const unifiedMax = rows[0].maxScore
+    this.criteria = rows.map((r) => ({ ...r, minScore: unifiedMin, maxScore: unifiedMax }))
   }
 
   /** Валидация перед отправкой */
@@ -172,13 +177,14 @@ class CreateEventFormStore {
     const filledCriteria = this.criteria.filter((c) => c.name.trim())
     if (filledCriteria.length === 0) return 'Добавьте хотя бы один критерий с названием'
     for (const c of filledCriteria) {
-      const m = Math.round(Number(c.maxScore))
-      if (!Number.isFinite(m) || m < 1) return `Некорректная верхняя граница у критерия «${c.name}»`
+      const min = Math.round(Number(c.minScore))
+      const max = Math.round(Number(c.maxScore))
+      if (!Number.isFinite(min) || min < 0) return `Некорректная нижняя граница у критерия «${c.name}»`
+      if (!Number.isFinite(max) || max < 1) return `Некорректная верхняя граница у критерия «${c.name}»`
+      if (max <= min) return `У критерия «${c.name}» верхняя граница должна быть больше нижней`
     }
     for (const p of this.participants) {
       if (!p.fullName.trim()) return 'У всех участников должно быть ФИО'
-      const age = Math.round(Number(p.age))
-      if (!Number.isInteger(age) || age < 1 || age > 150) return 'Проверьте возраст участников'
     }
     for (const j of this.jury) {
       if (!j.fullName.trim()) return 'У всех членов жюри укажите ФИО'
@@ -203,11 +209,12 @@ class CreateEventFormStore {
       contestType: this.contestType,
       criteria: filledCriteria.map((c) => ({
         name: c.name.trim(),
+        minScore: Math.round(Number(c.minScore)),
         maxScore: Math.round(Number(c.maxScore)),
       })),
       participants: this.participants.map((p) => ({
         fullName: p.fullName.trim(),
-        age: Math.round(Number(p.age)),
+        extraInfo: p.extraInfo.trim() || null,
         country: p.country.trim() || null,
       })),
       jury: this.jury.map((j) => ({
@@ -229,12 +236,16 @@ class CreateEventFormStore {
     return fd
   }
 
-  getSkeletonForTemplate(): { contestType: string; criteria: { name: string; maxScore: number }[] } {
+  getSkeletonForTemplate(): {
+    contestType: string
+    criteria: { name: string; minScore: number; maxScore: number }[]
+  } {
     const filledCriteria = this.criteria.filter((c) => c.name.trim())
     return {
       contestType: this.contestType,
       criteria: filledCriteria.map((c) => ({
         name: c.name.trim(),
+        minScore: Math.round(Number(c.minScore)),
         maxScore: Math.round(Number(c.maxScore)),
       })),
     }

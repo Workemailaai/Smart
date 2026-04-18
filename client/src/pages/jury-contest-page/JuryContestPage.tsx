@@ -100,9 +100,7 @@ export const JuryContestPage = observer(() => {
           <h2 className={styles.topTitle}>Мероприятия</h2>
           <div className={styles.searchWrap}>
             <label className={styles.searchLabel}>
-              <span aria-hidden className={styles.searchIcon}>
-                ⌕
-              </span>
+              <img alt="" aria-hidden className={styles.searchIcon} src="/nav/header-search-normal.svg" />
               <input className={styles.search} placeholder="Поиск" type="text" />
             </label>
           </div>
@@ -141,7 +139,8 @@ export const JuryContestPage = observer(() => {
                           )}
                           <div className={styles.participantMeta}>
                             <span className={styles.participantName}>
-                              {participant.fullName}, {participant.age}
+                              {participant.fullName}
+                              {participant.extraInfo ? `, ${participant.extraInfo}` : ''}
                             </span>
                             <span className={styles.participantCountry}>{participant.country || 'Страна не указана'}</span>
                           </div>
@@ -151,13 +150,17 @@ export const JuryContestPage = observer(() => {
 
                       <div className={styles.criteriaWrap}>
                         {view.criteria.map((criterion) => {
-                          const value = juryContestStore.getScore(participant.id, criterion.id)
-                          const percent = criterion.maxScore > 0 ? (value / criterion.maxScore) * 100 : 0
+                          const min = criterion.minScore ?? 0
+                          const max = criterion.maxScore
+                          const range = Math.max(1, max - min)
+                          const value = juryContestStore.getScore(participant.id, criterion.id, min)
+                          const clamped = Math.min(max, Math.max(min, value))
+                          const percent = range > 0 ? ((clamped - min) / range) * 100 : 0
                           return (
                             <label className={styles.criterionRow} key={criterion.id}>
                               <div className={styles.criterionLabel}>{criterion.name}</div>
                               <div className={styles.sliderWrap}>
-                                <span className={styles.boundaryValue}>0</span>
+                                <span className={styles.boundaryValue}>{min}</span>
                                 <div className={styles.sliderTrackWrap}>
                                   <div className={styles.sliderTrack}>
                                     <div className={styles.sliderProgress} style={{ width: `${percent}%` }} />
@@ -165,19 +168,19 @@ export const JuryContestPage = observer(() => {
                                   <input
                                     className={styles.sliderInput}
                                     type="range"
-                                    min={0}
-                                    max={criterion.maxScore}
+                                    min={min}
+                                    max={max}
                                     step={1}
-                                    value={value}
+                                    value={clamped}
                                     onChange={(event) =>
                                       juryContestStore.setScore(participant.id, criterion.id, Number(event.target.value))
                                     }
                                   />
                                   <span className={styles.sliderValue} style={{ left: `calc(${percent}% - 24px)` }}>
-                                    {value}
+                                    {clamped}
                                   </span>
                                 </div>
-                                <span className={styles.boundaryValue}>{criterion.maxScore}</span>
+                                <span className={styles.boundaryValue}>{max}</span>
                               </div>
                             </label>
                           )

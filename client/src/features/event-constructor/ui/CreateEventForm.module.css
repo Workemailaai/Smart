@@ -29,6 +29,210 @@
   background: #e0e5eb;
 }
 
+/* Блок «Общая информация» (макет: карточка 714px, ряды по 48px) */
+.generalCard {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 12px;
+  overflow: hidden;
+  width: 100%;
+  max-width: 714px;
+}
+
+.generalTitleRow {
+  padding: 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.generalTitleRow .cardTitle {
+  font-family: 'Geist', 'Segoe UI', sans-serif;
+}
+
+.titleFieldShell {
+  align-self: stretch;
+  height: 48px;
+  padding: 0 16px;
+  background: #fff;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  box-sizing: border-box;
+}
+
+.generalTitleInput {
+  flex: 1 1 0;
+  min-width: 0;
+  height: 100%;
+  border: none;
+  background: transparent;
+  font-family: 'Geist', 'Segoe UI', sans-serif;
+  font-size: 18px;
+  font-weight: 400;
+  line-height: 24px;
+  color: #0a0f15;
+  outline: none;
+}
+
+.generalTitleInput::placeholder {
+  opacity: 0.5;
+  color: #0a0f15;
+}
+
+.typeBlock {
+  align-self: stretch;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 4px;
+}
+
+.typeRow {
+  align-self: stretch;
+  height: 48px;
+  padding: 0 16px;
+  background: #fff;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  box-sizing: border-box;
+}
+
+.typeRowLabel {
+  flex: 0 1 auto;
+  color: #0a0f15;
+  font-family: 'Geist', 'Segoe UI', sans-serif;
+  font-size: 18px;
+  font-weight: 500;
+  line-height: 18px;
+}
+
+/* Справа: выбранный тип + шеврон; нативный select перекрывает зону клика */
+.typeValueCluster {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  flex: 1 1 0;
+  min-width: 0;
+  min-height: 32px;
+}
+
+.typeSelectedLabel {
+  font-family: 'Geist', 'Segoe UI', sans-serif;
+  font-size: 18px;
+  font-weight: 500;
+  line-height: 18px;
+  color: #0a0f15;
+  text-align: right;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.typeChevronInline {
+  flex-shrink: 0;
+  color: #0a0f15;
+  pointer-events: none;
+}
+
+.typeSelectOverlay {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  border: none;
+  cursor: pointer;
+  opacity: 0;
+  font-size: 18px;
+  appearance: none;
+  outline: none;
+}
+
+/* Одна белая карточка: строки разделены линиями (как в макете) */
+.optionsCard {
+  align-self: stretch;
+  padding: 0;
+  background: #fff;
+  border-radius: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  overflow: hidden;
+}
+
+.toggleRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px;
+  border-bottom: 1px solid rgba(10, 15, 21, 0.08);
+}
+
+.toggleRow:last-child {
+  border-bottom: none;
+}
+
+.toggleLabel {
+  flex: 1 1 0;
+  min-width: 0;
+  color: #0a0f15;
+  font-family: 'Geist', 'Segoe UI', sans-serif;
+  font-size: 18px;
+  font-weight: 400;
+  line-height: 24px;
+}
+
+/* Декоративные переключатели (логика оценки не меняется) */
+.switchButton {
+  border: none;
+  background: transparent;
+  padding: 0;
+  margin: 0;
+  display: inline-flex;
+  cursor: pointer;
+}
+
+.switchTrack {
+  width: 58px;
+  padding: 2px;
+  border-radius: 40px;
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  overflow: hidden;
+  transition: background-color 0.2s ease;
+}
+
+.switchTrackOn {
+  background: #00a99d;
+  justify-content: flex-end;
+}
+
+.switchTrackOff {
+  background: #e0e5eb;
+  justify-content: flex-start;
+}
+
+.switchThumb {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow:
+    0 5px 5px rgba(10, 15, 21, 0.03),
+    0 12px 7px rgba(10, 15, 21, 0.02),
+    0 32px 9px rgba(10, 15, 21, 0);
+}
+
 .cardHeader {
   padding: 12px;
   display: flex;
@@ -134,55 +338,240 @@
   display: none;
 }
 
-.criteriaList {
+/* Карточка: границы + список показателей (единый блок по макету) */
+.criteriaPanel {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 12px;
+  overflow: hidden;
+}
+
+.criteriaPanelBoundariesHeader {
+  align-self: stretch;
+  padding: 12px;
+  display: flex;
+  align-items: center;
+}
+
+.criteriaPanelBoundariesTitle {
+  margin: 0;
+  color: #0a0f15;
+  font-family: 'Geist', 'Segoe UI', sans-serif;
+  font-size: 24px;
+  font-weight: 500;
+  line-height: 24px;
+}
+
+.criteriaPanelBoundariesRow {
+  align-self: stretch;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.criteriaPanelBoundaryCell {
+  flex: 1 1 0;
+  height: 48px;
+  background: #fff;
+  border-radius: 16px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+}
+
+.criteriaPanelBoundaryInput {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0 8px;
+  border: none;
+  background: transparent;
+  text-align: center;
+  opacity: 0.9;
+  color: #0a0f15;
+  font-family: 'Geist', 'Segoe UI', sans-serif;
+  font-size: 18px;
+  font-weight: 400;
+  line-height: 24px;
+  outline: none;
+  /* Убираем стрелки у number в WebKit */
+  appearance: textfield;
+}
+
+.criteriaPanelBoundaryInput::-webkit-outer-spin-button,
+.criteriaPanelBoundaryInput::-webkit-inner-spin-button {
+  appearance: none;
+  margin: 0;
+}
+
+.criteriaPanelIntro {
+  align-self: stretch;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.criteriaPanelIntroTitle {
+  margin: 0;
+  color: #0a0f15;
+  font-family: 'Geist', 'Segoe UI', sans-serif;
+  font-size: 24px;
+  font-weight: 500;
+  line-height: 24px;
+}
+
+.criteriaPanelIntroSubtitle {
+  margin: 0;
+  align-self: stretch;
+  opacity: 0.8;
+  color: #0a0f15;
+  font-family: 'Geist', 'Segoe UI', sans-serif;
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 16px;
+}
+
+.criteriaPanelList {
+  align-self: stretch;
   display: flex;
   flex-direction: column;
   gap: 8px;
 }
 
-.criterionRow {
-  display: grid;
-  grid-template-columns: 48px 1fr 96px 36px;
+.criteriaPanelCriterionRow {
+  align-self: stretch;
+  display: flex;
+  align-items: flex-start;
   gap: 8px;
-  align-items: center;
 }
 
-.criterionIndex {
+.criteriaPanelOrderBadge {
+  width: 48px;
   height: 48px;
+  flex-shrink: 0;
   border-radius: 16px;
   background: #fff;
-  display: grid;
-  place-items: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #0a0f15;
+  font-family: 'Geist', 'Segoe UI', sans-serif;
   font-size: 18px;
+  font-weight: 400;
   line-height: 24px;
+  text-align: right;
+  box-sizing: border-box;
+}
+
+/* Цифра в строке «Добавить показатель»: #0A0F15, непрозрачность 50% (фон бейджа не трогаем) */
+.criteriaPanelTemplateBadgeDigit {
+  color: #0a0f15;
+  opacity: 0.5;
+  font: inherit;
+}
+
+.criteriaPanelNameShell,
+.criteriaPanelNameShellMuted {
+  flex: 1 1 0;
+  min-width: 0;
+  height: 48px;
+  padding: 0 16px;
+  background: #fff;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  box-sizing: border-box;
+}
+
+.criteriaPanelNameInput {
+  flex: 1 1 0;
+  min-width: 0;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: #0a0f15;
+  font-family: 'Geist', 'Segoe UI', sans-serif;
+  font-size: 18px;
+  font-weight: 400;
+  line-height: 24px;
+  outline: none;
+}
+
+.criteriaPanelNameInput::placeholder {
+  opacity: 0.5;
   color: #0a0f15;
 }
 
-.maxScoreInput {
-  text-align: center;
+.criteriaPanelRowIcon {
+  display: block;
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  object-fit: contain;
 }
 
-.boundHint {
-  font-size: 16px;
-  color: rgba(10, 15, 21, 0.8);
-  margin: 0 0 8px;
+.criteriaPanelDeleteControl {
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  padding: 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.boundaryRow {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 16px;
+.criteriaPanelDeleteControlSpacer {
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
 }
 
-.boundaryBox {
-  height: 48px;
-  border-radius: 16px;
-  background: #fff;
-  display: grid;
-  place-items: center;
+/* Декоративная галочка в строке-шаблоне (клик по всей строке добавляет критерий) */
+.criteriaPanelTemplateTick {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.criteriaPanelAddCriterionRow {
+  align-self: stretch;
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
+}
+
+.criteriaPanelNameShellMuted {
+  opacity: 1;
+}
+
+.criteriaPanelAddCriterionHint {
+  flex: 1 1 0;
+  min-width: 0;
+  opacity: 0.5;
+  color: #0a0f15;
+  font-family: 'Geist', 'Segoe UI', sans-serif;
   font-size: 18px;
+  font-weight: 400;
   line-height: 24px;
-  color: rgba(10, 15, 21, 0.9);
 }
 
 .iconBtn {
@@ -200,53 +589,118 @@
   color: #b03a44;
 }
 
-.addRowBtn {
-  margin-top: 8px;
-  border: none;
-  background: #0a0f15;
-  color: #fff;
-  border-radius: 999px;
-  padding: 8px 16px;
-  font-size: 16px;
-  cursor: pointer;
-}
-
-.listsGrid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
+/* Участники / жюри: две колонки по макету */
+.listsRow {
+  align-self: stretch;
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+  align-items: flex-start;
   gap: 16px;
 }
 
 @media (max-width: 800px) {
-  .listsGrid {
-    grid-template-columns: 1fr;
+  .listsRow {
+    flex-direction: column;
+  }
+
+  .listBlock {
+    min-width: 100%;
   }
 }
 
-.listHeader {
+.listBlock {
+  flex: 1 1 0;
+  min-width: min(320px, 100%);
+  padding: 12px;
+  background: #e0e5eb;
+  overflow: hidden;
+  border-radius: 28px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+  box-sizing: border-box;
+}
+
+.listBlockHeader {
+  align-self: stretch;
+  padding: 12px;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 12px;
+  gap: 12px;
 }
 
-.listTitle {
+.listBlockTitle {
+  margin: 0;
+  color: #0a0f15;
+  font-family: 'Geist', 'Segoe UI', sans-serif;
   font-size: 24px;
   font-weight: 500;
-  margin: 0;
   line-height: 24px;
 }
 
-.addCircle {
+/* Кнопка добавления: квадрат 30×30 на чёрном фоне в зоне 36×36 */
+.listBlockAdd {
   width: 36px;
   height: 36px;
-  border-radius: 18px;
+  padding: 0;
   border: none;
-  background: #0a0f15;
-  color: #fff;
-  font-size: 22px;
+  background: transparent;
   cursor: pointer;
-  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.listBlockAddIcon {
+  display: block;
+  width: 36px;
+  height: 36px;
+  object-fit: contain;
+}
+
+.listBlockBody {
+  align-self: stretch;
+  height: 240px;
+  background: #fff;
+  overflow: hidden;
+  border-radius: 16px;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+}
+
+.listBlockEmpty {
+  flex: 1 1 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  opacity: 0.5;
+  color: #0a0f15;
+  font-family: 'Geist', 'Segoe UI', sans-serif;
+  font-size: 18px;
+  font-weight: 400;
+  line-height: 24px;
+  padding: 12px;
+  min-height: 0;
+}
+
+.listBlockScroll {
+  flex: 1 1 0;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 8px;
+  box-sizing: border-box;
 }
 
 .personRow {
@@ -255,8 +709,8 @@
   gap: 12px;
   padding: 12px 16px;
   border-radius: 16px;
-  background: #fff;
-  margin-bottom: 8px;
+  background: rgba(10, 15, 21, 0.04);
+  flex-shrink: 0;
 }
 
 .avatarSm {

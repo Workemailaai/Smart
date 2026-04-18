@@ -116,11 +116,11 @@ export const ContestResultsPage = observer(() => {
   const onExport = () => {
     if (!view) return
     const csvRows = [
-      ['Место', 'Участник', 'Возраст', 'Страна', 'Средний балл'],
+      ['Место', 'Участник', 'Доп. информация', 'Страна', 'Средний балл'],
       ...rows.map((item) => [
         String(item.place),
         item.fullName,
-        String(item.age),
+        item.extraInfo || '',
         item.country || '',
         String(item.score),
       ]),
@@ -196,7 +196,8 @@ export const ContestResultsPage = observer(() => {
                     )}
                     <div className={styles.listMeta}>
                       <p className={styles.listName}>
-                        {participant.fullName}, {participant.age}
+                        {participant.fullName}
+                        {participant.extraInfo ? `, ${participant.extraInfo}` : ''}
                       </p>
                       <p className={styles.listCountry}>{participant.country || 'Страна не указана'}</p>
                     </div>

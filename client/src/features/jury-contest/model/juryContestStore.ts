@@ -63,8 +63,11 @@ class JuryContestStore {
     this.draftScores.set(this.getKey(participantId, criterionId), value)
   }
 
-  getScore(participantId: number, criterionId: number) {
-    return this.draftScores.get(this.getKey(participantId, criterionId)) ?? 0
+  /** Если оценка ещё не вводилась, подставляем нижнюю границу критерия */
+  getScore(participantId: number, criterionId: number, defaultValue = 0) {
+    const key = this.getKey(participantId, criterionId)
+    if (this.draftScores.has(key)) return this.draftScores.get(key)!
+    return defaultValue
   }
 
   setComment(participantId: number, comment: string) {
@@ -79,7 +82,8 @@ class JuryContestStore {
     if (!this.view) return 0
     if (this.view.criteria.length === 0) return 0
     const sum = this.view.criteria.reduce((acc, criterion) => {
-      return acc + this.getScore(participantId, criterion.id)
+      const lo = criterion.minScore ?? 0
+      return acc + this.getScore(participantId, criterion.id, lo)
     }, 0)
     return Number((sum / this.view.criteria.length).toFixed(1))
   }
@@ -90,7 +94,7 @@ class JuryContestStore {
       this.view!.criteria.map((criterion) => ({
         participantId: participant.id,
         criterionId: criterion.id,
-        value: this.getScore(participant.id, criterion.id),
+        value: this.getScore(participant.id, criterion.id, criterion.minScore ?? 0),
       })),
     )
   }

@@ -25,9 +25,9 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.STRING,
         allowNull: false
       },
-      age: {
-        type: DataTypes.INTEGER,
-        allowNull: false
+      extraInfo: {
+        type: DataTypes.TEXT,
+        allowNull: true
       },
       contestId: {
         type: DataTypes.INTEGER,

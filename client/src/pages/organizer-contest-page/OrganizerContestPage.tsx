@@ -110,9 +110,7 @@ export const OrganizerContestPage = observer(() => {
           <h2 className={styles.topTitle}>Мероприятия</h2>
           <div className={styles.searchWrap}>
             <label className={styles.searchLabel}>
-              <span aria-hidden className={styles.searchIcon}>
-                ⌕
-              </span>
+              <img alt="" aria-hidden className={styles.searchIcon} src="/nav/header-search-normal.svg" />
               <input className={styles.search} placeholder="Поиск" type="text" />
             </label>
           </div>
@@ -152,7 +150,8 @@ export const OrganizerContestPage = observer(() => {
                           )}
                           <div className={styles.participantMeta}>
                             <span className={styles.participantName}>
-                              {participant.fullName}, {participant.age}
+                              {participant.fullName}
+                              {participant.extraInfo ? `, ${participant.extraInfo}` : ''}
                             </span>
                             <span className={styles.participantCountry}>{participant.country || 'Страна не указана'}</span>
                           </div>

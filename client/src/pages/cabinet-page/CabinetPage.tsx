@@ -227,9 +227,7 @@ export const CabinetPage = observer(({ section }: CabinetPageProps) => {
           <h2 className={styles.title}>{pageTitle}</h2>
           <div className={styles.searchWrap}>
             <label className={styles.searchLabel}>
-              <span aria-hidden className={styles.searchIcon}>
-                ⌕
-              </span>
+              <img alt="" aria-hidden className={styles.searchIcon} src="/nav/header-search-normal.svg" />
               <input className={styles.search} placeholder="Поиск" type="text" />
             </label>
           </div>

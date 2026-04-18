@@ -25,8 +25,13 @@ class ScoreService {
       throw new ApiError(400, "Критерий не относится к этому мероприятию");
     }
 
-    if (value < 0 || value > criterion.maxScore) {
-      throw new ApiError(400, `Оценка должна быть в диапазоне от 0 до ${criterion.maxScore}`);
+    const minAllowed = Number(criterion.minScore ?? 0);
+    const maxAllowed = Number(criterion.maxScore);
+    if (value < minAllowed || value > maxAllowed) {
+      throw new ApiError(
+        400,
+        `Оценка должна быть в диапазоне от ${minAllowed} до ${maxAllowed}`
+      );
     }
   }
 

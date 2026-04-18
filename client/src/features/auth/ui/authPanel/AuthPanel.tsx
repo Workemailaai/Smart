@@ -3,6 +3,12 @@ import { useNavigate } from 'react-router'
 import { userStore } from '@/entities/user'
 import type { AuthPanelMode, ViewConfig } from '../../model/authPanel.types'
 import { authFormStore } from '../../model/authFormStore'
+import {
+  formatRuPhoneMask,
+  isCompleteRuPhone,
+  normalizePhoneDigits,
+  ruPhoneMaskOnKeyDown,
+} from '@/shared/lib/ruPhone'
 import styles from './AuthPanel.module.css'
 
 type AuthPanelProps = {
@@ -13,7 +19,7 @@ const views: Record<AuthPanelMode, ViewConfig> = {
   signUpOrg: {
     title: 'Регистрация',
     subtitle: 'Профиль организатора',
-    fields: ['Имя / Организация', '+7 999 999-99-99', 'Пароль', 'Повторите пароль'],
+    fields: ['Имя / Организация', '+7 (999) 656-86-85', 'Пароль', 'Повторите пароль'],
     submitText: 'Зарегистрироваться',
     secondaryAction: 'Быстрый вход через VK',
     bottomText: 'Уже зарегистрированы?',
@@ -60,7 +66,7 @@ export const AuthPanel = observer(({ mode }: AuthPanelProps) => {
 
   const handleSubmit = async () => {
     if (mode === 'signUpOrg') {
-      if (!signUpForm.fullName || !signUpForm.phone || !signUpForm.password || !signUpForm.repeatPassword) {
+      if (!signUpForm.fullName || !isCompleteRuPhone(signUpForm.phone) || !signUpForm.password || !signUpForm.repeatPassword) {
         authFormStore.setError('Заполните все поля регистрации')
         return
       }
@@ -72,7 +78,7 @@ export const AuthPanel = observer(({ mode }: AuthPanelProps) => {
 
       await authFormStore.signUpOrganizer({
         fullName: signUpForm.fullName,
-        phone: signUpForm.phone,
+        phone: normalizePhoneDigits(signUpForm.phone),
         password: signUpForm.password,
       })
       if (userStore.user) {
@@ -82,13 +88,13 @@ export const AuthPanel = observer(({ mode }: AuthPanelProps) => {
     }
 
     if (mode === 'signInOrg') {
-      if (!signInOrgForm.phone || !signInOrgForm.password) {
+      if (!isCompleteRuPhone(signInOrgForm.phone) || !signInOrgForm.password) {
         authFormStore.setError('Заполните телефон и пароль')
         return
       }
 
       await authFormStore.signInOrganizer({
-        phone: signInOrgForm.phone,
+        phone: normalizePhoneDigits(signInOrgForm.phone),
         password: signInOrgForm.password,
       })
       if (userStore.user) {
@@ -97,13 +103,13 @@ export const AuthPanel = observer(({ mode }: AuthPanelProps) => {
       return
     }
 
-    if (!signInJuryForm.phone || !signInJuryForm.password) {
+    if (!isCompleteRuPhone(signInJuryForm.phone) || !signInJuryForm.password) {
       authFormStore.setError('Заполните телефон и пароль')
       return
     }
 
     await authFormStore.signInJury({
-      phone: signInJuryForm.phone,
+      phone: normalizePhoneDigits(signInJuryForm.phone),
       password: signInJuryForm.password,
     })
     if (userStore.user) {
@@ -115,20 +121,36 @@ export const AuthPanel = observer(({ mode }: AuthPanelProps) => {
     if (mode === 'signUpOrg') {
       const mapper: Record<string, keyof typeof signUpForm> = {
         'Имя / Организация': 'fullName',
-        '+7 999 999-99-99': 'phone',
+        '+7 (999) 656-86-85': 'phone',
         Пароль: 'password',
         'Повторите пароль': 'repeatPassword',
       }
       const key = mapper[field]
-      const type = field.toLowerCase().includes('пароль') ? 'password' : 'text'
+      const isPhone = key === 'phone'
+      const type = field.toLowerCase().includes('пароль') ? 'password' : isPhone ? 'tel' : 'text'
       return (
         <input
           className={styles.input}
           key={field}
-          onChange={(event) => authFormStore.setSignUpField(key, event.target.value)}
-          placeholder={field}
+          onChange={(event) =>
+            authFormStore.setSignUpField(
+              key,
+              (isPhone ? formatRuPhoneMask(event.target.value) : event.target.value) as (typeof signUpForm)[typeof key],
+            )
+          }
+          onKeyDown={
+            isPhone
+              ? (e) =>
+                  ruPhoneMaskOnKeyDown(e, signUpForm.phone, (v) => {
+                    authFormStore.setSignUpField('phone', v)
+                  })
+              : undefined
+          }
+          placeholder={isPhone ? '+7 (999) 656-86-85' : field}
           type={type}
-          value={signUpForm[key]}
+          inputMode={isPhone ? 'numeric' : undefined}
+          autoComplete={isPhone ? 'tel-national' : undefined}
+          value={isPhone ? formatRuPhoneMask(signUpForm.phone) : signUpForm[key]}
         />
       )
     }
@@ -139,15 +161,31 @@ export const AuthPanel = observer(({ mode }: AuthPanelProps) => {
         Пароль: 'password',
       }
       const key = mapper[field]
-      const type = field.toLowerCase().includes('пароль') ? 'password' : 'text'
+      const isPhone = key === 'phone'
+      const type = field.toLowerCase().includes('пароль') ? 'password' : isPhone ? 'tel' : 'text'
       return (
         <input
           className={styles.input}
           key={field}
-          onChange={(event) => authFormStore.setSignInOrgField(key, event.target.value)}
-          placeholder={field}
+          onChange={(event) =>
+            authFormStore.setSignInOrgField(
+              key,
+              (isPhone ? formatRuPhoneMask(event.target.value) : event.target.value) as (typeof signInOrgForm)[typeof key],
+            )
+          }
+          onKeyDown={
+            isPhone
+              ? (e) =>
+                  ruPhoneMaskOnKeyDown(e, signInOrgForm.phone, (v) => {
+                    authFormStore.setSignInOrgField('phone', v)
+                  })
+              : undefined
+          }
+          placeholder={isPhone ? '+7 (999) 656-86-85' : field}
           type={type}
-          value={signInOrgForm[key]}
+          inputMode={isPhone ? 'numeric' : undefined}
+          autoComplete={isPhone ? 'tel-national' : undefined}
+          value={isPhone ? formatRuPhoneMask(signInOrgForm.phone) : signInOrgForm[key]}
         />
       )
     }
@@ -157,15 +195,31 @@ export const AuthPanel = observer(({ mode }: AuthPanelProps) => {
       Пароль: 'password',
     }
     const key = mapper[field]
-    const type = field.toLowerCase().includes('пароль') ? 'password' : 'text'
+    const isPhone = key === 'phone'
+    const type = field.toLowerCase().includes('пароль') ? 'password' : isPhone ? 'tel' : 'text'
     return (
       <input
         className={styles.input}
         key={field}
-        onChange={(event) => authFormStore.setSignInJuryField(key, event.target.value)}
-        placeholder={field}
+        onChange={(event) =>
+          authFormStore.setSignInJuryField(
+            key,
+            (isPhone ? formatRuPhoneMask(event.target.value) : event.target.value) as (typeof signInJuryForm)[typeof key],
+          )
+        }
+        onKeyDown={
+          isPhone
+            ? (e) =>
+                ruPhoneMaskOnKeyDown(e, signInJuryForm.phone, (v) => {
+                  authFormStore.setSignInJuryField('phone', v)
+                })
+            : undefined
+        }
+        placeholder={isPhone ? '+7 (999) 656-86-85' : field}
         type={type}
-        value={signInJuryForm[key]}
+        inputMode={isPhone ? 'numeric' : undefined}
+        autoComplete={isPhone ? 'tel-national' : undefined}
+        value={isPhone ? formatRuPhoneMask(signInJuryForm.phone) : signInJuryForm[key]}
       />
     )
   }

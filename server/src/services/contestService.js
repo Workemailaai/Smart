@@ -282,6 +282,7 @@ class ContestService {
           return {
             criterionId: criterion.id,
             name: criterion.name,
+            minScore: criterion.minScore ?? 0,
             maxScore: criterion.maxScore,
             value
           };
@@ -302,7 +303,7 @@ class ContestService {
       return {
         id: participant.id,
         fullName: participant.fullName,
-        age: participant.age,
+        extraInfo: participant.extraInfo,
         country: participant.country,
         photoUrl: participant.photoUrl,
         juryCards,
@@ -378,7 +379,7 @@ class ContestService {
         return {
           participantId: participant.id,
           fullName: participant.fullName,
-          age: participant.age,
+          extraInfo: participant.extraInfo,
           country: participant.country,
           photoUrl: participant.photoUrl,
           score: average,
@@ -452,12 +453,19 @@ class ContestService {
     }
     for (const c of criteria) {
       const name = c?.name != null ? String(c.name).trim() : "";
+      const minScore = c?.minScore != null ? Number(c.minScore) : 0;
       const maxScore = Number(c?.maxScore);
       if (!name) {
         throw new ApiError(422, "У каждого критерия должно быть название");
       }
+      if (!Number.isInteger(minScore) || minScore < 0) {
+        throw new ApiError(422, "Нижняя граница критерия — целое число не меньше 0");
+      }
       if (!Number.isInteger(maxScore) || maxScore < 1) {
         throw new ApiError(422, "Верхняя граница критерия — целое число не меньше 1");
+      }
+      if (maxScore <= minScore) {
+        throw new ApiError(422, "Верхняя граница должна быть больше нижней");
       }
     }
     if (!Array.isArray(participants)) {
@@ -465,12 +473,8 @@ class ContestService {
     }
     for (const p of participants) {
       const fn = p?.fullName != null ? String(p.fullName).trim() : "";
-      const age = Number(p?.age);
       if (!fn) {
         throw new ApiError(422, "У каждого участника укажите ФИО");
-      }
-      if (!Number.isInteger(age) || age < 1 || age > 150) {
-        throw new ApiError(422, "Некорректный возраст участника");
       }
     }
     if (!Array.isArray(jury)) {
@@ -536,9 +540,10 @@ class ContestService {
 
       for (const c of criteria) {
         const name = String(c.name).trim();
+        const minScore = c.minScore != null ? Number(c.minScore) : 0;
         const maxScore = Number(c.maxScore);
         await Criterion.create(
-          { contestId: contest.id, name, maxScore },
+          { contestId: contest.id, name, minScore, maxScore },
           { transaction: t }
         );
       }
@@ -567,11 +572,15 @@ class ContestService {
           p.country != null && String(p.country).trim() !== ""
             ? String(p.country).trim()
             : null;
+        const extraInfoTrim =
+          p.extraInfo != null && String(p.extraInfo).trim() !== ""
+            ? String(p.extraInfo).trim()
+            : null;
         await Participant.create(
           {
             contestId: contest.id,
             fullName: String(p.fullName).trim(),
-            age: Number(p.age),
+            extraInfo: extraInfoTrim,
             country: countryTrim,
             photoUrl
           },

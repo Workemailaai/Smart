@@ -10,11 +10,11 @@ class ParticipantController {
       if (req.user.role !== "organizer") {
         throw new ApiError(403, "Only organizer can create participants");
       }
-      requireFields(req.body, ["contestId", "fullName", "age"]);
+      requireFields(req.body, ["contestId", "fullName"]);
       const participant = await ParticipantService.createParticipant({
         contestId: req.body.contestId,
         fullName: req.body.fullName,
-        age: req.body.age,
+        extraInfo: req.body.extraInfo,
         country: req.body.country,
         photoUrl: req.body.photoUrl,
         organizerId: req.user.id

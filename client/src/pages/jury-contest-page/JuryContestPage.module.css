@@ -188,10 +188,10 @@
 .searchIcon {
   width: 24px;
   height: 24px;
-  color: #0a0f15;
+  flex-shrink: 0;
+  display: block;
+  object-fit: contain;
   opacity: 0.9;
-  font-size: 20px;
-  line-height: 24px;
 }
 
 .search {

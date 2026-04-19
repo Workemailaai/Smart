@@ -6,7 +6,7 @@ import { TemplateCard, templateStore } from '@/entities/template'
 import { userStore } from '@/entities/user'
 import styles from './CabinetPage.module.css'
 
-type CabinetSection = 'events' | 'constructor' | 'settings' | 'info' | 'profile'
+type CabinetSection = 'events' | 'constructor' | 'profile'
 
 type CabinetPageProps = {
   section: CabinetSection
@@ -72,15 +72,11 @@ export const CabinetPage = observer(({ section }: CabinetPageProps) => {
   const pageTitle =
     section === 'constructor'
       ? 'Конструктор'
-      : section === 'settings'
-        ? 'Настройки'
-        : section === 'info'
-          ? 'Информация'
-          : section === 'profile'
-            ? 'Профиль'
-            : section === 'events' && !isOrganizer
-              ? 'Мои мероприятия'
-              : 'Мероприятия'
+      : section === 'profile'
+        ? 'Профиль'
+        : section === 'events' && !isOrganizer
+          ? 'Мои мероприятия'
+          : 'Мероприятия'
   const pendingContests = isOrganizer
     ? contestStore.organizerInProgressContests
     : contestStore.juryPendingContests
@@ -159,14 +155,22 @@ export const CabinetPage = observer(({ section }: CabinetPageProps) => {
                 <span className={styles.menuLabel}>Конструктор</span>
               </NavLink>
             ) : null}
-            <NavLink className={({ isActive }) => (isActive ? styles.activeItem : styles.menuItem)} to="/cabinet/settings">
+            <div
+              className={`${styles.menuItem} ${styles.menuItemInactive}`}
+              aria-disabled="true"
+              aria-label="Настройки (недоступно)"
+            >
               <span aria-hidden className={`${styles.navIcon} ${styles.navIconSettings}`} />
               <span className={styles.menuLabel}>Настройки</span>
-            </NavLink>
-            <NavLink className={({ isActive }) => (isActive ? styles.activeItem : styles.menuItem)} to="/cabinet/info">
+            </div>
+            <div
+              className={`${styles.menuItem} ${styles.menuItemInactive}`}
+              aria-disabled="true"
+              aria-label="Информация (недоступно)"
+            >
               <span aria-hidden className={`${styles.navIcon} ${styles.navIconInfo}`} />
               <span className={styles.menuLabel}>Информация</span>
-            </NavLink>
+            </div>
           </nav>
         </div>
 
@@ -191,24 +195,20 @@ export const CabinetPage = observer(({ section }: CabinetPageProps) => {
             >
               <span className={`${styles.juryBottomNavIcon} ${styles.juryBottomNavIconEvents}`} aria-hidden />
             </NavLink>
-            <NavLink
-              className={({ isActive }) =>
-                `${styles.juryBottomNavLink} ${isActive ? styles.juryBottomNavLinkActive : ''}`
-              }
-              to="/cabinet/settings"
-              aria-label="Настройки"
+            <span
+              className={`${styles.juryBottomNavLink} ${styles.juryBottomNavItemInactive}`}
+              aria-disabled="true"
+              aria-label="Настройки, раздел недоступен"
             >
               <span className={`${styles.juryBottomNavIcon} ${styles.juryBottomNavIconSettings}`} aria-hidden />
-            </NavLink>
-            <NavLink
-              className={({ isActive }) =>
-                `${styles.juryBottomNavLink} ${isActive ? styles.juryBottomNavLinkActive : ''}`
-              }
-              to="/cabinet/info"
-              aria-label="Информация"
+            </span>
+            <span
+              className={`${styles.juryBottomNavLink} ${styles.juryBottomNavItemInactive}`}
+              aria-disabled="true"
+              aria-label="Информация, раздел недоступен"
             >
               <span className={`${styles.juryBottomNavIcon} ${styles.juryBottomNavIconInfo}`} aria-hidden />
-            </NavLink>
+            </span>
             <NavLink
               className={({ isActive }) =>
                 `${styles.juryBottomNavLink} ${isActive ? styles.juryBottomNavLinkActive : ''}`
@@ -295,16 +295,14 @@ export const CabinetPage = observer(({ section }: CabinetPageProps) => {
                 </div>
                 <span className={styles.juryProfileBadge}>{roleTitle}</span>
               </div>
-              <button
-                className={styles.juryProfileSideBtn}
-                type="button"
-                onClick={() => navigate('/cabinet/settings')}
-                aria-label="Открыть настройки"
+              <div
+                className={`${styles.juryProfileSideBtn} ${styles.juryProfileSideBtnInactive}`}
+                aria-label="Настройки, раздел недоступен"
               >
                 <span className={styles.juryProfileSideBtnIcon} aria-hidden>
                   <img src="/nav/setting.svg" alt="" width={18} height={18} />
                 </span>
-              </button>
+              </div>
             </div>
             <button className={styles.juryProfileLogout} onClick={() => void onLogout()} type="button">
               <span aria-hidden className={styles.juryProfileLogoutIcon} />
@@ -519,15 +517,7 @@ export const CabinetPage = observer(({ section }: CabinetPageProps) => {
               </div>
             </section>
           </div>
-        ) : (
-          <div className={styles.cabinetPlaceholder}>
-            <p>
-              {section === 'settings'
-                ? 'Раздел настроек в разработке.'
-                : 'Раздел информации в разработке.'}
-            </p>
-          </div>
-        )}
+        ) : null}
       </div>
     </section>
   )

@@ -88,12 +88,12 @@ export const OrganizerContestPage = observer(() => {
             <NavLink className={({ isActive }) => (isActive ? styles.activeItem : styles.menuItem)} to="/cabinet/constructor">
               Конструктор
             </NavLink>
-            <NavLink className={({ isActive }) => (isActive ? styles.activeItem : styles.menuItem)} to="/cabinet/settings">
+            <span className={`${styles.menuItem} ${styles.menuItemInactive}`} aria-disabled="true">
               Настройки
-            </NavLink>
-            <NavLink className={({ isActive }) => (isActive ? styles.activeItem : styles.menuItem)} to="/cabinet/info">
+            </span>
+            <span className={`${styles.menuItem} ${styles.menuItemInactive}`} aria-disabled="true">
               Информация
-            </NavLink>
+            </span>
           </nav>
         </div>
 

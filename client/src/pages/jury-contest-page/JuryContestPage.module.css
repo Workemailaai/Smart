@@ -113,6 +113,17 @@
   background: rgba(255, 255, 255, 0.08);
 }
 
+.menuItem.menuItemInactive {
+  opacity: 0.35;
+  pointer-events: none;
+  cursor: not-allowed;
+}
+
+.menuItem.menuItemInactive:hover {
+  background: transparent;
+  opacity: 0.35;
+}
+
 .activeItem {
   background: rgba(255, 255, 255, 0.12);
   color: #fff;

@@ -66,11 +66,11 @@ export const routerConfig = createBrowserRouter([
           },
           {
             path: 'settings',
-            element: <CabinetPage section="settings" />,
+            element: <Navigate replace to="/cabinet/events" />,
           },
           {
             path: 'info',
-            element: <CabinetPage section="info" />,
+            element: <Navigate replace to="/cabinet/events" />,
           },
           {
             path: 'profile',

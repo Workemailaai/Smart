@@ -563,23 +563,32 @@ export const CreateEventForm = observer(function CreateEventForm() {
                         {p.extraInfo?.trim() ? p.extraInfo.trim() : '—'} · {p.country || '—'}
                       </p>
                     </div>
-                    <div className={styles.rowActions}>
+                    <div className={styles.personRowActions}>
                       <button
-                        className={styles.iconBtn}
+                        className={styles.personEditBtn}
                         onClick={() => openEditParticipant(p)}
                         type="button"
                         aria-label="Изменить"
                       >
-                        ✎
+                        <img alt="" className={styles.personEditIcon} src="/card-edit.svg" width={24} height={24} />
                       </button>
-                      <button
-                        className={`${styles.iconBtn} ${styles.iconBtnDanger}`}
-                        onClick={() => store.removeParticipant(p.localId)}
-                        type="button"
-                        aria-label="Удалить"
-                      >
-                        🗑
-                      </button>
+                      <div className={styles.personDeleteWrap}>
+                        <button
+                          className={styles.personDeleteStripe}
+                          onClick={() => store.removeParticipant(p.localId)}
+                          type="button"
+                          aria-label="Удалить"
+                        >
+                          <svg className={styles.personDeleteX} width="24" height="24" viewBox="0 0 24 24" aria-hidden>
+                            <path
+                              d="M7 7L17 17M17 7L7 17"
+                              stroke="white"
+                              strokeWidth="2"
+                              strokeLinecap="round"
+                            />
+                          </svg>
+                        </button>
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -611,18 +620,27 @@ export const CreateEventForm = observer(function CreateEventForm() {
                       <p className={styles.personName}>{j.fullName || 'Без имени'}</p>
                       <p className={styles.personSub}>{j.phone || '—'}</p>
                     </div>
-                    <div className={styles.rowActions}>
-                      <button className={styles.iconBtn} onClick={() => openEditJury(j)} type="button" aria-label="Изменить">
-                        ✎
+                    <div className={styles.personRowActions}>
+                      <button className={styles.personEditBtn} onClick={() => openEditJury(j)} type="button" aria-label="Изменить">
+                        <img alt="" className={styles.personEditIcon} src="/card-edit.svg" width={24} height={24} />
                       </button>
-                      <button
-                        className={`${styles.iconBtn} ${styles.iconBtnDanger}`}
-                        onClick={() => store.removeJuryMember(j.localId)}
-                        type="button"
-                        aria-label="Удалить"
-                      >
-                        🗑
-                      </button>
+                      <div className={styles.personDeleteWrap}>
+                        <button
+                          className={styles.personDeleteStripe}
+                          onClick={() => store.removeJuryMember(j.localId)}
+                          type="button"
+                          aria-label="Удалить"
+                        >
+                          <svg className={styles.personDeleteX} width="24" height="24" viewBox="0 0 24 24" aria-hidden>
+                            <path
+                              d="M7 7L17 17M17 7L7 17"
+                              stroke="white"
+                              strokeWidth="2"
+                              strokeLinecap="round"
+                            />
+                          </svg>
+                        </button>
+                      </div>
                     </div>
                   </div>
                 ))}

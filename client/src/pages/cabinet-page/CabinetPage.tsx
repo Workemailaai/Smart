@@ -89,6 +89,8 @@ export const CabinetPage = observer(({ section }: CabinetPageProps) => {
     ? contestStore.organizerCompletedContests
     : contestStore.juryRatedContests
   const archivedContests = isOrganizer ? contestStore.organizerArchivedContests : contestStore.juryArchivedContests
+  const hasNoOrganizerContests =
+    isOrganizer && pendingContests.length === 0 && ratedContests.length === 0 && archivedContests.length === 0
   const templates = templateStore.templates
   const titleByType = new Map<string, string>()
   contestTypeOptions.forEach((option) => {
@@ -315,7 +317,20 @@ export const CabinetPage = observer(({ section }: CabinetPageProps) => {
           </div>
         ) : section === 'events' ? (
           <div className={styles.eventsLayout}>
-            <section className={isOrganizer ? styles.eventsSectionOrganizer : styles.eventsCard}>
+            {hasNoOrganizerContests && !contestStore.isLoading && !contestStore.error ? (
+              <div className={styles.eventsEmptyState}>
+                <p className={styles.eventsEmptyTitle}>У вас еще нет ни одного мероприятия</p>
+                <button
+                  className={styles.eventsEmptyButton}
+                  type="button"
+                  onClick={() => navigate('/cabinet/constructor')}
+                >
+                  Перейти в конструктор
+                </button>
+              </div>
+            ) : (
+              <>
+                <section className={isOrganizer ? styles.eventsSectionOrganizer : styles.eventsCard}>
               {isOrganizer ? (
                 <div className={styles.eventsSectionBlock}>
                   <div className={styles.sectionHeader}>
@@ -442,7 +457,7 @@ export const CabinetPage = observer(({ section }: CabinetPageProps) => {
               )}
             </section>
 
-            <section className={isOrganizer ? styles.eventsSectionOrganizer : styles.eventsCard}>
+                <section className={isOrganizer ? styles.eventsSectionOrganizer : styles.eventsCard}>
               {isOrganizer ? (
                 <div className={styles.eventsSectionBlock}>
                   <div className={styles.sectionHeader}>
@@ -694,7 +709,9 @@ export const CabinetPage = observer(({ section }: CabinetPageProps) => {
                   </div>
                 </>
               )}
-            </section>
+                </section>
+              </>
+            )}
           </div>
         ) : (
           <div className={styles.cabinetPlaceholder}>

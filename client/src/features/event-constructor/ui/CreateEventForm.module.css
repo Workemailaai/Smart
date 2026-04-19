@@ -610,21 +610,6 @@
   cursor: pointer;
 }
 
-.iconBtn {
-  width: 36px;
-  height: 36px;
-  border-radius: 18px;
-  border: none;
-  background: #e0e5eb;
-  cursor: pointer;
-  font-size: 18px;
-  line-height: 1;
-}
-
-.iconBtnDanger {
-  color: #b03a44;
-}
-
 /* Участники / жюри: две колонки по макету */
 .listsRow {
   align-self: stretch;
@@ -736,19 +721,19 @@
   overflow-x: hidden;
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  padding: 8px;
   box-sizing: border-box;
 }
 
+/* Строка как карточка организатора: белый фон, карандаш + красная вкладка удаления */
 .personRow {
   display: flex;
   align-items: center;
   gap: 12px;
   padding: 12px 16px;
   border-radius: 16px;
-  background: rgba(10, 15, 21, 0.04);
+  background: #fff;
   flex-shrink: 0;
+  overflow: hidden;
 }
 
 .avatarSm {
@@ -780,9 +765,91 @@
   margin: 2px 0 0;
 }
 
-.rowActions {
+.personRowActions {
   display: flex;
+  height: 68px;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: flex-end;
   gap: 8px;
+  margin-left: auto;
+}
+
+.personEditBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.personEditIcon {
+  display: block;
+  flex-shrink: 0;
+}
+
+.personDeleteWrap {
+  display: flex;
+  align-items: stretch;
+  flex-shrink: 0;
+  height: 68px;
+}
+
+.personDeleteStripe {
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 8px;
+  min-width: 8px;
+  height: 68px;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  border: none;
+  background: #ff383c;
+  cursor: pointer;
+  border-top-left-radius: 20px;
+  border-bottom-left-radius: 20px;
+  transition:
+    width 0.22s ease,
+    min-width 0.22s ease;
+}
+
+.personDeleteStripe:hover,
+.personDeleteStripe:focus-visible {
+  width: 40px;
+  min-width: 40px;
+}
+
+.personDeleteX {
+  display: block;
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  opacity: 0;
+  transition: opacity 0.18s ease;
+}
+
+.personDeleteStripe:hover .personDeleteX,
+.personDeleteStripe:focus-visible .personDeleteX {
+  opacity: 1;
+}
+
+@media (hover: none), (pointer: coarse) {
+  .personDeleteStripe {
+    width: 40px;
+    min-width: 40px;
+  }
+
+  .personDeleteX {
+    opacity: 1;
+  }
 }
 
 .footerBar {

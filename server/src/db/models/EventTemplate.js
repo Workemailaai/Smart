@@ -31,7 +31,7 @@ module.exports = (sequelize, DataTypes) => {
       contestType: {
         type: DataTypes.STRING(32),
         allowNull: false,
-        defaultValue: "miss_world"
+        defaultValue: "creative"
       },
       organizerId: {
         type: DataTypes.INTEGER,

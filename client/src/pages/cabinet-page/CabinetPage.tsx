@@ -4,6 +4,7 @@ import { NavLink, Navigate, useNavigate } from 'react-router'
 import { ContestCard, contestStore, getContestTypes, type IContest } from '@/entities/contest'
 import { TemplateCard, templateStore } from '@/entities/template'
 import { userStore } from '@/entities/user'
+import { OrganizerCabinetSidebar } from '@/widgets/organizer-cabinet-sidebar/OrganizerCabinetSidebar'
 import styles from './CabinetPage.module.css'
 
 type CabinetSection = 'events' | 'constructor' | 'settings' | 'info' | 'profile'
@@ -125,59 +126,52 @@ export const CabinetPage = observer(({ section }: CabinetPageProps) => {
       className={`${styles.page} ${!isOrganizer ? styles.pageJuryCabinet : ''}`}
       data-cabinet-section={section}
     >
-      <aside className={styles.sidebar}>
-        <div>
-          <div className={styles.sidebarHeader}>
-            <h1 className={styles.brand}>СмартОценка</h1>
-          </div>
-          <div className={styles.profileCard}>
-            <div className={styles.avatarWrap}>
-              <div className={styles.avatar}>{getInitials(fullName)}</div>
+      {isOrganizer ? (
+        <OrganizerCabinetSidebar fullName={fullName} phone={user.phone} onLogout={onLogout} />
+      ) : (
+        <aside className={styles.sidebar}>
+          <div>
+            <div className={styles.sidebarHeader}>
+              <h1 className={styles.brand}>СмартОценка</h1>
             </div>
-            <p className={styles.name}>{fullName}</p>
-            <p className={styles.phone}>{user.phone}</p>
-            <span className={styles.roleBadge}>{roleTitle}</span>
-          </div>
+            <div className={styles.profileCard}>
+              <div className={styles.avatarWrap}>
+                <div className={styles.avatar}>{getInitials(fullName)}</div>
+              </div>
+              <p className={styles.name}>{fullName}</p>
+              <p className={styles.phone}>{user.phone}</p>
+              <span className={styles.roleBadge}>{roleTitle}</span>
+            </div>
 
-          <nav className={styles.menu}>
-            <NavLink className={({ isActive }) => (isActive ? styles.activeItem : styles.menuItem)} to="/cabinet/events">
-              <span aria-hidden className={`${styles.navIcon} ${styles.navIconEvents}`} />
-              <span className={styles.menuLabel}>Мероприятия</span>
-            </NavLink>
-            {!isOrganizer ? (
+            <nav className={styles.menu}>
+              <NavLink className={({ isActive }) => (isActive ? styles.activeItem : styles.menuItem)} to="/cabinet/events">
+                <span aria-hidden className={`${styles.navIcon} ${styles.navIconEvents}`} />
+                <span className={styles.menuLabel}>Мероприятия</span>
+              </NavLink>
               <NavLink className={({ isActive }) => (isActive ? styles.activeItem : styles.menuItem)} to="/cabinet/profile">
                 <span aria-hidden className={`${styles.navIcon} ${styles.navIconProfile}`} />
                 <span className={styles.menuLabel}>Профиль</span>
               </NavLink>
-            ) : null}
-            {isOrganizer ? (
-              <NavLink
-                className={({ isActive }) => (isActive ? styles.activeItem : styles.menuItem)}
-                to="/cabinet/constructor"
-              >
-                <span aria-hidden className={`${styles.navIcon} ${styles.navIconConstructor}`} />
-                <span className={styles.menuLabel}>Конструктор</span>
+              <NavLink className={({ isActive }) => (isActive ? styles.activeItem : styles.menuItem)} to="/cabinet/settings">
+                <span aria-hidden className={`${styles.navIcon} ${styles.navIconSettings}`} />
+                <span className={styles.menuLabel}>Настройки</span>
               </NavLink>
-            ) : null}
-            <NavLink className={({ isActive }) => (isActive ? styles.activeItem : styles.menuItem)} to="/cabinet/settings">
-              <span aria-hidden className={`${styles.navIcon} ${styles.navIconSettings}`} />
-              <span className={styles.menuLabel}>Настройки</span>
-            </NavLink>
-            <NavLink className={({ isActive }) => (isActive ? styles.activeItem : styles.menuItem)} to="/cabinet/info">
-              <span aria-hidden className={`${styles.navIcon} ${styles.navIconInfo}`} />
-              <span className={styles.menuLabel}>Информация</span>
-            </NavLink>
-          </nav>
-        </div>
+              <NavLink className={({ isActive }) => (isActive ? styles.activeItem : styles.menuItem)} to="/cabinet/info">
+                <span aria-hidden className={`${styles.navIcon} ${styles.navIconInfo}`} />
+                <span className={styles.menuLabel}>Информация</span>
+              </NavLink>
+            </nav>
+          </div>
 
-        <div className={styles.sidebarFooter}>
-          <button className={styles.logoutButton} onClick={() => void onLogout()} type="button">
-            <span aria-hidden className={styles.logoutIcon} />
-            <span>Выход</span>
-          </button>
-          <p className={styles.versionText}>v 1.0.0{'\n'}© 2026 СмартОценка</p>
-        </div>
-      </aside>
+          <div className={styles.sidebarFooter}>
+            <button className={styles.logoutButton} onClick={() => void onLogout()} type="button">
+              <span aria-hidden className={styles.logoutIcon} />
+              <span>Выход</span>
+            </button>
+            <p className={styles.versionText}>v 1.0.0{'\n'}© 2026 СмартОценка</p>
+          </div>
+        </aside>
+      )}
 
       {!isOrganizer ? (
         <nav className={styles.juryBottomNav} aria-label="Основные разделы кабинета жюри">
@@ -249,10 +243,19 @@ export const CabinetPage = observer(({ section }: CabinetPageProps) => {
               </button>
               <h3 className={styles.constructorTitle}>Создать мероприятие</h3>
             </div>
-            <p className={styles.templatesTitle}>Шаблоны</p>
-            <div className={styles.templateGrid}>
-              <button className={styles.newTemplate} type="button">
-                +
+            <div className={styles.constructorTemplates}>
+              <p className={styles.templatesTitle}>Шаблоны</p>
+              <div className={styles.templateGrid}>
+              <button
+                className={styles.newTemplate}
+                type="button"
+                onClick={() => navigate('/cabinet/constructor/new')}
+                aria-label="Создать мероприятие без шаблона"
+              >
+                <span className={styles.newTemplateInner}>
+                  <span className={styles.newTemplatePlusH} />
+                  <span className={styles.newTemplatePlusV} />
+                </span>
               </button>
               {templateStore.isLoading ? <p className={styles.helperText}>Загрузка шаблонов...</p> : null}
               {templateStore.error ? <p className={styles.errorText}>{templateStore.error}</p> : null}
@@ -268,6 +271,7 @@ export const CabinetPage = observer(({ section }: CabinetPageProps) => {
                     </button>
                   ))
                 : null}
+              </div>
             </div>
           </div>
         ) : section === 'profile' && !isOrganizer ? (
@@ -311,210 +315,385 @@ export const CabinetPage = observer(({ section }: CabinetPageProps) => {
           </div>
         ) : section === 'events' ? (
           <div className={styles.eventsLayout}>
-            <section className={styles.eventsCard}>
-              <div className={styles.sectionHeader}>
-                <div className={styles.sectionTitleWrap}>
-                  <span className={`${styles.sectionDot} ${styles.sectionDotBlue}`}>
-                    <span />
-                  </span>
-                  <h3 className={styles.sectionTitle}>{isOrganizer ? 'Идет процесс оценивания' : 'Ждут оценки'}</h3>
-                  <span className={`${styles.sectionCount} ${styles.sectionCountBlue}`}>({filteredPendingContests.length})</span>
-                </div>
-                <div className={styles.filterBox}>
-                  <button
-                    className={styles.filterButton}
-                    type="button"
-                    onClick={() => {
-                      setIsPendingFilterOpen((prev) => !prev)
-                      setIsRatedFilterOpen(false)
-                      setIsArchivedFilterOpen(false)
-                    }}
-                  >
-                    <span>{getSelectedFilterTitle(pendingFilterType)}</span>
-                    <span aria-hidden className={styles.filterChevron} />
-                  </button>
-                  {isPendingFilterOpen ? (
-                    <div className={styles.filterDropdown}>
-                      {availableContestTypeOptions.map((option) => (
-                        <button
-                          key={`pending-${option.id}`}
-                          className={`${styles.filterOption} ${pendingFilterType === option.id ? styles.filterOptionActive : ''}`}
-                          type="button"
-                          onClick={() => {
-                            setPendingFilterType(option.id)
-                            setIsPendingFilterOpen(false)
-                          }}
-                        >
-                          {option.label}
-                        </button>
-                      ))}
+            <section className={isOrganizer ? styles.eventsSectionOrganizer : styles.eventsCard}>
+              {isOrganizer ? (
+                <div className={styles.eventsSectionBlock}>
+                  <div className={styles.sectionHeader}>
+                    <div className={styles.sectionTitleWrap}>
+                      <span className={`${styles.sectionDot} ${styles.sectionDotBlue}`}>
+                        <span />
+                      </span>
+                      <h3 className={styles.sectionTitle}>Идет процесс оценивания</h3>
+                      <span className={`${styles.sectionCount} ${styles.sectionCountBlue}`}>({filteredPendingContests.length})</span>
                     </div>
+                    <div className={styles.filterBox}>
+                      <button
+                        className={styles.filterButton}
+                        type="button"
+                        onClick={() => {
+                          setIsPendingFilterOpen((prev) => !prev)
+                          setIsRatedFilterOpen(false)
+                          setIsArchivedFilterOpen(false)
+                        }}
+                      >
+                        <span>{getSelectedFilterTitle(pendingFilterType)}</span>
+                        <span aria-hidden className={styles.filterChevron} />
+                      </button>
+                      {isPendingFilterOpen ? (
+                        <div className={styles.filterDropdown}>
+                          {availableContestTypeOptions.map((option) => (
+                            <button
+                              key={`pending-${option.id}`}
+                              className={`${styles.filterOption} ${pendingFilterType === option.id ? styles.filterOptionActive : ''}`}
+                              type="button"
+                              onClick={() => {
+                                setPendingFilterType(option.id)
+                                setIsPendingFilterOpen(false)
+                              }}
+                            >
+                              {option.label}
+                            </button>
+                          ))}
+                        </div>
+                      ) : null}
+                    </div>
+                  </div>
+                  {contestStore.isLoading ? <p className={`${styles.helperText} ${styles.eventsHelperText}`}>Загрузка мероприятий...</p> : null}
+                  {contestStore.error ? <p className={styles.errorText}>{contestStore.error}</p> : null}
+                  {!contestStore.isLoading && !contestStore.error && filteredPendingContests.length === 0 ? (
+                    <p className={`${styles.helperText} ${styles.eventsHelperText}`}>Пока нет мероприятий</p>
                   ) : null}
+                  {filteredPendingContests.map((contest) => (
+                    <ContestCard
+                      contest={contest}
+                      key={contest.id}
+                      organizerLayout
+                      withAlertStripe
+                      onDelete={() => contestStore.deleteContest(contest.id)}
+                      onOpen={() => navigate(`/cabinet/events/${contest.id}/organizer`)}
+                    />
+                  ))}
                 </div>
-              </div>
-              <div className={styles.eventsBody}>
-                <div className={styles.tableHeader}>
-                  <span className={styles.tableHeaderCover}>Обложка</span>
-                  <span>Название конкурса</span>
-                  <span>Дата</span>
-                  <span>Тип конкурса</span>
-                  <span className={styles.tableHeaderAction}>Действие</span>
-                </div>
-                {contestStore.isLoading ? <p className={`${styles.helperText} ${styles.eventsHelperText}`}>Загрузка мероприятий...</p> : null}
-                {contestStore.error ? <p className={styles.errorText}>{contestStore.error}</p> : null}
-                {!contestStore.isLoading && !contestStore.error && filteredPendingContests.length === 0 ? (
-                  <p className={`${styles.helperText} ${styles.eventsHelperText}`}>Пока нет мероприятий</p>
-                ) : null}
-                {filteredPendingContests.map((contest) => (
-                  <ContestCard
-                    contest={contest}
-                    juryCabinetCompact={!isOrganizer}
-                    key={contest.id}
-                    withAlertStripe={isOrganizer}
-                    onOpen={() =>
-                      navigate(
-                        isOrganizer
-                          ? `/cabinet/events/${contest.id}/organizer`
-                          : `/cabinet/events/${contest.id}/jury`,
-                      )
-                    }
-                  />
-                ))}
-              </div>
+              ) : (
+                <>
+                  <div className={styles.sectionHeader}>
+                    <div className={styles.sectionTitleWrap}>
+                      <span className={`${styles.sectionDot} ${styles.sectionDotBlue}`}>
+                        <span />
+                      </span>
+                      <h3 className={styles.sectionTitle}>Ждут оценки</h3>
+                      <span className={`${styles.sectionCount} ${styles.sectionCountBlue}`}>({filteredPendingContests.length})</span>
+                    </div>
+                    <div className={styles.filterBox}>
+                      <button
+                        className={styles.filterButton}
+                        type="button"
+                        onClick={() => {
+                          setIsPendingFilterOpen((prev) => !prev)
+                          setIsRatedFilterOpen(false)
+                          setIsArchivedFilterOpen(false)
+                        }}
+                      >
+                        <span>{getSelectedFilterTitle(pendingFilterType)}</span>
+                        <span aria-hidden className={styles.filterChevron} />
+                      </button>
+                      {isPendingFilterOpen ? (
+                        <div className={styles.filterDropdown}>
+                          {availableContestTypeOptions.map((option) => (
+                            <button
+                              key={`pending-${option.id}`}
+                              className={`${styles.filterOption} ${pendingFilterType === option.id ? styles.filterOptionActive : ''}`}
+                              type="button"
+                              onClick={() => {
+                                setPendingFilterType(option.id)
+                                setIsPendingFilterOpen(false)
+                              }}
+                            >
+                              {option.label}
+                            </button>
+                          ))}
+                        </div>
+                      ) : null}
+                    </div>
+                  </div>
+                  <div className={styles.eventsBody}>
+                    <div className={styles.tableHeader}>
+                      <span className={styles.tableHeaderCover}>Обложка</span>
+                      <span>Название конкурса</span>
+                      <span>Дата</span>
+                      <span>Тип конкурса</span>
+                      <span className={styles.tableHeaderAction}>Действие</span>
+                    </div>
+                    {contestStore.isLoading ? <p className={`${styles.helperText} ${styles.eventsHelperText}`}>Загрузка мероприятий...</p> : null}
+                    {contestStore.error ? <p className={styles.errorText}>{contestStore.error}</p> : null}
+                    {!contestStore.isLoading && !contestStore.error && filteredPendingContests.length === 0 ? (
+                      <p className={`${styles.helperText} ${styles.eventsHelperText}`}>Пока нет мероприятий</p>
+                    ) : null}
+                    {filteredPendingContests.map((contest) => (
+                      <ContestCard
+                        contest={contest}
+                        juryCabinetCompact
+                        key={contest.id}
+                        onOpen={() => navigate(`/cabinet/events/${contest.id}/jury`)}
+                      />
+                    ))}
+                  </div>
+                </>
+              )}
             </section>
 
-            <section className={styles.eventsCard}>
-              <div className={styles.sectionHeader}>
-                <div className={styles.sectionTitleWrap}>
-                  <span className={`${styles.sectionDot} ${styles.sectionDotGreen}`}>
-                    <span />
-                  </span>
-                  <h3 className={styles.sectionTitle}>{isOrganizer ? 'Завершенные' : 'Оцененные'}</h3>
-                  <span className={`${styles.sectionCount} ${styles.sectionCountGreen}`}>({filteredRatedContests.length})</span>
-                </div>
-                <div className={styles.filterBox}>
-                  <button
-                    className={styles.filterButton}
-                    type="button"
-                    onClick={() => {
-                      setIsRatedFilterOpen((prev) => !prev)
-                      setIsPendingFilterOpen(false)
-                      setIsArchivedFilterOpen(false)
-                    }}
-                  >
-                    <span>{getSelectedFilterTitle(ratedFilterType)}</span>
-                    <span aria-hidden className={styles.filterChevron} />
-                  </button>
-                  {isRatedFilterOpen ? (
-                    <div className={styles.filterDropdown}>
-                      {availableContestTypeOptions.map((option) => (
-                        <button
-                          key={`rated-${option.id}`}
-                          className={`${styles.filterOption} ${ratedFilterType === option.id ? styles.filterOptionActive : ''}`}
-                          type="button"
-                          onClick={() => {
-                            setRatedFilterType(option.id)
-                            setIsRatedFilterOpen(false)
-                          }}
-                        >
-                          {option.label}
-                        </button>
-                      ))}
+            <section className={isOrganizer ? styles.eventsSectionOrganizer : styles.eventsCard}>
+              {isOrganizer ? (
+                <div className={styles.eventsSectionBlock}>
+                  <div className={styles.sectionHeader}>
+                    <div className={styles.sectionTitleWrap}>
+                      <span className={`${styles.sectionDot} ${styles.sectionDotGreen}`}>
+                        <span />
+                      </span>
+                      <h3 className={styles.sectionTitle}>Завершенные</h3>
+                      <span className={`${styles.sectionCount} ${styles.sectionCountGreen}`}>({filteredRatedContests.length})</span>
                     </div>
+                    <div className={styles.filterBox}>
+                      <button
+                        className={styles.filterButton}
+                        type="button"
+                        onClick={() => {
+                          setIsRatedFilterOpen((prev) => !prev)
+                          setIsPendingFilterOpen(false)
+                          setIsArchivedFilterOpen(false)
+                        }}
+                      >
+                        <span>{getSelectedFilterTitle(ratedFilterType)}</span>
+                        <span aria-hidden className={styles.filterChevron} />
+                      </button>
+                      {isRatedFilterOpen ? (
+                        <div className={styles.filterDropdown}>
+                          {availableContestTypeOptions.map((option) => (
+                            <button
+                              key={`rated-${option.id}`}
+                              className={`${styles.filterOption} ${ratedFilterType === option.id ? styles.filterOptionActive : ''}`}
+                              type="button"
+                              onClick={() => {
+                                setRatedFilterType(option.id)
+                                setIsRatedFilterOpen(false)
+                              }}
+                            >
+                              {option.label}
+                            </button>
+                          ))}
+                        </div>
+                      ) : null}
+                    </div>
+                  </div>
+                  {!contestStore.isLoading && !contestStore.error && filteredRatedContests.length === 0 ? (
+                    <p className={`${styles.helperText} ${styles.eventsHelperText}`}>Пока нет оцененных мероприятий</p>
                   ) : null}
+                  {filteredRatedContests.map((contest) => (
+                    <ContestCard
+                      contest={contest}
+                      key={contest.id}
+                      organizerLayout
+                      variant="results"
+                      withAlertStripe
+                      onDelete={() => contestStore.deleteContest(contest.id)}
+                      onOpen={() => navigate(`/cabinet/events/${contest.id}/results`)}
+                    />
+                  ))}
                 </div>
-              </div>
-              <div className={styles.eventsBody}>
-                <div className={styles.tableHeader}>
-                  <span className={styles.tableHeaderCover}>Обложка</span>
-                  <span>Название конкурса</span>
-                  <span>Дата</span>
-                  <span>Тип конкурса</span>
-                  <span className={styles.tableHeaderAction}>Действие</span>
-                </div>
-                {!contestStore.isLoading && !contestStore.error && filteredRatedContests.length === 0 ? (
-                  <p className={`${styles.helperText} ${styles.eventsHelperText}`}>Пока нет оцененных мероприятий</p>
-                ) : null}
-                {filteredRatedContests.map((contest) => (
-                  <ContestCard
-                    contest={contest}
-                    juryCabinetCompact={!isOrganizer}
-                    key={contest.id}
-                    variant={isOrganizer || contest.status === 'archived' ? 'results' : 'pending'}
-                    onOpen={() =>
-                      navigate(
-                        isOrganizer || contest.status === 'archived'
-                          ? `/cabinet/events/${contest.id}/results`
-                          : `/cabinet/events/${contest.id}/jury`,
-                      )
-                    }
-                  />
-                ))}
-              </div>
+              ) : (
+                <>
+                  <div className={styles.sectionHeader}>
+                    <div className={styles.sectionTitleWrap}>
+                      <span className={`${styles.sectionDot} ${styles.sectionDotGreen}`}>
+                        <span />
+                      </span>
+                      <h3 className={styles.sectionTitle}>Оцененные</h3>
+                      <span className={`${styles.sectionCount} ${styles.sectionCountGreen}`}>({filteredRatedContests.length})</span>
+                    </div>
+                    <div className={styles.filterBox}>
+                      <button
+                        className={styles.filterButton}
+                        type="button"
+                        onClick={() => {
+                          setIsRatedFilterOpen((prev) => !prev)
+                          setIsPendingFilterOpen(false)
+                          setIsArchivedFilterOpen(false)
+                        }}
+                      >
+                        <span>{getSelectedFilterTitle(ratedFilterType)}</span>
+                        <span aria-hidden className={styles.filterChevron} />
+                      </button>
+                      {isRatedFilterOpen ? (
+                        <div className={styles.filterDropdown}>
+                          {availableContestTypeOptions.map((option) => (
+                            <button
+                              key={`rated-${option.id}`}
+                              className={`${styles.filterOption} ${ratedFilterType === option.id ? styles.filterOptionActive : ''}`}
+                              type="button"
+                              onClick={() => {
+                                setRatedFilterType(option.id)
+                                setIsRatedFilterOpen(false)
+                              }}
+                            >
+                              {option.label}
+                            </button>
+                          ))}
+                        </div>
+                      ) : null}
+                    </div>
+                  </div>
+                  <div className={styles.eventsBody}>
+                    <div className={styles.tableHeader}>
+                      <span className={styles.tableHeaderCover}>Обложка</span>
+                      <span>Название конкурса</span>
+                      <span>Дата</span>
+                      <span>Тип конкурса</span>
+                      <span className={styles.tableHeaderAction}>Действие</span>
+                    </div>
+                    {!contestStore.isLoading && !contestStore.error && filteredRatedContests.length === 0 ? (
+                      <p className={`${styles.helperText} ${styles.eventsHelperText}`}>Пока нет оцененных мероприятий</p>
+                    ) : null}
+                    {filteredRatedContests.map((contest) => (
+                      <ContestCard
+                        contest={contest}
+                        juryCabinetCompact
+                        key={contest.id}
+                        variant={contest.status === 'archived' ? 'results' : 'pending'}
+                        onOpen={() =>
+                          navigate(
+                            contest.status === 'archived'
+                              ? `/cabinet/events/${contest.id}/results`
+                              : `/cabinet/events/${contest.id}/jury`,
+                          )
+                        }
+                      />
+                    ))}
+                  </div>
+                </>
+              )}
             </section>
 
-            <section className={styles.eventsCard}>
-              <div className={styles.sectionHeader}>
-                <div className={styles.sectionTitleWrap}>
-                  <span className={`${styles.sectionDot} ${styles.sectionDotOrange}`}>
-                    <span />
-                  </span>
-                  <h3 className={styles.sectionTitle}>Архив</h3>
-                  <span className={`${styles.sectionCount} ${styles.sectionCountOrange}`}>({filteredArchivedContests.length})</span>
-                </div>
-                <div className={styles.filterBox}>
-                  <button
-                    className={styles.filterButton}
-                    type="button"
-                    onClick={() => {
-                      setIsArchivedFilterOpen((prev) => !prev)
-                      setIsPendingFilterOpen(false)
-                      setIsRatedFilterOpen(false)
-                    }}
-                  >
-                    <span>{getSelectedFilterTitle(archivedFilterType)}</span>
-                    <span aria-hidden className={styles.filterChevron} />
-                  </button>
-                  {isArchivedFilterOpen ? (
-                    <div className={styles.filterDropdown}>
-                      {availableContestTypeOptions.map((option) => (
-                        <button
-                          key={`archived-${option.id}`}
-                          className={`${styles.filterOption} ${archivedFilterType === option.id ? styles.filterOptionActive : ''}`}
-                          type="button"
-                          onClick={() => {
-                            setArchivedFilterType(option.id)
-                            setIsArchivedFilterOpen(false)
-                          }}
-                        >
-                          {option.label}
-                        </button>
-                      ))}
+            <section className={isOrganizer ? styles.eventsSectionOrganizer : styles.eventsCard}>
+              {isOrganizer ? (
+                <div className={styles.eventsSectionBlock}>
+                  <div className={styles.sectionHeader}>
+                    <div className={styles.sectionTitleWrap}>
+                      <span className={`${styles.sectionDot} ${styles.sectionDotOrange}`}>
+                        <span />
+                      </span>
+                      <h3 className={styles.sectionTitle}>Архив</h3>
+                      <span className={`${styles.sectionCount} ${styles.sectionCountOrange}`}>({filteredArchivedContests.length})</span>
                     </div>
+                    <div className={styles.filterBox}>
+                      <button
+                        className={styles.filterButton}
+                        type="button"
+                        onClick={() => {
+                          setIsArchivedFilterOpen((prev) => !prev)
+                          setIsPendingFilterOpen(false)
+                          setIsRatedFilterOpen(false)
+                        }}
+                      >
+                        <span>{getSelectedFilterTitle(archivedFilterType)}</span>
+                        <span aria-hidden className={styles.filterChevron} />
+                      </button>
+                      {isArchivedFilterOpen ? (
+                        <div className={styles.filterDropdown}>
+                          {availableContestTypeOptions.map((option) => (
+                            <button
+                              key={`archived-${option.id}`}
+                              className={`${styles.filterOption} ${archivedFilterType === option.id ? styles.filterOptionActive : ''}`}
+                              type="button"
+                              onClick={() => {
+                                setArchivedFilterType(option.id)
+                                setIsArchivedFilterOpen(false)
+                              }}
+                            >
+                              {option.label}
+                            </button>
+                          ))}
+                        </div>
+                      ) : null}
+                    </div>
+                  </div>
+                  {!contestStore.isLoading && !contestStore.error && filteredArchivedContests.length === 0 ? (
+                    <p className={`${styles.helperText} ${styles.eventsHelperText}`}>Архив пуст</p>
                   ) : null}
+                  {filteredArchivedContests.map((contest) => (
+                    <ContestCard
+                      contest={contest}
+                      key={contest.id}
+                      organizerLayout
+                      variant="results"
+                      onOpen={() => navigate(`/cabinet/events/${contest.id}/results`)}
+                    />
+                  ))}
                 </div>
-              </div>
-              <div className={styles.eventsBody}>
-                <div className={styles.tableHeader}>
-                  <span className={styles.tableHeaderCover}>Обложка</span>
-                  <span>Название конкурса</span>
-                  <span>Дата</span>
-                  <span>Тип конкурса</span>
-                  <span className={styles.tableHeaderAction}>Действие</span>
-                </div>
-                {!contestStore.isLoading && !contestStore.error && filteredArchivedContests.length === 0 ? (
-                  <p className={`${styles.helperText} ${styles.eventsHelperText}`}>Архив пуст</p>
-                ) : null}
-                {filteredArchivedContests.map((contest) => (
-                  <ContestCard
-                    contest={contest}
-                    juryCabinetCompact={!isOrganizer}
-                    key={contest.id}
-                    variant="results"
-                    onOpen={() => navigate(`/cabinet/events/${contest.id}/results`)}
-                  />
-                ))}
-              </div>
+              ) : (
+                <>
+                  <div className={styles.sectionHeader}>
+                    <div className={styles.sectionTitleWrap}>
+                      <span className={`${styles.sectionDot} ${styles.sectionDotOrange}`}>
+                        <span />
+                      </span>
+                      <h3 className={styles.sectionTitle}>Архив</h3>
+                      <span className={`${styles.sectionCount} ${styles.sectionCountOrange}`}>({filteredArchivedContests.length})</span>
+                    </div>
+                    <div className={styles.filterBox}>
+                      <button
+                        className={styles.filterButton}
+                        type="button"
+                        onClick={() => {
+                          setIsArchivedFilterOpen((prev) => !prev)
+                          setIsPendingFilterOpen(false)
+                          setIsRatedFilterOpen(false)
+                        }}
+                      >
+                        <span>{getSelectedFilterTitle(archivedFilterType)}</span>
+                        <span aria-hidden className={styles.filterChevron} />
+                      </button>
+                      {isArchivedFilterOpen ? (
+                        <div className={styles.filterDropdown}>
+                          {availableContestTypeOptions.map((option) => (
+                            <button
+                              key={`archived-${option.id}`}
+                              className={`${styles.filterOption} ${archivedFilterType === option.id ? styles.filterOptionActive : ''}`}
+                              type="button"
+                              onClick={() => {
+                                setArchivedFilterType(option.id)
+                                setIsArchivedFilterOpen(false)
+                              }}
+                            >
+                              {option.label}
+                            </button>
+                          ))}
+                        </div>
+                      ) : null}
+                    </div>
+                  </div>
+                  <div className={styles.eventsBody}>
+                    <div className={styles.tableHeader}>
+                      <span className={styles.tableHeaderCover}>Обложка</span>
+                      <span>Название конкурса</span>
+                      <span>Дата</span>
+                      <span>Тип конкурса</span>
+                      <span className={styles.tableHeaderAction}>Действие</span>
+                    </div>
+                    {!contestStore.isLoading && !contestStore.error && filteredArchivedContests.length === 0 ? (
+                      <p className={`${styles.helperText} ${styles.eventsHelperText}`}>Архив пуст</p>
+                    ) : null}
+                    {filteredArchivedContests.map((contest) => (
+                      <ContestCard
+                        contest={contest}
+                        juryCabinetCompact
+                        key={contest.id}
+                        variant="results"
+                        onOpen={() => navigate(`/cabinet/events/${contest.id}/results`)}
+                      />
+                    ))}
+                  </div>
+                </>
+              )}
             </section>
           </div>
         ) : (

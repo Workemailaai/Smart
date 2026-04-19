@@ -1,5 +1,5 @@
 import { observer } from 'mobx-react-lite'
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router'
 import { contestStore, createContestFull, getContestTypes } from '@/entities/contest'
 import { createTemplate, getTemplateById, templateStore } from '@/entities/template'
@@ -8,6 +8,34 @@ import { createEventFormStore, type DraftJury, type DraftParticipant } from '../
 import { ParticipantProfileModal } from './ParticipantProfileModal'
 import { JuryProfileModal } from './JuryProfileModal'
 import styles from './CreateEventForm.module.css'
+
+/** Шесть основных типов в дропдауне конструктора (совпадает с макетом) */
+const PRIMARY_CONTEST_TYPE_IDS = new Set([
+  'creative',
+  'sports',
+  'designers',
+  'rating_objects',
+  'student_work',
+  'other',
+])
+
+const FALLBACK_CONTEST_TYPES: IContestTypeOption[] = [
+  { id: 'creative', label: 'Творческий конкурс' },
+  { id: 'sports', label: 'Спортивный конкурс' },
+  { id: 'designers', label: 'Конкурс дизайнеров' },
+  { id: 'rating_objects', label: 'Построение рейтинга объектов' },
+  { id: 'student_work', label: 'Оценка студенческих работ' },
+  { id: 'other', label: 'Другое' },
+]
+
+const PRIMARY_ORDER = [
+  'creative',
+  'sports',
+  'designers',
+  'rating_objects',
+  'student_work',
+  'other',
+] as const
 
 /** Общие границы оценки для всех показателей (согласованы с валидацией на сервере) */
 function syncAllCriteriaBounds(
@@ -23,6 +51,27 @@ function syncAllCriteriaBounds(
   store.criteria.forEach((c) => store.updateCriterion(c.localId, { minScore: m, maxScore: M }))
 }
 
+/** Границы для первого показателя из полей формы (с тем же зажимом, что и syncAllCriteriaBounds) */
+function getClampedBoundsFromStrings(
+  minStr: string,
+  maxStr: string,
+  fallbackMin: number,
+  fallbackMax: number,
+): { minScore: number; maxScore: number } {
+  const parsePart = (s: string, fallback: number) => {
+    const t = s.trim()
+    if (t === '') return fallback
+    const n = Number(t)
+    return Number.isFinite(n) ? Math.round(n) : fallback
+  }
+  let m = parsePart(minStr, fallbackMin)
+  let M = parsePart(maxStr, fallbackMax)
+  if (!Number.isFinite(m) || m < 0) m = 0
+  if (!Number.isFinite(M) || M < 1) M = 2
+  if (M <= m) M = m + 1
+  return { minScore: m, maxScore: M }
+}
+
 export const CreateEventForm = observer(function CreateEventForm() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
@@ -34,7 +83,7 @@ export const CreateEventForm = observer(function CreateEventForm() {
   const [juryModalOpen, setJuryModalOpen] = useState(false)
   const [juryDraft, setJuryDraft] = useState<DraftJury | null>(null)
   const [juryModalKey, setJuryModalKey] = useState(0)
-  const [isJuryPreferenceEnabled, setIsJuryPreferenceEnabled] = useState(true)
+  const [isJuryPreferenceEnabled, setIsJuryPreferenceEnabled] = useState(false)
   /** Строковое состояние полей границ — чтобы можно было стереть ввод и набрать число заново */
   const [boundaryMinStr, setBoundaryMinStr] = useState(() =>
     String(store.criteria[0]?.minScore ?? 1),
@@ -42,6 +91,11 @@ export const CreateEventForm = observer(function CreateEventForm() {
   const [boundaryMaxStr, setBoundaryMaxStr] = useState(() =>
     String(store.criteria[0]?.maxScore ?? 10),
   )
+  /** Черновик названия для следующей строки показателя (добавление только после ввода + галка) */
+  const [newCriterionDraftName, setNewCriterionDraftName] = useState('')
+  /** DnD: индекс перетаскиваемой строки и подсветка цели */
+  const [criterionDragFrom, setCriterionDragFrom] = useState<number | null>(null)
+  const [criterionDragOver, setCriterionDragOver] = useState<number | null>(null)
 
   useEffect(() => {
     createEventFormStore.reset()
@@ -55,6 +109,25 @@ export const CreateEventForm = observer(function CreateEventForm() {
     }
   }, [store.criteria[0]?.localId, store.criteria[0]?.minScore, store.criteria[0]?.maxScore])
 
+  /** Выкл. значимости → сбрасываем предпочтения жюри. Вкл. предпочтений → при выкл. значимости включаем её автоматически. */
+  const handleToggleCriteriaWeights = () => {
+    const next = !store.useCriteriaWeights
+    store.setUseCriteriaWeights(next)
+    if (!next) setIsJuryPreferenceEnabled(false)
+  }
+
+  const handleToggleJuryPreferences = () => {
+    const next = !isJuryPreferenceEnabled
+    if (next) {
+      if (!store.useCriteriaWeights) store.setUseCriteriaWeights(true)
+      setIsJuryPreferenceEnabled(true)
+    } else {
+      setIsJuryPreferenceEnabled(false)
+    }
+  }
+
+  const canReorderCriteria = store.useCriteriaWeights && store.criteria.length >= 2
+
   const commitBoundaryInputs = () => {
     const c0 = store.criteria[0]
     const parsePart = (s: string, fallback: number) => {
@@ -63,27 +136,39 @@ export const CreateEventForm = observer(function CreateEventForm() {
       const n = Number(t)
       return Number.isFinite(n) ? Math.round(n) : fallback
     }
-    const m = parsePart(boundaryMinStr, c0?.minScore ?? 0)
+    const m = parsePart(boundaryMinStr, c0?.minScore ?? 1)
     const M = parsePart(boundaryMaxStr, c0?.maxScore ?? 10)
     syncAllCriteriaBounds(store, m, M)
     const c = store.criteria[0]
     if (c) {
       setBoundaryMinStr(String(c.minScore))
       setBoundaryMaxStr(String(c.maxScore))
+    } else {
+      const { minScore, maxScore } = getClampedBoundsFromStrings(boundaryMinStr, boundaryMaxStr, 1, 10)
+      setBoundaryMinStr(String(minScore))
+      setBoundaryMaxStr(String(maxScore))
     }
   }
 
   useEffect(() => {
     void getContestTypes().then((r) => {
       if (r.data?.length) setTypeOptions(r.data)
-      else {
-        setTypeOptions([
-          { id: 'miss_world', label: 'Мисс мира' },
-          { id: 'miss_universe', label: 'Мисс вселенная' },
-        ])
-      }
+      else setTypeOptions(FALLBACK_CONTEST_TYPES)
     })
   }, [])
+
+  const typeSelectOptions = useMemo(() => {
+    const src = typeOptions.length ? typeOptions : FALLBACK_CONTEST_TYPES
+    const primary = PRIMARY_ORDER.map((id) => src.find((t) => t.id === id)).filter(
+      (t): t is IContestTypeOption => Boolean(t),
+    )
+    const ct = store.contestType
+    if (ct && !PRIMARY_CONTEST_TYPE_IDS.has(ct)) {
+      const legacy = src.find((t) => t.id === ct)
+      if (legacy && !primary.some((p) => p.id === legacy.id)) return [legacy, ...primary]
+    }
+    return primary.length ? primary : FALLBACK_CONTEST_TYPES
+  }, [typeOptions, store.contestType])
 
   useEffect(() => {
     const tid = searchParams.get('templateId')
@@ -200,7 +285,7 @@ export const CreateEventForm = observer(function CreateEventForm() {
               <span className={styles.typeRowLabel}>Тип конкурса</span>
               <div className={styles.typeValueCluster}>
                 <span className={styles.typeSelectedLabel}>
-                  {typeOptions.find((t) => t.id === store.contestType)?.label ?? ''}
+                  {typeSelectOptions.find((t) => t.id === store.contestType)?.label ?? ''}
                 </span>
                 <svg
                   className={styles.typeChevronInline}
@@ -220,7 +305,7 @@ export const CreateEventForm = observer(function CreateEventForm() {
                   onChange={(e) => store.setContestType(e.target.value)}
                   value={store.contestType}
                 >
-                  {typeOptions.map((t) => (
+                  {typeSelectOptions.map((t) => (
                     <option key={t.id} value={t.id}>
                       {t.label}
                     </option>
@@ -237,7 +322,7 @@ export const CreateEventForm = observer(function CreateEventForm() {
                 aria-pressed={store.useCriteriaWeights}
                 className={styles.switchButton}
                 data-property-1={store.useCriteriaWeights ? 'Active' : 'Inactive'}
-                onClick={() => store.setUseCriteriaWeights(!store.useCriteriaWeights)}
+                onClick={handleToggleCriteriaWeights}
                 type="button"
               >
                 <span className={`${styles.switchTrack} ${store.useCriteriaWeights ? styles.switchTrackOn : styles.switchTrackOff}`}>
@@ -252,7 +337,7 @@ export const CreateEventForm = observer(function CreateEventForm() {
                 aria-pressed={isJuryPreferenceEnabled}
                 className={styles.switchButton}
                 data-property-1={isJuryPreferenceEnabled ? 'Active' : 'Inactive'}
-                onClick={() => setIsJuryPreferenceEnabled((v) => !v)}
+                onClick={handleToggleJuryPreferences}
                 type="button"
               >
                 <span className={`${styles.switchTrack} ${isJuryPreferenceEnabled ? styles.switchTrackOn : styles.switchTrackOff}`}>
@@ -316,53 +401,135 @@ export const CreateEventForm = observer(function CreateEventForm() {
         </div>
         <div className={styles.criteriaPanelIntro}>
           <h3 className={styles.criteriaPanelIntroTitle}>Показатели оценивания</h3>
-          <p className={styles.criteriaPanelIntroSubtitle}>Укажите показатели с учетом их значимости</p>
+          <p className={styles.criteriaPanelIntroSubtitle}>
+            Укажите показатели с учетом их значимости
+            {store.useCriteriaWeights && store.criteria.length >= 2
+              ? ' Порядок сверху вниз задаёт приоритет при расчёте — перетаскивайте белую плашку с названием.'
+              : ''}
+          </p>
         </div>
         <div className={styles.criteriaPanelList}>
           {store.criteria.map((c, index) => (
-            <div className={styles.criteriaPanelCriterionRow} key={c.localId}>
+            <div
+              className={`${styles.criteriaPanelCriterionRow} ${
+                canReorderCriteria && criterionDragOver === index && criterionDragFrom !== index
+                  ? styles.criteriaPanelCriterionRowDragOver
+                  : ''
+              } ${canReorderCriteria && criterionDragFrom === index ? styles.criteriaPanelCriterionRowDragging : ''}`}
+              key={c.localId}
+              onDragOver={(e) => {
+                if (!canReorderCriteria || criterionDragFrom === null) return
+                e.preventDefault()
+                e.dataTransfer.dropEffect = 'move'
+                setCriterionDragOver(index)
+              }}
+              onDrop={(e) => {
+                if (!canReorderCriteria) return
+                e.preventDefault()
+                const raw = e.dataTransfer.getData('text/plain')
+                const from = Number.parseInt(raw, 10)
+                if (Number.isNaN(from) || from === index) {
+                  setCriterionDragFrom(null)
+                  setCriterionDragOver(null)
+                  return
+                }
+                store.moveCriterion(from, index)
+                setCriterionDragFrom(null)
+                setCriterionDragOver(null)
+              }}
+            >
               <div className={styles.criteriaPanelOrderBadge}>{index + 1}</div>
-              <div className={styles.criteriaPanelNameShell}>
+              <div
+                aria-grabbed={canReorderCriteria && criterionDragFrom === index ? true : undefined}
+                className={`${styles.criteriaPanelNameShell} ${
+                  canReorderCriteria ? styles.criteriaPanelNameShellDraggable : ''
+                }`}
+                draggable={canReorderCriteria}
+                onDragEnd={() => {
+                  setCriterionDragFrom(null)
+                  setCriterionDragOver(null)
+                }}
+                onDragStart={(e) => {
+                  if (!canReorderCriteria) return
+                  const t = e.target as HTMLElement
+                  if (t.closest('button')) {
+                    e.preventDefault()
+                    return
+                  }
+                  e.dataTransfer.setData('text/plain', String(index))
+                  e.dataTransfer.effectAllowed = 'move'
+                  setCriterionDragFrom(index)
+                }}
+                title={canReorderCriteria ? 'Перетащите плашку, чтобы изменить порядок значимости' : undefined}
+              >
                 <input
                   className={styles.criteriaPanelNameInput}
+                  draggable={false}
                   onChange={(e) => store.updateCriterion(c.localId, { name: e.target.value })}
                   placeholder="Название показателя"
                   type="text"
                   value={c.name}
                 />
-                {store.criteria.length > 1 ? (
-                  <button
-                    aria-label="Удалить критерий"
-                    className={styles.criteriaPanelDeleteControl}
-                    onClick={() => store.removeCriterion(c.localId)}
-                    type="button"
-                  >
-                    <img alt="" className={styles.criteriaPanelRowIcon} src="/card-minus-cirlce.svg" />
-                  </button>
-                ) : (
-                  <span className={styles.criteriaPanelDeleteControlSpacer} />
-                )}
+                <button
+                  aria-label="Удалить критерий"
+                  className={styles.criteriaPanelDeleteControl}
+                  draggable={false}
+                  onClick={() => store.removeCriterion(c.localId)}
+                  type="button"
+                >
+                  <span className={styles.criteriaPanelDeleteIcon} aria-hidden />
+                </button>
               </div>
             </div>
           ))}
-          {/* Пустой шаблон всегда последний: добавляет новую строку критерия */}
-          <button
-            className={styles.criteriaPanelAddCriterionRow}
-            onClick={() => store.addCriterion()}
-            type="button"
-          >
+          {/* Строка добавления: имя вводится в поле, зелёная галка — только при непустом названии */}
+          <div className={styles.criteriaPanelAddCriterionRow}>
             <div className={styles.criteriaPanelOrderBadge}>
               <span className={styles.criteriaPanelTemplateBadgeDigit}>{store.criteria.length + 1}</span>
             </div>
             <div className={styles.criteriaPanelNameShellMuted}>
-              <span className={styles.criteriaPanelAddCriterionHint}>
-                Добавить показатель {store.criteria.length + 1}
-              </span>
-              <span aria-hidden className={styles.criteriaPanelTemplateTick}>
-                <img alt="" className={styles.criteriaPanelRowIcon} src="/card-tick-circle.svg" />
-              </span>
+              <input
+                aria-label={`Название нового показателя ${store.criteria.length + 1}`}
+                className={styles.criteriaPanelNameInput}
+                onChange={(e) => setNewCriterionDraftName(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key !== 'Enter') return
+                  const trimmed = (e.target as HTMLInputElement).value.trim()
+                  if (!trimmed) return
+                  e.preventDefault()
+                  const bounds = getClampedBoundsFromStrings(boundaryMinStr, boundaryMaxStr, 1, 10)
+                  store.addCriterion(trimmed, store.criteria.length === 0 ? bounds : undefined)
+                  setNewCriterionDraftName('')
+                }}
+                placeholder={`Добавить показатель ${store.criteria.length + 1}`}
+                type="text"
+                value={newCriterionDraftName}
+              />
+              <button
+                aria-label="Подтвердить и добавить показатель"
+                className={styles.criteriaPanelAddTickBtn}
+                disabled={!newCriterionDraftName.trim()}
+                onClick={() => {
+                  const trimmed = newCriterionDraftName.trim()
+                  if (!trimmed) return
+                  const bounds = getClampedBoundsFromStrings(boundaryMinStr, boundaryMaxStr, 1, 10)
+                  store.addCriterion(trimmed, store.criteria.length === 0 ? bounds : undefined)
+                  setNewCriterionDraftName('')
+                }}
+                type="button"
+              >
+                <img
+                  alt=""
+                  className={styles.criteriaPanelRowIcon}
+                  src={
+                    newCriterionDraftName.trim()
+                      ? '/card-tick-circle-active.svg'
+                      : '/card-tick-circle.svg'
+                  }
+                />
+              </button>
             </div>
-          </button>
+          </div>
         </div>
       </section>
 

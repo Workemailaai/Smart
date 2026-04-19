@@ -18,6 +18,7 @@ export {
   putScoresBatch,
   submitJuryContest,
   completeContest,
+  deleteContest,
 } from './api/contestApi'
 export { contestStore } from './model/contestStore'
 export { ContestCard } from './ui/ContestCard'

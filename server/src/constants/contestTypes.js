@@ -1,9 +1,20 @@
-/** Допустимые типы конкурса в конструкторе */
-const CONTEST_TYPES = ["miss_world", "miss_universe"];
+/** Допустимые типы конкурса в конструкторе (id — латиница для API/БД) */
+const CONTEST_TYPES = [
+  "creative",
+  "sports",
+  "designers",
+  "rating_objects",
+  "student_work",
+  "other"
+];
 
 const CONTEST_TYPE_LABELS = {
-  miss_world: "Мисс мира",
-  miss_universe: "Мисс вселенная"
+  creative: "Творческий конкурс",
+  sports: "Спортивный конкурс",
+  designers: "Конкурс дизайнеров",
+  rating_objects: "Построение рейтинга объектов",
+  student_work: "Оценка студенческих работ",
+  other: "Другое"
 };
 
 module.exports = { CONTEST_TYPES, CONTEST_TYPE_LABELS };

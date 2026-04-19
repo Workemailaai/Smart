@@ -1,20 +1,12 @@
 import { observer } from 'mobx-react-lite'
 import { useEffect, useState } from 'react'
-import { NavLink, Navigate, useNavigate, useParams } from 'react-router'
+import { Navigate, useNavigate, useParams } from 'react-router'
 import { userStore } from '@/entities/user'
 import { organizerContestStore } from '@/features/organizer-contest/model/organizerContestStore'
+import { OrganizerCabinetSidebar } from '@/widgets/organizer-cabinet-sidebar/OrganizerCabinetSidebar'
 import styles from './OrganizerContestPage.module.css'
 
 const MEDIA_BASE_URL = import.meta.env.VITE_MEDIA_BASE_URL || 'http://localhost:3000'
-
-function getInitials(name: string) {
-  return name
-    .split(' ')
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((part) => part[0]?.toUpperCase() ?? '')
-    .join('')
-}
 
 function resolveMediaUrl(path: string | null) {
   if (!path) return null
@@ -29,6 +21,27 @@ function formatDate(value: string) {
     month: '2-digit',
     year: 'numeric',
   })
+}
+
+function getInitials(name: string) {
+  return name
+    .split(' ')
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase() ?? '')
+    .join('')
+}
+
+/** Балл для отображения: «9,45»; при отсутствии числа — «—» */
+function formatScoreValue(value: number | null | undefined) {
+  const n = Number(value)
+  if (!Number.isFinite(n)) return '—'
+  return n.toFixed(2).replace('.', ',')
+}
+
+function scoreForSort(value: number | null | undefined): number {
+  const n = Number(value)
+  return Number.isFinite(n) ? n : -Infinity
 }
 
 export const OrganizerContestPage = observer(() => {
@@ -65,45 +78,16 @@ export const OrganizerContestPage = observer(() => {
     }))
   }
 
+  const handleCompleteContest = async () => {
+    await organizerContestStore.complete(numericContestId)
+    if (!organizerContestStore.error) {
+      navigate(`/cabinet/events/${numericContestId}/results`, { replace: true })
+    }
+  }
+
   return (
     <section className={styles.page}>
-      <aside className={styles.sidebar}>
-        <div>
-          <div className={styles.sidebarHeader}>
-            <h1 className={styles.brand}>СмартОценка</h1>
-          </div>
-          <div className={styles.profileCard}>
-            <div className={styles.avatarWrap}>
-              <div className={styles.avatar}>{getInitials(fullName)}</div>
-            </div>
-            <p className={styles.name}>{fullName}</p>
-            <p className={styles.phone}>{user.phone}</p>
-            <span className={styles.roleBadge}>Организатор</span>
-          </div>
-
-          <nav className={styles.menu}>
-            <NavLink className={({ isActive }) => (isActive ? styles.activeItem : styles.menuItem)} to="/cabinet/events">
-              Мероприятия
-            </NavLink>
-            <NavLink className={({ isActive }) => (isActive ? styles.activeItem : styles.menuItem)} to="/cabinet/constructor">
-              Конструктор
-            </NavLink>
-            <NavLink className={({ isActive }) => (isActive ? styles.activeItem : styles.menuItem)} to="/cabinet/settings">
-              Настройки
-            </NavLink>
-            <NavLink className={({ isActive }) => (isActive ? styles.activeItem : styles.menuItem)} to="/cabinet/info">
-              Информация
-            </NavLink>
-          </nav>
-        </div>
-
-        <div className={styles.sidebarFooter}>
-          <button className={styles.logoutButton} onClick={() => void onLogout()} type="button">
-            Выход
-          </button>
-          <p className={styles.versionText}>v 1.0.0{'\n'}© 2026 СмартОценка</p>
-        </div>
-      </aside>
+      <OrganizerCabinetSidebar fullName={fullName} phone={user.phone} onLogout={onLogout} />
 
       <div className={styles.content}>
         <header className={styles.topBar}>
@@ -131,16 +115,20 @@ export const OrganizerContestPage = observer(() => {
                 <p className={styles.contestDate}>{formatDate(view.contest.createdAt)}</p>
                 <p className={styles.contestTitle}>{view.contest.title}</p>
                 <p className={styles.contestSubtitle}>{view.contest.description || 'Оценка конкурса'}</p>
-                <p className={styles.progress}>
-                  Сдали оценивание: {view.submittedJuryCount} / {view.totalJuryCount}
-                </p>
               </article>
 
               <div className={styles.participantSections}>
-                {view.participants.map((participant) => {
+                {[...view.participants]
+                  .sort((a, b) => scoreForSort(b.overallAverage) - scoreForSort(a.overallAverage))
+                  .map((participant, index) => {
+                  const rank = index + 1
+                  const isTopThree = rank <= 3
                   const participantPhoto = resolveMediaUrl(participant.photoUrl)
                   return (
-                    <details className={styles.participantSection} key={participant.id}>
+                    <details
+                      className={`${styles.participantSection} ${isTopThree ? styles.participantSectionTop : ''}`}
+                      key={participant.id}
+                    >
                       <summary className={styles.participantSummary}>
                         <div className={styles.participantMain}>
                           {participantPhoto ? (
@@ -156,7 +144,18 @@ export const OrganizerContestPage = observer(() => {
                             <span className={styles.participantCountry}>{participant.country || 'Страна не указана'}</span>
                           </div>
                         </div>
-                        <strong className={styles.participantScore}>{participant.overallAverage} / 10</strong>
+                        <div className={styles.scoreRankCluster}>
+                          <div className={styles.scorePill}>
+                            <span className={styles.scoreValue}>{formatScoreValue(participant.overallAverage)}</span>
+                            <span className={styles.scoreSlash}>/</span>
+                            <span className={styles.scoreMax}>10</span>
+                          </div>
+                          <div
+                            className={`${styles.rankBadge} ${isTopThree ? styles.rankBadgeFilled : styles.rankBadgeOutline}`}
+                          >
+                            {rank}
+                          </div>
+                        </div>
                       </summary>
 
                       <div className={styles.juryCards}>
@@ -221,18 +220,42 @@ export const OrganizerContestPage = observer(() => {
               </div>
 
               <div className={styles.actions}>
-                <button className={styles.backButton} type="button" onClick={() => navigate('/cabinet/events')}>
-                  ←
-                </button>
                 <button
+                  className={styles.backButton}
                   type="button"
-                  className={styles.primaryButton}
-                  disabled={!view.canComplete || organizerContestStore.isCompleting}
-                  onClick={() => void organizerContestStore.complete(numericContestId)}
+                  onClick={() => navigate('/cabinet/events')}
+                  aria-label="Назад к списку мероприятий"
                 >
-                  {organizerContestStore.isCompleting ? 'Завершение...' : 'Завершить конкурс'}
+                  <span aria-hidden className={styles.backButtonArrow}>
+                    ←
+                  </span>
                 </button>
+                {view.contest.status === 'completed' || view.contest.status === 'archived' ? (
+                  <button
+                    type="button"
+                    className={styles.primaryButton}
+                    onClick={() => navigate(`/cabinet/events/${numericContestId}/results`)}
+                  >
+                    Результаты
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    className={styles.primaryButton}
+                    disabled={!view.canComplete || organizerContestStore.isCompleting}
+                    onClick={() => void handleCompleteContest()}
+                  >
+                    {organizerContestStore.isCompleting ? 'Завершение...' : 'Завершить конкурс'}
+                  </button>
+                )}
               </div>
+              {!view.canComplete &&
+              view.contest.status !== 'completed' &&
+              view.contest.status !== 'archived' ? (
+                <p className={styles.completeHint}>
+                  Кнопка «Завершить конкурс» станет активна, когда все жюри отправят оценки.
+                </p>
+              ) : null}
             </>
           ) : null}
         </div>

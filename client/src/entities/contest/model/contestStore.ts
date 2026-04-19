@@ -1,5 +1,5 @@
 import { makeAutoObservable, runInAction } from 'mobx'
-import { getContests } from '../api/contestApi'
+import { deleteContest as deleteContestRequest, getContests } from '../api/contestApi'
 import type { IContest } from './contest.types'
 
 class ContestStore {
@@ -53,6 +53,23 @@ class ContestStore {
       runInAction(() => {
         this.isLoading = false
       })
+    }
+  }
+
+  /** Удаление мероприятия на этапе оценивания (организатор). Бросает ошибку при неудаче — для UI. */
+  deleteContest = async (id: number) => {
+    this.error = null
+    try {
+      await deleteContestRequest(id)
+      runInAction(() => {
+        this.contests = this.contests.filter((c) => c.id !== id)
+      })
+    } catch (error) {
+      const message = (error as Error)?.message || 'Не удалось удалить мероприятие'
+      runInAction(() => {
+        this.error = message
+      })
+      throw error
     }
   }
 }

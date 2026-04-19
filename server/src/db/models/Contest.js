@@ -39,7 +39,7 @@ module.exports = (sequelize, DataTypes) => {
       contestType: {
         type: DataTypes.STRING(32),
         allowNull: false,
-        defaultValue: "miss_world"
+        defaultValue: "creative"
       },
       coverImageUrl: {
         type: DataTypes.STRING(512),

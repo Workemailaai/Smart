@@ -140,6 +140,22 @@ class ContestController {
     }
   }
 
+  /** Удаление мероприятия организатором (только на этапе оценивания) */
+  static async deleteContest(req, res, next) {
+    try {
+      if (req.user.role !== "organizer") {
+        throw new ApiError(403, "Только организатор может удалить мероприятие");
+      }
+      await ContestService.deleteContestByOrganizer({
+        contestId: Number(req.params.id),
+        userId: req.user.id
+      });
+      return res.status(200).json(formatResponse(200, "Мероприятие удалено", null));
+    } catch (error) {
+      return next(error);
+    }
+  }
+
   /** Завершение мероприятия организатором */
   static async completeContest(req, res, next) {
     try {

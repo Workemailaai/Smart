@@ -33,8 +33,8 @@ export type DraftJury = {
 class CreateEventFormStore {
   title = ''
   description = ''
-  contestType = 'miss_world'
-  criteria: DraftCriterion[] = [{ localId: newLocalId(), name: '', minScore: 1, maxScore: 10 }]
+  contestType = 'creative'
+  criteria: DraftCriterion[] = []
   participants: DraftParticipant[] = []
   jury: DraftJury[] = []
   coverFile: File | null = null
@@ -44,7 +44,7 @@ class CreateEventFormStore {
   templateMessage: string | null = null
   isSavingTemplate = false
   /** Учитывать значимость показателей (взвешенный расчёт на сервере) */
-  useCriteriaWeights = true
+  useCriteriaWeights = false
 
   constructor() {
     makeAutoObservable(this)
@@ -60,15 +60,15 @@ class CreateEventFormStore {
     })
     this.title = ''
     this.description = ''
-    this.contestType = 'miss_world'
-    this.criteria = [{ localId: newLocalId(), name: '', minScore: 1, maxScore: 10 }]
+    this.contestType = 'creative'
+    this.criteria = []
     this.participants = []
     this.jury = []
     this.coverFile = null
     this.coverPreviewUrl = null
     this.submitError = null
     this.templateMessage = null
-    this.useCriteriaWeights = true
+    this.useCriteriaWeights = false
   }
 
   setUseCriteriaWeights(v: boolean) {
@@ -95,15 +95,40 @@ class CreateEventFormStore {
     })
   }
 
-  addCriterion() {
-    const minScore = this.criteria.length ? this.criteria[0].minScore : 1
-    const maxScore = this.criteria.length ? this.criteria[0].maxScore : 10
-    this.criteria.push({ localId: newLocalId(), name: '', minScore, maxScore })
+  /**
+   * Добавить критерий; имя обрезается по краям.
+   * Для первого показателя можно передать границы из полей «Границы» формы.
+   */
+  addCriterion(initialName = '', bounds?: { minScore: number; maxScore: number }) {
+    const name = initialName.trim()
+    let minScore: number
+    let maxScore: number
+    if (this.criteria.length > 0) {
+      minScore = this.criteria[0].minScore
+      maxScore = this.criteria[0].maxScore
+    } else if (bounds) {
+      minScore = bounds.minScore
+      maxScore = bounds.maxScore
+    } else {
+      minScore = 1
+      maxScore = 10
+    }
+    this.criteria.push({ localId: newLocalId(), name, minScore, maxScore })
   }
 
   removeCriterion(localId: string) {
-    if (this.criteria.length <= 1) return
     this.criteria = this.criteria.filter((c) => c.localId !== localId)
+  }
+
+  /** Перестановка показателей (порядок = значимость при взвешенном расчёте) */
+  moveCriterion(fromIndex: number, toIndex: number) {
+    if (fromIndex === toIndex) return
+    const n = this.criteria.length
+    if (fromIndex < 0 || toIndex < 0 || fromIndex >= n || toIndex >= n) return
+    const next = [...this.criteria]
+    const [item] = next.splice(fromIndex, 1)
+    next.splice(toIndex, 0, item)
+    this.criteria = next
   }
 
   updateCriterion(
@@ -161,7 +186,7 @@ class CreateEventFormStore {
   }
 
   applyTemplate(t: ITemplate) {
-    this.contestType = t.contestType || 'miss_world'
+    this.contestType = t.contestType || 'creative'
     const rows = normalizeTemplateCriteria(t.criteria).map((c) => ({
       localId: newLocalId(),
       name: c.name,
@@ -169,7 +194,7 @@ class CreateEventFormStore {
       maxScore: c.maxScore,
     }))
     if (!rows.length) {
-      this.criteria = [{ localId: newLocalId(), name: '', minScore: 1, maxScore: 10 }]
+      this.criteria = []
       return
     }
     /* Одни границы для всех показателей — выравниваем по первому критерию */

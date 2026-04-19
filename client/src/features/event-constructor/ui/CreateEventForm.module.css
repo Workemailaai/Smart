@@ -1,7 +1,9 @@
+/* Как у списка мероприятий: .eventsLayout — padding 24px по горизонтали */
 .wrap {
-  padding: 24px 12px 32px;
-  width: min(1152px, 100%);
-  margin: 0 auto;
+  box-sizing: border-box;
+  width: 100%;
+  padding: 24px;
+  padding-bottom: 32px;
   display: flex;
   flex-direction: column;
   gap: 16px;
@@ -448,6 +450,37 @@
   display: flex;
   align-items: flex-start;
   gap: 8px;
+  border-radius: 16px;
+  transition:
+    background 0.12s ease,
+    box-shadow 0.12s ease;
+}
+
+.criteriaPanelCriterionRowDragOver {
+  background: rgba(20, 184, 166, 0.12);
+  box-shadow: inset 0 0 0 2px rgba(20, 184, 166, 0.45);
+}
+
+.criteriaPanelCriterionRowDragging {
+  opacity: 0.65;
+}
+
+/* Плашка с названием как зона перетаскивания (значимость вкл., ≥2 показателей) */
+.criteriaPanelNameShellDraggable {
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+}
+
+.criteriaPanelNameShellDraggable:active {
+  cursor: grabbing;
+}
+
+/* Поле ввода остаётся для текста; не тащим его как отдельный фрагмент (родитель — источник DnD) */
+.criteriaPanelNameShellDraggable .criteriaPanelNameInput {
+  -webkit-user-drag: none;
+  user-select: text;
+  cursor: text;
 }
 
 .criteriaPanelOrderBadge {
@@ -531,19 +564,19 @@
   justify-content: center;
 }
 
-.criteriaPanelDeleteControlSpacer {
+/* Серая иконка по умолчанию, красная #FF383C при наведении / фокусе с клавиатуры */
+.criteriaPanelDeleteIcon {
+  display: block;
   width: 36px;
   height: 36px;
   flex-shrink: 0;
+  background: center / contain no-repeat url('/card-minus-cirlce.svg');
+  transition: opacity 0.12s ease;
 }
 
-/* Декоративная галочка в строке-шаблоне (клик по всей строке добавляет критерий) */
-.criteriaPanelTemplateTick {
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  pointer-events: none;
+.criteriaPanelDeleteControl:hover .criteriaPanelDeleteIcon,
+.criteriaPanelDeleteControl:focus-visible .criteriaPanelDeleteIcon {
+  background-image: url('/card-minus-circle-red.svg');
 }
 
 .criteriaPanelAddCriterionRow {
@@ -553,25 +586,28 @@
   gap: 8px;
   margin: 0;
   padding: 0;
-  border: none;
-  background: transparent;
-  cursor: pointer;
-  text-align: left;
 }
 
 .criteriaPanelNameShellMuted {
   opacity: 1;
 }
 
-.criteriaPanelAddCriterionHint {
-  flex: 1 1 0;
-  min-width: 0;
-  opacity: 0.5;
-  color: #0a0f15;
-  font-family: 'Geist', 'Segoe UI', sans-serif;
-  font-size: 18px;
-  font-weight: 400;
-  line-height: 24px;
+/* Галка подтверждения: серая иконка, зелёная только при непустом поле (см. src в разметке) */
+.criteriaPanelAddTickBtn {
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  padding: 0;
+  border: none;
+  background: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: not-allowed;
+}
+
+.criteriaPanelAddTickBtn:not(:disabled) {
+  cursor: pointer;
 }
 
 .iconBtn {
@@ -661,6 +697,8 @@
   width: 36px;
   height: 36px;
   object-fit: contain;
+  /* В SVG заливка white (как в сайдбаре) — на светлом фоне карточки показываем чёрной */
+  filter: brightness(0);
 }
 
 .listBlockBody {

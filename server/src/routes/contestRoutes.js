@@ -16,6 +16,7 @@ router.post(
   ContestController.createContestFull
 );
 router.get("/", ContestController.getContests);
+router.delete("/:id", ContestController.deleteContest);
 router.get("/:id/jury-view", ContestController.getJuryContestView);
 router.get("/:id/organizer-view", ContestController.getOrganizerContestView);
 router.get("/:id/results-view", ContestController.getContestResultsView);

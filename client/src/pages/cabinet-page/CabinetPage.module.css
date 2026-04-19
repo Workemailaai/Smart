@@ -137,32 +137,24 @@
   width: 24px;
   height: 24px;
   flex: 0 0 24px;
-  border-radius: 6px;
-  /* border: 1.5px solid currentColor; */
   position: relative;
   background-position: center;
   background-repeat: no-repeat;
-  background-size: 20px 20px;
-  
+  background-size: 24px 24px;
+  flex-shrink: 0;
 }
 
-.navIcon::after {
-  content: '';
-  position: absolute;
-  inset: 4px;
-  border-radius: 3px;
-  background: currentColor;
-  opacity: 0.3;
+/* Активный пункт: белый фон — иконки (белые в SVG) красим в чёрный */
+.activeItem .navIcon {
+  filter: brightness(0);
 }
-
-
 
 .navIconEvents {
   background-image: url('../../../public/nav/calendar.svg');
 }
 
 .navIconConstructor {
-  background-image: url('../../../public/nav/calendar.svg');
+  background-image: url('../../../public/nav/nav-add-circle.svg');
 }
 
 .navIconSettings {
@@ -309,6 +301,30 @@
 .eventsCard {
   display: grid;
   gap: 16px;
+}
+
+/* Организатор: одна серая карточка на секцию (шапка + список), без отдельной полосы над блоком */
+.eventsSectionOrganizer {
+  display: block;
+}
+
+.eventsSectionBlock {
+  background: #e0e5eb;
+  border-radius: 28px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  overflow: hidden;
+}
+
+.eventsSectionBlock .sectionHeader {
+  background: transparent;
+}
+
+.eventsSectionBlock .filterButton {
+  border: none;
+  font-weight: 500;
 }
 
 .eventsBody {
@@ -499,19 +515,29 @@
   background: #f0f1f5;
 }
 
+/* Как у .eventsLayout: только боковые 24px, без сужения по max-width */
 .constructorBlock {
+  box-sizing: border-box;
+  width: 100%;
   padding: 24px;
+  padding-bottom: 32px;
   display: flex;
   flex-direction: column;
   min-height: calc(100vh - 80px);
 }
 
+/* Блок «Создать мероприятие»: по макету 1152×432, скругление 24, колонка по центру, gap 12 */
 .constructorHero {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 432px;
+  border-radius: 24px;
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: center;
   gap: 12px;
-  margin-top: 12px;
+  padding: 24px;
 }
 
 .heroCreateButton {
@@ -523,11 +549,18 @@
   padding: 0;
   display: grid;
   place-items: center;
+  cursor: pointer;
+}
+
+.heroCreateButton:focus-visible {
+  outline: 2px solid #12a6b0;
+  outline-offset: 4px;
 }
 
 .heroCreateInner {
   width: 30px;
   height: 30px;
+  border-radius: 50%;
   background: #00a99d;
   position: relative;
   display: grid;
@@ -552,23 +585,36 @@
 }
 
 .constructorTitle {
+  max-width: 568px;
   text-align: center;
+  color: #0a0f15;
   font-size: 36px;
   line-height: 39.6px;
   font-weight: 500;
+  margin: 0;
+}
+
+.constructorTemplates {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 16px;
+  width: 100%;
+  margin-top: 24px;
 }
 
 .templatesTitle {
   font-size: 24px;
   line-height: 24px;
   font-weight: 500;
-  margin-top: auto;
-  margin-bottom: 0;
+  margin: 0;
+  color: #0a0f15;
 }
 
 .templateGrid {
   display: flex;
   align-items: center;
+  justify-content: flex-start;
   gap: 16px;
   flex-wrap: wrap;
 }
@@ -588,14 +634,54 @@
   outline-offset: 2px;
 }
 
+/* Карточка «новый шаблон»: пунктир 2px (как изначально в конструкторе) */
 .newTemplate {
+  box-sizing: border-box;
   width: 276px;
   height: 276px;
+  padding: 28px;
+  border: 2px dashed #bfc7d4;
   border-radius: 28px;
-  border: 2px solid #bfc7d4;
+  overflow: hidden;
   background: transparent;
-  font-size: 56px;
-  color: #bfc7d4;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.newTemplate:focus-visible {
+  outline: 2px solid #12a6b0;
+  outline-offset: 2px;
+}
+
+.newTemplateInner {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: #bfc7d4;
+  position: relative;
+  display: grid;
+  place-items: center;
+}
+
+.newTemplatePlusH,
+.newTemplatePlusV {
+  position: absolute;
+  background: #fff;
+  border-radius: 2px;
+}
+
+.newTemplatePlusH {
+  width: 14px;
+  height: 2px;
+}
+
+.newTemplatePlusV {
+  width: 2px;
+  height: 14px;
 }
 
 @media (max-width: 1400px) {
@@ -605,7 +691,11 @@
 
   .constructorTitle {
     font-size: 30px;
-    margin-bottom: 72px;
+    line-height: 1.1;
+  }
+
+  .constructorHero {
+    min-height: 360px;
   }
 
   .templateGrid {

@@ -56,6 +56,44 @@ class ContestService {
     return submitted;
   }
 
+  /**
+   * Удаление мероприятия организатором (только этап оценивания).
+   */
+  static async deleteContestByOrganizer({ contestId, userId }) {
+    const contest = await Contest.findByPk(contestId);
+    if (!contest) {
+      throw new ApiError(404, "Мероприятие не найдено");
+    }
+    if (contest.organizerId !== userId) {
+      throw new ApiError(403, "Нет доступа к этому мероприятию");
+    }
+    const deletable = [
+      ContestService.contestStatuses.inProgress,
+      ContestService.contestStatuses.judgingCompleted,
+      ContestService.contestStatuses.completed
+    ];
+    if (!deletable.includes(contest.status)) {
+      throw new ApiError(
+        400,
+        "Удаление недоступно для этого мероприятия"
+      );
+    }
+
+    const t = await sequelize.transaction();
+    try {
+      await JuryParticipantComment.destroy({ where: { contestId }, transaction: t });
+      await Score.destroy({ where: { contestId }, transaction: t });
+      await Jury.destroy({ where: { contestId }, transaction: t });
+      await Participant.destroy({ where: { contestId }, transaction: t });
+      await Criterion.destroy({ where: { contestId }, transaction: t });
+      await contest.destroy({ transaction: t });
+      await t.commit();
+    } catch (err) {
+      await t.rollback();
+      throw err;
+    }
+  }
+
   static async getContestWithDependencies(contestId) {
     const contest = await Contest.findByPk(contestId, {
       include: [
@@ -109,7 +147,7 @@ class ContestService {
       title,
       description,
       organizerId,
-      contestType: contestType || "miss_world",
+      contestType: contestType || "creative",
       coverImageUrl: coverImageUrl || null,
       status: ContestService.contestStatuses.inProgress
     });

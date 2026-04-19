@@ -2,6 +2,12 @@ import type { ITemplate } from '../model/template.types'
 import styles from './TemplateCard.module.css'
 
 const TYPE_LABELS: Record<string, string> = {
+  creative: 'Творческий конкурс',
+  sports: 'Спортивный конкурс',
+  designers: 'Конкурс дизайнеров',
+  rating_objects: 'Построение рейтинга объектов',
+  student_work: 'Оценка студенческих работ',
+  other: 'Другое',
   miss_world: 'Мисс мира',
   miss_universe: 'Мисс вселенная',
 }

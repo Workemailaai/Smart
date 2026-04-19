@@ -73,6 +73,18 @@ export const completeContest = async (contestId: number): Promise<ServerResponse
   return response.data
 }
 
+export const deleteContest = async (contestId: number): Promise<ServerResponseType<null>> => {
+  try {
+    const response = await axiosInstance.delete(`/contests/${contestId}`)
+    return response.data
+  } catch (error) {
+    const msg =
+      (error as { response?: { data?: { error?: string; message?: string } } })?.response?.data?.error ||
+      (error as { response?: { data?: { message?: string } } })?.response?.data?.message
+    throw new Error(msg || (error as Error)?.message || 'Не удалось удалить мероприятие')
+  }
+}
+
 export const getContestResultsView = async (
   contestId: number,
 ): Promise<ServerResponseType<IContestResultsView>> => {

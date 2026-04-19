@@ -56,7 +56,7 @@ class TemplateService {
     if (!title) {
       throw new ApiError(400, "Укажите название шаблона");
     }
-    const type = contestType != null ? String(contestType) : "miss_world";
+    const type = contestType != null ? String(contestType) : "creative";
     if (!CONTEST_TYPES.includes(type)) {
       throw new ApiError(400, "Некорректный тип конкурса в шаблоне");
     }

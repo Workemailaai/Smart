@@ -9,6 +9,8 @@ export interface IContest {
   completedAt: string | null
   /** Взвешенные показатели (новые мероприятия); старые — false */
   useCriteriaWeights?: boolean
+  /** Жюри может задать порядок показателей перед оцениванием */
+  juryPreferencesEnabled?: boolean
   mySubmitted?: boolean
   submittedJuryCount?: number
   totalJuryCount?: number
@@ -55,6 +57,8 @@ export interface IParticipantCommentItem {
 export interface IJuryContestView {
   contest: IContest
   criteria: ICriterion[]
+  /** Индивидуальный порядок id критериев для текущего жюри (приоритет для взвешенного расчёта) */
+  myCriterionOrder?: number[] | null
   participants: IParticipant[]
   myScores: IScoreItem[]
   myComments: IParticipantCommentItem[]

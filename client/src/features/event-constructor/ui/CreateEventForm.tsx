@@ -83,7 +83,6 @@ export const CreateEventForm = observer(function CreateEventForm() {
   const [juryModalOpen, setJuryModalOpen] = useState(false)
   const [juryDraft, setJuryDraft] = useState<DraftJury | null>(null)
   const [juryModalKey, setJuryModalKey] = useState(0)
-  const [isJuryPreferenceEnabled, setIsJuryPreferenceEnabled] = useState(false)
   /** Строковое состояние полей границ — чтобы можно было стереть ввод и набрать число заново */
   const [boundaryMinStr, setBoundaryMinStr] = useState(() =>
     String(store.criteria[0]?.minScore ?? 1),
@@ -113,16 +112,16 @@ export const CreateEventForm = observer(function CreateEventForm() {
   const handleToggleCriteriaWeights = () => {
     const next = !store.useCriteriaWeights
     store.setUseCriteriaWeights(next)
-    if (!next) setIsJuryPreferenceEnabled(false)
+    if (!next) store.setJuryPreferencesEnabled(false)
   }
 
   const handleToggleJuryPreferences = () => {
-    const next = !isJuryPreferenceEnabled
+    const next = !store.juryPreferencesEnabled
     if (next) {
       if (!store.useCriteriaWeights) store.setUseCriteriaWeights(true)
-      setIsJuryPreferenceEnabled(true)
+      store.setJuryPreferencesEnabled(true)
     } else {
-      setIsJuryPreferenceEnabled(false)
+      store.setJuryPreferencesEnabled(false)
     }
   }
 
@@ -334,13 +333,13 @@ export const CreateEventForm = observer(function CreateEventForm() {
               <span className={styles.toggleLabel}>Учитывать предпочтения жюри</span>
               <button
                 aria-label="Переключить учет предпочтений жюри"
-                aria-pressed={isJuryPreferenceEnabled}
+                aria-pressed={store.juryPreferencesEnabled}
                 className={styles.switchButton}
-                data-property-1={isJuryPreferenceEnabled ? 'Active' : 'Inactive'}
+                data-property-1={store.juryPreferencesEnabled ? 'Active' : 'Inactive'}
                 onClick={handleToggleJuryPreferences}
                 type="button"
               >
-                <span className={`${styles.switchTrack} ${isJuryPreferenceEnabled ? styles.switchTrackOn : styles.switchTrackOff}`}>
+                <span className={`${styles.switchTrack} ${store.juryPreferencesEnabled ? styles.switchTrackOn : styles.switchTrackOff}`}>
                   <span className={styles.switchThumb} />
                 </span>
               </button>

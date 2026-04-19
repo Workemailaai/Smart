@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { observer } from 'mobx-react-lite'
 import { useNavigate } from 'react-router'
 import { userStore } from '@/entities/user'
@@ -50,9 +51,61 @@ const authModePath: Record<AuthPanelMode, string> = {
   signInJury: '/auth/jury/sign-in'
 }
 
+type SignUpPasswordFieldKey = 'password' | 'repeatPassword'
+
 export const AuthPanel = observer(({ mode }: AuthPanelProps) => {
   const navigate = useNavigate()
   const { signUpForm, signInOrgForm, signInJuryForm } = authFormStore
+
+  const [signUpPasswordVisibility, setSignUpPasswordVisibility] = useState<Record<SignUpPasswordFieldKey, boolean>>({
+    password: false,
+    repeatPassword: false,
+  })
+
+  const [isSignInOrgPasswordVisible, setIsSignInOrgPasswordVisible] = useState(false)
+
+  const [isSignInJuryPasswordVisible, setIsSignInJuryPasswordVisible] = useState(false)
+
+  const toggleSignUpPasswordVisibility = (fieldKey: SignUpPasswordFieldKey) => {
+    setSignUpPasswordVisibility((previous) => ({
+      ...previous,
+      [fieldKey]: !previous[fieldKey],
+    }))
+  }
+
+  const renderPasswordRow = (
+    fieldLabel: string,
+    value: string,
+    onValueChange: (nextValue: string) => void,
+    isVisible: boolean,
+    onToggleVisibility: () => void,
+    autoCompleteMode: 'new-password' | 'current-password',
+  ) => (
+    <div className={styles.passwordField} key={fieldLabel}>
+      <input
+        autoComplete={autoCompleteMode}
+        className={styles.inputPassword}
+        onChange={(event) => onValueChange(event.target.value)}
+        placeholder={fieldLabel}
+        type={isVisible ? 'text' : 'password'}
+        value={value}
+      />
+      <button
+        aria-label={isVisible ? 'Скрыть пароль' : 'Показать пароль'}
+        className={styles.passwordToggle}
+        onClick={onToggleVisibility}
+        type="button"
+      >
+        <img
+          alt=""
+          className={styles.passwordToggleIcon}
+          height={24}
+          src={isVisible ? '/auth-eye-slash.svg' : '/auth-eye-open.svg'}
+          width={24}
+        />
+      </button>
+    </div>
+  )
 
   const currentView = views[mode]
   const isOrganizerMode = mode !== 'signInJury'
@@ -127,7 +180,22 @@ export const AuthPanel = observer(({ mode }: AuthPanelProps) => {
       }
       const key = mapper[field]
       const isPhone = key === 'phone'
-      const type = field.toLowerCase().includes('пароль') ? 'password' : isPhone ? 'tel' : 'text'
+      const isPasswordField = key === 'password' || key === 'repeatPassword'
+
+      if (isPasswordField) {
+        const isVisible = signUpPasswordVisibility[key]
+
+        return renderPasswordRow(
+          field,
+          signUpForm[key],
+          (nextValue) => authFormStore.setSignUpField(key, nextValue),
+          isVisible,
+          () => toggleSignUpPasswordVisibility(key),
+          'new-password',
+        )
+      }
+
+      const type = isPhone ? 'tel' : 'text'
       return (
         <input
           className={styles.input}
@@ -162,7 +230,19 @@ export const AuthPanel = observer(({ mode }: AuthPanelProps) => {
       }
       const key = mapper[field]
       const isPhone = key === 'phone'
-      const type = field.toLowerCase().includes('пароль') ? 'password' : isPhone ? 'tel' : 'text'
+
+      if (key === 'password') {
+        return renderPasswordRow(
+          field,
+          signInOrgForm.password,
+          (nextValue) => authFormStore.setSignInOrgField('password', nextValue),
+          isSignInOrgPasswordVisible,
+          () => setIsSignInOrgPasswordVisible((previous) => !previous),
+          'current-password',
+        )
+      }
+
+      const type = isPhone ? 'tel' : 'text'
       return (
         <input
           className={styles.input}
@@ -196,7 +276,19 @@ export const AuthPanel = observer(({ mode }: AuthPanelProps) => {
     }
     const key = mapper[field]
     const isPhone = key === 'phone'
-    const type = field.toLowerCase().includes('пароль') ? 'password' : isPhone ? 'tel' : 'text'
+
+    if (key === 'password') {
+      return renderPasswordRow(
+        field,
+        signInJuryForm.password,
+        (nextValue) => authFormStore.setSignInJuryField('password', nextValue),
+        isSignInJuryPasswordVisible,
+        () => setIsSignInJuryPasswordVisible((previous) => !previous),
+        'current-password',
+      )
+    }
+
+    const type = isPhone ? 'tel' : 'text'
     return (
       <input
         className={styles.input}
@@ -290,7 +382,6 @@ export const AuthPanel = observer(({ mode }: AuthPanelProps) => {
               </button>
             ) : null}
             {authFormStore.error ? <p className={styles.errorText}>{authFormStore.error}</p> : null}
-            {authFormStore.successMessage ? <p className={styles.successText}>{authFormStore.successMessage}</p> : null}
           </div>
 
           {canSwitchMode ? (

@@ -1,5 +1,6 @@
 import { axiosInstance, type ServerResponseType } from '@/shared'
 import type {
+  ICriterion,
   IContest,
   IContestResultsView,
   IContestTypeOption,
@@ -44,6 +45,17 @@ export const getJuryContestView = async (
   contestId: number,
 ): Promise<ServerResponseType<IJuryContestView>> => {
   const response = await axiosInstance.get(`/contests/${contestId}/jury-view`)
+  return response.data
+}
+
+/** Сохранить порядок показателей (жюри), если у мероприятия включены предпочтения жюри */
+export const putJuryCriteriaOrder = async (
+  contestId: number,
+  orderedCriterionIds: number[],
+): Promise<ServerResponseType<{ criteria: ICriterion[]; myCriterionOrder: number[] }>> => {
+  const response = await axiosInstance.put(`/contests/${contestId}/criteria-order`, {
+    orderedCriterionIds,
+  })
   return response.data
 }
 

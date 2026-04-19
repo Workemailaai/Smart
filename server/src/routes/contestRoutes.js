@@ -18,6 +18,7 @@ router.post(
 router.get("/", ContestController.getContests);
 router.delete("/:id", ContestController.deleteContest);
 router.get("/:id/jury-view", ContestController.getJuryContestView);
+router.put("/:id/criteria-order", ContestController.reorderJuryCriteria);
 router.get("/:id/organizer-view", ContestController.getOrganizerContestView);
 router.get("/:id/results-view", ContestController.getContestResultsView);
 router.post("/:id/jury-submit", ContestController.submitJuryScores);

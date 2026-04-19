@@ -129,6 +129,61 @@
   border-color: rgba(0, 169, 157, 0.85);
 }
 
+/* Поле пароля с переключателем видимости — те же цвета, что у .input */
+.passwordField {
+  display: flex;
+  align-items: stretch;
+  min-height: 50px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 14px;
+  background: rgba(10, 15, 21, 0.35);
+  overflow: hidden;
+}
+
+.passwordField:focus-within {
+  border-color: rgba(0, 169, 157, 0.85);
+}
+
+.inputPassword {
+  flex: 1 1 0;
+  min-width: 0;
+  height: 50px;
+  box-sizing: border-box;
+  padding: 0 8px 0 16px;
+  border: none;
+  color: #ffffff;
+  font-size: 16px;
+  line-height: 1.25;
+  background: transparent;
+  outline: none;
+}
+
+.inputPassword::placeholder {
+  color: rgba(255, 255, 255, 0.56);
+}
+
+.passwordToggle {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+}
+
+.passwordToggle:focus-visible {
+  outline: 2px solid rgba(0, 169, 157, 0.85);
+  outline-offset: -2px;
+}
+
+.passwordToggleIcon {
+  display: block;
+  opacity: 0.5;
+}
+
 .actionArea {
   margin-top: auto;
   padding-top: 24px;
@@ -159,19 +214,11 @@
   background: #0077ff;
 }
 
-.errorText,
-.successText {
+.errorText {
   margin-top: 10px;
   font-size: 15px;
   text-align: center;
-}
-
-.errorText {
   color: #ffb0b0;
-}
-
-.successText {
-  color: #b5ffd5;
 }
 
 .bottomText {
@@ -323,7 +370,8 @@
     min-height: 0;
   }
 
-  .page.pageJury .input {
+  .page.pageJury .input,
+  .page.pageJury .passwordField {
     flex-shrink: 0;
   }
 

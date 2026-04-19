@@ -6,7 +6,6 @@ import type { SignInJuryForm, SignInOrgForm, SignInPayload, SignUpForm, SignUpPa
 class AuthFormStore {
   isLoading = false
   error: string | null = null
-  successMessage: string | null = null
   signUpForm: SignUpForm = {
     fullName: '',
     phone: '',
@@ -28,12 +27,10 @@ class AuthFormStore {
 
   resetStatus = () => {
     this.error = null
-    this.successMessage = null
   }
 
   setError = (message: string) => {
     this.error = message
-    this.successMessage = null
   }
 
   setSignUpField = <K extends keyof SignUpForm>(field: K, value: SignUpForm[K]) => {
@@ -74,7 +71,6 @@ class AuthFormStore {
       runInAction(() => {
         setAccessToken(response.data.accessToken)
         userStore.user = response.data.user
-        this.successMessage = response.message || 'Регистрация выполнена успешно'
       })
     } catch (error) {
       runInAction(() => {
@@ -96,7 +92,6 @@ class AuthFormStore {
       runInAction(() => {
         setAccessToken(response.data.accessToken)
         userStore.user = response.data.user
-        this.successMessage = response.message || 'Вход выполнен успешно'
       })
     } catch (error) {
       runInAction(() => {
@@ -118,7 +113,6 @@ class AuthFormStore {
       runInAction(() => {
         setAccessToken(response.data.accessToken)
         userStore.user = response.data.user
-        this.successMessage = response.message || 'Вход выполнен успешно'
       })
     } catch (error) {
       runInAction(() => {

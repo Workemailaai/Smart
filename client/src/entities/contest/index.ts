@@ -1,4 +1,5 @@
 export type {
+  ICriterion,
   IContest,
   IContestResultsView,
   IContestTypeOption,
@@ -15,6 +16,7 @@ export {
   createContestFull,
   getJuryContestView,
   getOrganizerContestView,
+  putJuryCriteriaOrder,
   putScoresBatch,
   submitJuryContest,
   completeContest,

@@ -14,6 +14,7 @@ export function JuryProfileModal({ initial, onClose, onSave }: JuryProfileModalP
   const [phone, setPhone] = useState(() => formatRuPhoneMask(initial?.phone ?? ''))
   const [position, setPosition] = useState(() => initial?.position ?? '')
   const [password, setPassword] = useState(() => initial?.password ?? '')
+  const [isPasswordVisible, setIsPasswordVisible] = useState(false)
   const [file, setFile] = useState<File | null>(null)
   const [previewUrl, setPreviewUrl] = useState<string | null>(() => initial?.previewUrl ?? null)
 
@@ -90,14 +91,30 @@ export function JuryProfileModal({ initial, onClose, onSave }: JuryProfileModalP
               autoComplete="tel-national"
               value={phone}
             />
-            <input
-              className={styles.input}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="Пароль для входа в кабинет"
-              type="password"
-              autoComplete="new-password"
-              value={password}
-            />
+            <div className={styles.passwordRow}>
+              <input
+                autoComplete="new-password"
+                className={styles.inputPasswordInner}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Пароль для входа в кабинет"
+                type={isPasswordVisible ? 'text' : 'password'}
+                value={password}
+              />
+              <button
+                aria-label={isPasswordVisible ? 'Скрыть пароль' : 'Показать пароль'}
+                className={styles.passwordToggle}
+                onClick={() => setIsPasswordVisible((previous) => !previous)}
+                type="button"
+              >
+                <img
+                  alt=""
+                  className={styles.passwordToggleIcon}
+                  height={24}
+                  src={isPasswordVisible ? '/auth-eye-slash.svg' : '/auth-eye-open.svg'}
+                  width={24}
+                />
+              </button>
+            </div>
           </div>
         </div>
         <div className={styles.footer}>

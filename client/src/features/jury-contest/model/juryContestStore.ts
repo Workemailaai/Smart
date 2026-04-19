@@ -2,12 +2,14 @@ import { makeAutoObservable, runInAction } from 'mobx'
 import {
   getJuryContestView,
   type IParticipantCommentItem,
+  putJuryCriteriaOrder,
   putScoresBatch,
   submitJuryContest,
   type IJuryContestView,
   type IScoreItem,
 } from '@/entities/contest'
 import {
+  orderCriteriaForJury,
   sortCriteriaRows,
   sortParticipantsRows,
   weightedTotalsForJury,
@@ -20,7 +22,11 @@ class JuryContestStore {
   isLoading = false
   isSaving = false
   isSubmitting = false
+  /** Сохранение порядка показателей на экране приоритетов */
+  isSavingPriorityOrder = false
   error: string | null = null
+  /** Порядок id критериев на шаге «Приоритет показателей» (drag-and-drop) */
+  priorityDraftIds: number[] = []
 
   constructor() {
     makeAutoObservable(this)
@@ -31,6 +37,7 @@ class JuryContestStore {
     this.draftScores.clear()
     this.draftComments.clear()
     this.error = null
+    this.priorityDraftIds = []
   }
 
   async loadContest(contestId: number) {
@@ -48,6 +55,7 @@ class JuryContestStore {
         response.data.myComments.forEach((item) => {
           this.draftComments.set(item.participantId, item.comment || '')
         })
+        this.syncPriorityDraftFromView()
       })
     } catch (error) {
       runInAction(() => {
@@ -56,6 +64,72 @@ class JuryContestStore {
     } finally {
       runInAction(() => {
         this.isLoading = false
+      })
+    }
+  }
+
+  priorityStorageKey(userId: number, contestId: number) {
+    return `smart_jury_priority_done_${userId}_${contestId}`
+  }
+
+  /** Показать экран расстановки приоритетов перед оцениванием */
+  shouldShowCriteriaPriorityStep(userId: number): boolean {
+    if (!this.view || this.view.mySubmitted) return false
+    const { contest, criteria } = this.view
+    if (
+      !contest.juryPreferencesEnabled ||
+      !contest.useCriteriaWeights ||
+      criteria.length < 2
+    ) {
+      return false
+    }
+    if (typeof localStorage === 'undefined') return true
+    return localStorage.getItem(this.priorityStorageKey(userId, contest.id)) !== '1'
+  }
+
+  syncPriorityDraftFromView() {
+    if (!this.view) {
+      this.priorityDraftIds = []
+      return
+    }
+    const { criteria, myCriterionOrder } = this.view
+    if (
+      myCriterionOrder &&
+      myCriterionOrder.length === criteria.length
+    ) {
+      this.priorityDraftIds = [...myCriterionOrder]
+      return
+    }
+    this.priorityDraftIds = sortCriteriaRows(criteria).map((c) => c.id)
+  }
+
+  movePriorityCriterion(fromIndex: number, toIndex: number) {
+    const n = this.priorityDraftIds.length
+    if (fromIndex === toIndex || fromIndex < 0 || toIndex < 0 || fromIndex >= n || toIndex >= n) {
+      return
+    }
+    const next = [...this.priorityDraftIds]
+    const [id] = next.splice(fromIndex, 1)
+    next.splice(toIndex, 0, id)
+    this.priorityDraftIds = next
+  }
+
+  async confirmPriorityOrder(contestId: number, userId: number) {
+    this.isSavingPriorityOrder = true
+    this.error = null
+    try {
+      await putJuryCriteriaOrder(contestId, this.priorityDraftIds)
+      if (typeof localStorage !== 'undefined') {
+        localStorage.setItem(this.priorityStorageKey(userId, contestId), '1')
+      }
+      await this.loadContest(contestId)
+    } catch (error) {
+      runInAction(() => {
+        this.error = (error as Error)?.message || 'Не удалось сохранить порядок показателей'
+      })
+    } finally {
+      runInAction(() => {
+        this.isSavingPriorityOrder = false
       })
     }
   }
@@ -96,7 +170,7 @@ class JuryContestStore {
       return Number((sum / n).toFixed(1))
     }
 
-    const criteriaSorted = sortCriteriaRows(this.view.criteria)
+    const criteriaSorted = orderCriteriaForJury(this.view.criteria, this.view.myCriterionOrder ?? null)
     const participantsSorted = sortParticipantsRows(this.view.participants)
     const totals = weightedTotalsForJury({
       criteriaSorted,

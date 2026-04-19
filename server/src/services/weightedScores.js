@@ -64,6 +64,33 @@ function sortCriteriaRows(criteria) {
   });
 }
 
+/**
+ * Упорядочить критерии по сохранённому списку id жюри; неизвестные id в конце по sortOrder.
+ * @param {Array<{ id: number, sortOrder?: number }>} criteria
+ * @param {number[] | null | undefined} criterionOrderIds
+ */
+function orderCriteriaForJury(criteria, criterionOrderIds) {
+  const sortedDefault = sortCriteriaRows(criteria);
+  if (!criterionOrderIds || !Array.isArray(criterionOrderIds) || criterionOrderIds.length === 0) {
+    return sortedDefault;
+  }
+  const byId = new Map(sortedDefault.map((c) => [c.id, c]));
+  const out = [];
+  const seen = new Set();
+  for (const raw of criterionOrderIds) {
+    const id = Number(raw);
+    const row = byId.get(id);
+    if (row && !seen.has(id)) {
+      out.push(row);
+      seen.add(id);
+    }
+  }
+  for (const c of sortedDefault) {
+    if (!seen.has(c.id)) out.push(c);
+  }
+  return out;
+}
+
 function sortParticipantsRows(participants) {
   return [...participants].sort((a, b) => a.id - b.id);
 }
@@ -72,5 +99,6 @@ module.exports = {
   scaleRawTo10,
   weightedTotalsForJury,
   sortCriteriaRows,
+  orderCriteriaForJury,
   sortParticipantsRows
 };

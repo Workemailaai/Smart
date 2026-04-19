@@ -36,7 +36,7 @@ export const MainPage = observer(() => {
   }, []);
 
   const goOrganizer = useCallback(
-    () => navigate("/auth/organizer/sign-up"),
+    () => navigate("/auth/organizer/sign-in"),
     [navigate],
   );
 

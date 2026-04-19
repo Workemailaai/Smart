@@ -14,7 +14,7 @@ const { CONTEST_TYPES } = require("../constants/contestTypes");
 const JuryService = require("./juryService");
 const {
   weightedTotalsForJury,
-  sortCriteriaRows,
+  orderCriteriaForJury,
   sortParticipantsRows
 } = require("./weightedScores");
 
@@ -228,7 +228,7 @@ class ContestService {
 
     let averageByParticipant;
     if (useWeights && criteriaCount > 0) {
-      const criteriaSorted = sortCriteriaRows(contest.criteria);
+      const criteriaSorted = orderCriteriaForJury(contest.criteria, myAssignment.criterionOrder);
       const participantsSorted = sortParticipantsRows(contest.participants);
       const myScoreMap = new Map();
       for (const s of myScores) {
@@ -265,14 +265,69 @@ class ContestService {
     );
     const mySubmitted = expectedScoreCount > 0 && myScores.length >= expectedScoreCount;
 
+    const criteriaForResponse = orderCriteriaForJury(contest.criteria, myAssignment.criterionOrder);
+    const criteriaPlain = criteriaForResponse.map((c) => c.get({ plain: true }));
+    const myCriterionOrder = criteriaForResponse.map((c) => c.id);
+
     return {
       contest: contest.get({ plain: true }),
-      criteria: contest.criteria,
+      criteria: criteriaPlain,
+      myCriterionOrder,
       participants: contest.participants,
       myScores,
       myComments,
       averageByParticipant,
       mySubmitted
+    };
+  }
+
+  /**
+   * Жюри сохраняет индивидуальный порядок показателей (поле jury.criterionOrder).
+   * @param {number[]} orderedCriterionIds — полный список id критериев конкурса в новом порядке
+   */
+  static async reorderCriteriaByJury({ contestId, userId, orderedCriterionIds }) {
+    const contest = await ContestService.getContestWithDependencies(contestId);
+    const myAssignment = contest.juryMembers.find((item) => item.userId === userId);
+    if (!myAssignment) {
+      throw new ApiError(403, "Это мероприятие недоступно для данного жюри");
+    }
+    if (!contest.juryPreferencesEnabled) {
+      throw new ApiError(403, "Изменение порядка показателей для жюри отключено");
+    }
+    if (!contest.useCriteriaWeights) {
+      throw new ApiError(403, "Порядок показателей доступен только при включённой значимости");
+    }
+    const rows = contest.criteria || [];
+    if (rows.length < 2) {
+      throw new ApiError(422, "Недостаточно показателей для перестановки");
+    }
+    if (!Array.isArray(orderedCriterionIds) || orderedCriterionIds.length !== rows.length) {
+      throw new ApiError(422, "Передайте полный список id критериев");
+    }
+    const idSet = new Set(rows.map((c) => c.id));
+    const seen = new Set();
+    for (const raw of orderedCriterionIds) {
+      const id = Number(raw);
+      if (!Number.isInteger(id) || !idSet.has(id) || seen.has(id)) {
+        throw new ApiError(422, "Некорректный список критериев");
+      }
+      seen.add(id);
+    }
+    if (seen.size !== idSet.size) {
+      throw new ApiError(422, "Некорректный список критериев");
+    }
+
+    await Jury.update(
+      { criterionOrder: orderedCriterionIds.map((x) => Number(x)) },
+      { where: { id: myAssignment.id, contestId } }
+    );
+
+    const fresh = await ContestService.getContestWithDependencies(contestId);
+    const me = fresh.juryMembers.find((j) => j.userId === userId);
+    const criteriaOrdered = orderCriteriaForJury(fresh.criteria, me?.criterionOrder);
+    return {
+      criteria: criteriaOrdered.map((c) => c.get({ plain: true })),
+      myCriterionOrder: criteriaOrdered.map((c) => c.id)
     };
   }
 
@@ -342,7 +397,6 @@ class ContestService {
       commentMap.set(`${row.juryId}_${row.participantId}`, String(row.comment || ""));
     }
 
-    const criteriaSorted = sortCriteriaRows(contest.criteria);
     const participantsSorted = sortParticipantsRows(contest.participants);
     const useWeights = Boolean(contest.useCriteriaWeights);
 
@@ -350,15 +404,17 @@ class ContestService {
     if (useWeights && contest.criteria.length > 0) {
       const perJuryTotals = {};
       for (const jm of contest.juryMembers) {
+        const criteriaSortedForJury = orderCriteriaForJury(contest.criteria, jm.criterionOrder);
         perJuryTotals[jm.id] = weightedTotalsForJury({
-          criteriaSorted,
+          criteriaSorted: criteriaSortedForJury,
           participantsSorted,
           getRawScore: (cId, pId) => scoreMap.get(`${jm.id}_${pId}_${cId}`)
         });
       }
       participants = participantsSorted.map((participant, idx) => {
         const juryCards = contest.juryMembers.map((juryMember) => {
-          const criteria = criteriaSorted.map((criterion) => {
+          const criteriaSortedForJury = orderCriteriaForJury(contest.criteria, juryMember.criterionOrder);
+          const criteria = criteriaSortedForJury.map((criterion) => {
             const value =
               scoreMap.get(`${juryMember.id}_${participant.id}_${criterion.id}`) ?? null;
             return {
@@ -497,7 +553,6 @@ class ContestService {
     }
 
     const scores = await Score.findAll({ where: { contestId } });
-    const criteriaSorted = sortCriteriaRows(contest.criteria);
     const participantsSorted = sortParticipantsRows(contest.participants);
     const useWeights = Boolean(contest.useCriteriaWeights);
 
@@ -509,8 +564,9 @@ class ContestService {
       }
       const perJuryTotals = {};
       for (const jm of contest.juryMembers) {
+        const criteriaSortedForJury = orderCriteriaForJury(contest.criteria, jm.criterionOrder);
         perJuryTotals[jm.id] = weightedTotalsForJury({
-          criteriaSorted,
+          criteriaSorted: criteriaSortedForJury,
           participantsSorted,
           getRawScore: (cId, pId) => scoreMap.get(`${jm.id}_${pId}_${cId}`)
         });
@@ -616,7 +672,16 @@ class ContestService {
     if (!payload || typeof payload !== "object") {
       throw new ApiError(400, "Некорректный JSON в поле payload");
     }
-    const { title, description, contestType, criteria, participants, jury, useCriteriaWeights } = payload;
+    const {
+      title,
+      description,
+      contestType,
+      criteria,
+      participants,
+      jury,
+      useCriteriaWeights,
+      juryPreferencesEnabled
+    } = payload;
     const titleTrim = title != null ? String(title).trim() : "";
     if (!titleTrim) {
       throw new ApiError(422, "Укажите название мероприятия");
@@ -677,6 +742,13 @@ class ContestService {
       phonesInPayload.add(norm);
     }
     const useW = Boolean(useCriteriaWeights);
+    const juryPref = Boolean(juryPreferencesEnabled);
+    if (juryPref && !useW) {
+      throw new ApiError(
+        422,
+        "Предпочтения жюри доступны только при включённой значимости показателей"
+      );
+    }
     return {
       title: titleTrim,
       description:
@@ -687,7 +759,8 @@ class ContestService {
       criteria,
       participants,
       jury,
-      useCriteriaWeights: useW
+      useCriteriaWeights: useW,
+      juryPreferencesEnabled: juryPref
     };
   }
 
@@ -698,7 +771,16 @@ class ContestService {
    */
   static async createContestFull({ organizerId, payload, filesByField }) {
     const normalized = ContestService.assertCreateFullPayload(payload);
-    const { title, description, contestType, criteria, participants, jury, useCriteriaWeights } = normalized;
+    const {
+      title,
+      description,
+      contestType,
+      criteria,
+      participants,
+      jury,
+      useCriteriaWeights,
+      juryPreferencesEnabled
+    } = normalized;
 
     const coverFile = filesByField.cover;
     const coverImageUrl = coverFile ? `/media/contests/${coverFile.filename}` : null;
@@ -712,7 +794,8 @@ class ContestService {
           organizerId,
           contestType,
           coverImageUrl,
-          useCriteriaWeights
+          useCriteriaWeights,
+          juryPreferencesEnabled
         },
         { transaction: t }
       );

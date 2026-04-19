@@ -45,6 +45,8 @@ class CreateEventFormStore {
   isSavingTemplate = false
   /** Учитывать значимость показателей (взвешенный расчёт на сервере) */
   useCriteriaWeights = false
+  /** Учитывать предпочтения жюри (экран приоритетов + смена порядка показателей) */
+  juryPreferencesEnabled = false
 
   constructor() {
     makeAutoObservable(this)
@@ -69,10 +71,15 @@ class CreateEventFormStore {
     this.submitError = null
     this.templateMessage = null
     this.useCriteriaWeights = false
+    this.juryPreferencesEnabled = false
   }
 
   setUseCriteriaWeights(v: boolean) {
     this.useCriteriaWeights = v
+  }
+
+  setJuryPreferencesEnabled(v: boolean) {
+    this.juryPreferencesEnabled = v
   }
 
   setTitle(v: string) {
@@ -240,6 +247,7 @@ class CreateEventFormStore {
       description: this.description.trim() || null,
       contestType: this.contestType,
       useCriteriaWeights: this.useCriteriaWeights,
+      juryPreferencesEnabled: this.juryPreferencesEnabled,
       criteria: filledCriteria.map((c) => ({
         name: c.name.trim(),
         minScore: Math.round(Number(c.minScore)),

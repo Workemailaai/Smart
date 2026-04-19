@@ -124,6 +124,24 @@ class ContestController {
     }
   }
 
+  /** Порядок показателей (жюри): только при juryPreferencesEnabled и useCriteriaWeights */
+  static async reorderJuryCriteria(req, res, next) {
+    try {
+      if (req.user.role !== "jury") {
+        throw new ApiError(403, "Только жюри может менять порядок показателей");
+      }
+      const orderedCriterionIds = req.body?.orderedCriterionIds;
+      const data = await ContestService.reorderCriteriaByJury({
+        contestId: Number(req.params.id),
+        userId: req.user.id,
+        orderedCriterionIds
+      });
+      return res.status(200).json(formatResponse(200, "Порядок показателей обновлён", data));
+    } catch (error) {
+      return next(error);
+    }
+  }
+
   /** Финальная отправка оценок жюри */
   static async submitJuryScores(req, res, next) {
     try {

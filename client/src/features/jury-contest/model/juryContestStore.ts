@@ -167,7 +167,7 @@ class JuryContestStore {
         const lo = criterion.minScore ?? 0
         return acc + this.getScore(participantId, criterion.id, lo)
       }, 0)
-      return Number((sum / n).toFixed(1))
+      return Number((sum / n).toFixed(2))
     }
 
     const criteriaSorted = orderCriteriaForJury(this.view.criteria, this.view.myCriterionOrder ?? null)
@@ -182,7 +182,7 @@ class JuryContestStore {
     })
     const idx = participantsSorted.findIndex((p) => p.id === participantId)
     if (idx < 0) return 0
-    return Number((totals[idx] ?? 0).toFixed(1))
+    return Number((totals[idx] ?? 0).toFixed(2))
   }
 
   buildPayload(): IScoreItem[] {

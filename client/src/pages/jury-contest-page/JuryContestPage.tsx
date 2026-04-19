@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react'
 import { NavLink, Navigate, useNavigate, useParams } from 'react-router'
 import { userStore } from '@/entities/user'
 import { juryContestStore } from '@/features/jury-contest/model/juryContestStore'
-import { orderCriteriaForJury } from '@/shared/lib/weightedScores.js'
+import { sortCriteriaRows } from '@/shared/lib/weightedScores.js'
 import styles from './JuryContestPage.module.css'
 
 const MEDIA_BASE_URL = import.meta.env.VITE_MEDIA_BASE_URL || 'http://localhost:3000'
@@ -31,6 +31,13 @@ function formatDate(value: string) {
     month: '2-digit',
     year: 'numeric',
   })
+}
+
+/** Балл для отображения: «9,45» — как у кабинета организатора */
+function formatScoreValue(value: number) {
+  const n = Number(value)
+  if (!Number.isFinite(n)) return '—'
+  return n.toFixed(2).replace('.', ',')
 }
 
 export const JuryContestPage = observer(() => {
@@ -238,11 +245,13 @@ export const JuryContestPage = observer(() => {
                             <span className={styles.participantCountry}>{participant.country || 'Страна не указана'}</span>
                           </div>
                         </div>
-                        <strong className={styles.averageBadge}>{juryContestStore.getParticipantAverage(participant.id)} / 10</strong>
+                        <strong className={styles.averageBadge}>
+                          {formatScoreValue(juryContestStore.getParticipantAverage(participant.id))} / 10
+                        </strong>
                       </summary>
 
                       <div className={styles.criteriaWrap}>
-                        {orderCriteriaForJury(view.criteria, view.myCriterionOrder ?? null).map((criterion) => {
+                        {sortCriteriaRows(view.criteria).map((criterion) => {
                           const min = criterion.minScore ?? 0
                           const max = criterion.maxScore
                           const range = Math.max(1, max - min)

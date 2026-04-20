@@ -12,6 +12,7 @@ const {
 const ApiError = require("../utils/ApiError");
 const { CONTEST_TYPES } = require("../constants/contestTypes");
 const JuryService = require("./juryService");
+const MediaFileService = require("./mediaFileService");
 const {
   weightedTotalsForJury,
   orderCriteriaForJury,
@@ -59,7 +60,7 @@ class ContestService {
    * Удаление мероприятия организатором (только этап оценивания).
    */
   static async deleteContestByOrganizer({ contestId, userId }) {
-    const contest = await Contest.findByPk(contestId);
+    const contest = await ContestService.getContestWithDependencies(contestId);
     if (!contest) {
       throw new ApiError(404, "Мероприятие не найдено");
     }
@@ -80,17 +81,24 @@ class ContestService {
 
     const t = await sequelize.transaction();
     try {
+      const mediaPaths = MediaFileService.collectContestMediaPaths({
+        contest,
+        participants: contest.participants,
+        juryMembers: contest.juryMembers
+      });
       await JuryParticipantComment.destroy({ where: { contestId }, transaction: t });
       await Score.destroy({ where: { contestId }, transaction: t });
       await Jury.destroy({ where: { contestId }, transaction: t });
       await Participant.destroy({ where: { contestId }, transaction: t });
       await Criterion.destroy({ where: { contestId }, transaction: t });
       await contest.destroy({ transaction: t });
+      removableMediaPaths = await MediaFileService.decrementReferences(mediaPaths, t);
       await t.commit();
     } catch (err) {
       await t.rollback();
       throw err;
     }
+    MediaFileService.cleanupFiles(removableMediaPaths);
   }
 
   static async getContestWithDependencies(contestId) {
@@ -686,6 +694,7 @@ class ContestService {
       criteria,
       participants,
       jury,
+      coverImageUrl,
       useCriteriaWeights,
       juryPreferencesEnabled
     } = payload;
@@ -724,6 +733,12 @@ class ContestService {
       if (!fn) {
         throw new ApiError(422, "У каждого участника укажите ФИО");
       }
+      if (p?.photoUrl != null && String(p.photoUrl).trim() !== "") {
+        const participantPhotoUrl = String(p.photoUrl).trim();
+        if (!participantPhotoUrl.startsWith("/media/")) {
+          throw new ApiError(422, "Некорректная ссылка на фото участника");
+        }
+      }
     }
     if (!Array.isArray(jury)) {
       throw new ApiError(422, "Список жюри должен быть массивом");
@@ -747,6 +762,19 @@ class ContestService {
         throw new ApiError(422, "В заявке жюри номер телефона повторяется");
       }
       phonesInPayload.add(norm);
+      if (j?.photoUrl != null && String(j.photoUrl).trim() !== "") {
+        const juryPhotoUrl = String(j.photoUrl).trim();
+        if (!juryPhotoUrl.startsWith("/media/")) {
+          throw new ApiError(422, "Некорректная ссылка на фото жюри");
+        }
+      }
+    }
+    const normalizedCoverImageUrl =
+      coverImageUrl != null && String(coverImageUrl).trim() !== ""
+        ? String(coverImageUrl).trim()
+        : null;
+    if (normalizedCoverImageUrl && !normalizedCoverImageUrl.startsWith("/media/")) {
+      throw new ApiError(422, "Некорректная ссылка на обложку мероприятия");
     }
     const useW = Boolean(useCriteriaWeights);
     const juryPref = Boolean(juryPreferencesEnabled);
@@ -766,6 +794,7 @@ class ContestService {
       criteria,
       participants,
       jury,
+      coverImageUrl: normalizedCoverImageUrl,
       useCriteriaWeights: useW,
       juryPreferencesEnabled: juryPref
     };
@@ -785,14 +814,18 @@ class ContestService {
       criteria,
       participants,
       jury,
+      coverImageUrl: coverImageUrlFromPayload,
       useCriteriaWeights,
       juryPreferencesEnabled
     } = normalized;
 
     const coverFile = filesByField.cover;
-    const coverImageUrl = coverFile ? `/media/contests/${coverFile.filename}` : null;
+    const coverImageUrl = coverFile
+      ? `/media/contests/${coverFile.filename}`
+      : coverImageUrlFromPayload || null;
 
     const t = await sequelize.transaction();
+    let removableMediaPaths = [];
     try {
       const contest = await Contest.create(
         {
@@ -837,7 +870,11 @@ class ContestService {
       for (let i = 0; i < participants.length; i++) {
         const p = participants[i];
         const f = filesByField[`participantPhoto_${i}`];
-        const photoUrl = f ? `/media/participants/${f.filename}` : null;
+        const fallbackParticipantPhotoUrl =
+          p?.photoUrl != null && String(p.photoUrl).trim() !== ""
+            ? String(p.photoUrl).trim()
+            : null;
+        const photoUrl = f ? `/media/participants/${f.filename}` : fallbackParticipantPhotoUrl;
         const countryTrim =
           p.country != null && String(p.country).trim() !== ""
             ? String(p.country).trim()
@@ -861,7 +898,11 @@ class ContestService {
       for (let i = 0; i < jury.length; i++) {
         const j = jury[i];
         const f = filesByField[`juryPhoto_${i}`];
-        const photoUrl = f ? `/media/jury/${f.filename}` : null;
+        const fallbackJuryPhotoUrl =
+          j?.photoUrl != null && String(j.photoUrl).trim() !== ""
+            ? String(j.photoUrl).trim()
+            : null;
+        const photoUrl = f ? `/media/jury/${f.filename}` : fallbackJuryPhotoUrl;
         await JuryService.assignJuryToContest(
           {
             contestId: contest.id,
@@ -875,6 +916,33 @@ class ContestService {
           t
         );
       }
+
+      const mediaPaths = MediaFileService.collectContestMediaPaths({
+        contest: { coverImageUrl },
+        participants: participants.map((participant, index) => {
+          const participantPhotoFile = filesByField[`participantPhoto_${index}`];
+          const fallbackParticipantPhotoUrl =
+            participant?.photoUrl != null && String(participant.photoUrl).trim() !== ""
+              ? String(participant.photoUrl).trim()
+              : null;
+          return {
+            photoUrl: participantPhotoFile
+              ? `/media/participants/${participantPhotoFile.filename}`
+              : fallbackParticipantPhotoUrl
+          };
+        }),
+        juryMembers: jury.map((juryMember, index) => {
+          const juryPhotoFile = filesByField[`juryPhoto_${index}`];
+          const fallbackJuryPhotoUrl =
+            juryMember?.photoUrl != null && String(juryMember.photoUrl).trim() !== ""
+              ? String(juryMember.photoUrl).trim()
+              : null;
+          return {
+            photoUrl: juryPhotoFile ? `/media/jury/${juryPhotoFile.filename}` : fallbackJuryPhotoUrl
+          };
+        })
+      });
+      await MediaFileService.incrementReferences(mediaPaths, t);
 
       await t.commit();
 

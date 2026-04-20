@@ -36,7 +36,8 @@ class TemplateController {
         organizerId: req.user.id,
         contestType: body.contestType,
         snapshot: body.snapshot,
-        coverFile: filesByField.cover
+        coverFile: filesByField.cover,
+        filesByField
       });
       return res
         .status(201)

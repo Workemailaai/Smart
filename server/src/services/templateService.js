@@ -1,6 +1,7 @@
-const { EventTemplate } = require("../db/models");
+const { EventTemplate, sequelize } = require("../db/models");
 const ApiError = require("../utils/ApiError");
 const { CONTEST_TYPES } = require("../constants/contestTypes");
+const MediaFileService = require("./mediaFileService");
 
 class TemplateService {
   /**
@@ -74,6 +75,10 @@ class TemplateService {
         country:
           participant?.country != null && String(participant.country).trim() !== ""
             ? String(participant.country).trim()
+            : null,
+        photoUrl:
+          participant?.photoUrl != null && String(participant.photoUrl).trim() !== ""
+            ? String(participant.photoUrl).trim()
             : null
       };
     });
@@ -103,7 +108,11 @@ class TemplateService {
           juryMember?.position != null && String(juryMember.position).trim() !== ""
             ? String(juryMember.position).trim()
             : null,
-        password
+        password,
+        photoUrl:
+          juryMember?.photoUrl != null && String(juryMember.photoUrl).trim() !== ""
+            ? String(juryMember.photoUrl).trim()
+            : null
       };
     });
     return {
@@ -128,7 +137,8 @@ class TemplateService {
     organizerId,
     contestType,
     snapshot,
-    coverFile
+    coverFile,
+    filesByField
   }) {
     const title = name != null ? String(name).trim() : "";
     if (!title) {
@@ -150,14 +160,49 @@ class TemplateService {
     if (coverImageUrl) {
       normalizedSnapshot.coverImageUrl = coverImageUrl;
     }
-    const normalizedCriteria = normalizedSnapshot.criteria;
-    return EventTemplate.create({
-      name: title,
-      criteria: normalizedCriteria,
-      contestType: type,
-      snapshot: normalizedSnapshot,
-      organizerId
+    normalizedSnapshot.participants = normalizedSnapshot.participants.map((participant, index) => {
+      const participantPhotoFile = filesByField?.[`participantPhoto_${index}`];
+      if (!participantPhotoFile) return participant;
+      if (!String(participantPhotoFile.mimetype || "").startsWith("image/")) {
+        throw new ApiError(400, `Файл участника ${index + 1} должен быть изображением`);
+      }
+      return {
+        ...participant,
+        photoUrl: `/media/participants/${participantPhotoFile.filename}`
+      };
     });
+    normalizedSnapshot.jury = normalizedSnapshot.jury.map((juryMember, index) => {
+      const juryPhotoFile = filesByField?.[`juryPhoto_${index}`];
+      if (!juryPhotoFile) return juryMember;
+      if (!String(juryPhotoFile.mimetype || "").startsWith("image/")) {
+        throw new ApiError(400, `Файл жюри ${index + 1} должен быть изображением`);
+      }
+      return {
+        ...juryMember,
+        photoUrl: `/media/jury/${juryPhotoFile.filename}`
+      };
+    });
+    const normalizedCriteria = normalizedSnapshot.criteria;
+    const mediaPaths = MediaFileService.collectTemplateSnapshotMediaPaths(normalizedSnapshot);
+    const transaction = await sequelize.transaction();
+    try {
+      const template = await EventTemplate.create(
+        {
+          name: title,
+          criteria: normalizedCriteria,
+          contestType: type,
+          snapshot: normalizedSnapshot,
+          organizerId
+        },
+        { transaction }
+      );
+      await MediaFileService.incrementReferences(mediaPaths, transaction);
+      await transaction.commit();
+      return template;
+    } catch (error) {
+      await transaction.rollback();
+      throw error;
+    }
   }
 
   /** Список шаблонов организатора */
@@ -187,7 +232,18 @@ class TemplateService {
     if (!t) {
       throw new ApiError(404, "Шаблон не найден");
     }
-    await t.destroy();
+    const mediaPaths = MediaFileService.collectTemplateSnapshotMediaPaths(t.snapshot);
+    const transaction = await sequelize.transaction();
+    let removableMediaPaths = [];
+    try {
+      await t.destroy({ transaction });
+      removableMediaPaths = await MediaFileService.decrementReferences(mediaPaths, transaction);
+      await transaction.commit();
+    } catch (error) {
+      await transaction.rollback();
+      throw error;
+    }
+    MediaFileService.cleanupFiles(removableMediaPaths);
     return { id: Number(id) };
   }
 }

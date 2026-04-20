@@ -37,8 +37,8 @@ export type EventTemplateSnapshot = {
   useCriteriaWeights: boolean
   juryPreferencesEnabled: boolean
   criteria: { name: string; minScore: number; maxScore: number }[]
-  participants: { fullName: string; extraInfo: string | null; country: string | null }[]
-  jury: { fullName: string; phone: string; position: string | null; password: string }[]
+  participants: { fullName: string; extraInfo: string | null; country: string | null; photoUrl: string | null }[]
+  jury: { fullName: string; phone: string; position: string | null; password: string; photoUrl: string | null }[]
 }
 
 class CreateEventFormStore {
@@ -235,7 +235,7 @@ class CreateEventFormStore {
       extraInfo: String(participant.extraInfo || ''),
       country: String(participant.country || ''),
       file: null,
-      previewUrl: null,
+      previewUrl: participant.photoUrl || null,
     }))
     this.jury = (snapshot?.jury ?? []).map((juryMember) => ({
       localId: newLocalId(),
@@ -244,7 +244,7 @@ class CreateEventFormStore {
       position: String(juryMember.position || ''),
       password: String(juryMember.password || ''),
       file: null,
-      previewUrl: null,
+      previewUrl: juryMember.photoUrl || null,
     }))
   }
 
@@ -295,13 +295,25 @@ class CreateEventFormStore {
         fullName: p.fullName.trim(),
         extraInfo: p.extraInfo.trim() || null,
         country: p.country.trim() || null,
+        photoUrl:
+          !p.file && p.previewUrl && !p.previewUrl.startsWith('blob:')
+            ? p.previewUrl
+            : null,
       })),
       jury: this.jury.map((j) => ({
         fullName: j.fullName.trim(),
         phone: normalizePhoneDigits(j.phone),
         password: j.password,
         position: j.position.trim() || null,
+        photoUrl:
+          !j.file && j.previewUrl && !j.previewUrl.startsWith('blob:')
+            ? j.previewUrl
+            : null,
       })),
+      coverImageUrl:
+        !this.coverFile && this.coverPreviewUrl && !this.coverPreviewUrl.startsWith('blob:')
+          ? this.coverPreviewUrl
+          : null,
     }
     const fd = new FormData()
     fd.append('payload', JSON.stringify(payload))
@@ -332,12 +344,20 @@ class CreateEventFormStore {
         fullName: participant.fullName.trim(),
         extraInfo: participant.extraInfo.trim() || null,
         country: participant.country.trim() || null,
+        photoUrl:
+          !participant.file && participant.previewUrl && !participant.previewUrl.startsWith('blob:')
+            ? participant.previewUrl
+            : null,
       })),
       jury: this.jury.map((juryMember) => ({
         fullName: juryMember.fullName.trim(),
         phone: normalizePhoneDigits(juryMember.phone),
         position: juryMember.position.trim() || null,
         password: juryMember.password,
+        photoUrl:
+          !juryMember.file && juryMember.previewUrl && !juryMember.previewUrl.startsWith('blob:')
+            ? juryMember.previewUrl
+            : null,
       })),
     }
   }

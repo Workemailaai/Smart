@@ -262,6 +262,16 @@ export const CreateEventForm = observer(function CreateEventForm() {
       if (store.coverFile) {
         formData.append('cover', store.coverFile)
       }
+      store.participants.forEach((participant, index) => {
+        if (participant.file) {
+          formData.append(`participantPhoto_${index}`, participant.file)
+        }
+      })
+      store.jury.forEach((juryMember, index) => {
+        if (juryMember.file) {
+          formData.append(`juryPhoto_${index}`, juryMember.file)
+        }
+      })
       await createTemplate(formData)
       store.templateMessage = 'Шаблон сохранён'
       void templateStore.fetchTemplates()

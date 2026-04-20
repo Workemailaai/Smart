@@ -9,6 +9,7 @@ export interface ITemplateParticipant {
   fullName: string
   extraInfo: string | null
   country: string | null
+  photoUrl?: string | null
 }
 
 export interface ITemplateJuryMember {
@@ -16,6 +17,7 @@ export interface ITemplateJuryMember {
   phone: string
   position: string | null
   password: string
+  photoUrl?: string | null
 }
 
 export interface ITemplateSnapshot {

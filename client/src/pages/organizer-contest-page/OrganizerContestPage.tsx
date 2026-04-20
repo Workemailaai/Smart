@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import { Navigate, useNavigate, useParams } from 'react-router'
 import { userStore } from '@/entities/user'
 import { organizerContestStore } from '@/features/organizer-contest/model/organizerContestStore'
+import { formatRuPhoneMask } from '@/shared/lib/ruPhone'
 import { OrganizerCabinetSidebar } from '@/widgets/organizer-cabinet-sidebar/OrganizerCabinetSidebar'
 import styles from './OrganizerContestPage.module.css'
 
@@ -174,7 +175,7 @@ export const OrganizerContestPage = observer(() => {
                                 )}
                                 <div className={styles.juryMeta}>
                                   <p className={styles.juryName}>{juryCard.fullName}</p>
-                                  <p className={styles.juryPhone}>{juryCard.phone}</p>
+                                  <p className={styles.juryPhone}>{formatRuPhoneMask(juryCard.phone)}</p>
                                 </div>
                               </div>
 

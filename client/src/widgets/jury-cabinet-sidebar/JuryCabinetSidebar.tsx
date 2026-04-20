@@ -1,5 +1,6 @@
 import { NavLink } from 'react-router'
 import styles from '@/pages/cabinet-page/CabinetPage.module.css'
+import { formatRuPhoneMask } from '@/shared/lib/ruPhone'
 
 function getInitials(name: string) {
   return name
@@ -28,7 +29,7 @@ export function JuryCabinetSidebar({ fullName, phone, onLogout }: JuryCabinetSid
             <div className={styles.avatar}>{getInitials(fullName)}</div>
           </div>
           <p className={styles.name}>{fullName}</p>
-          <p className={styles.phone}>{phone}</p>
+          <p className={styles.phone}>{formatRuPhoneMask(phone)}</p>
           <span className={styles.roleBadge}>Жюри</span>
         </div>
 

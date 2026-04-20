@@ -4,6 +4,7 @@ import { NavLink, Navigate, useNavigate } from 'react-router'
 import { ContestCard, contestStore, getContestTypes, type IContest } from '@/entities/contest'
 import { TemplateCard, templateStore } from '@/entities/template'
 import { userStore } from '@/entities/user'
+import { formatRuPhoneMask } from '@/shared/lib/ruPhone'
 import { OrganizerCabinetSidebar } from '@/widgets/organizer-cabinet-sidebar/OrganizerCabinetSidebar'
 import { JuryCabinetSidebar } from '@/widgets/jury-cabinet-sidebar/JuryCabinetSidebar'
 import styles from './CabinetPage.module.css'
@@ -247,7 +248,7 @@ export const CabinetPage = observer(({ section }: CabinetPageProps) => {
                 </div>
                 <div className={styles.juryProfileTextBlock}>
                   <p className={styles.juryProfileName}>{fullName}</p>
-                  <p className={styles.juryProfilePhone}>{user.phone}</p>
+                  <p className={styles.juryProfilePhone}>{formatRuPhoneMask(user.phone)}</p>
                 </div>
                 <span className={styles.juryProfileBadge}>{roleTitle}</span>
               </div>

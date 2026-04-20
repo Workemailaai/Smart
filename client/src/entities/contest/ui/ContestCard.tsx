@@ -2,6 +2,15 @@ import type { IContest } from '../model/contest.types'
 import { resolveMediaUrl } from '@/shared'
 import styles from './ContestCard.module.css'
 
+const CONTEST_TYPE_LABELS: Record<string, string> = {
+  creative: 'Творческий конкурс',
+  sports: 'Спортивный конкурс',
+  designers: 'Конкурс дизайнеров',
+  rating_objects: 'Построение рейтинга объектов',
+  student_work: 'Оценка студенческих работ',
+  other: 'Другое',
+}
+
 type ContestCardProps = {
   contest: IContest
   variant?: 'pending' | 'results'
@@ -118,7 +127,9 @@ export function ContestCard({
     )
   }
 
-  const contestTypeTitle = contest.contestType || 'Не указан'
+  const contestTypeTitle = contest.contestType
+    ? CONTEST_TYPE_LABELS[contest.contestType] || contest.contestType
+    : 'Не указан'
 
   const isClickableRow = Boolean(showVotedColumn && onOpen)
   const votedText = `${contest.submittedJuryCount ?? 0}/${contest.totalJuryCount ?? 0}`

@@ -4,6 +4,7 @@ import { useNavigate, useSearchParams } from 'react-router'
 import { contestStore, createContestFull, getContestTypes } from '@/entities/contest'
 import { createTemplate, getTemplateById, templateStore } from '@/entities/template'
 import type { IContestTypeOption } from '@/entities/contest'
+import { formatRuPhoneMask } from '@/shared/lib/ruPhone'
 import { createEventFormStore, type DraftJury, type DraftParticipant } from '../model/createEventFormStore'
 import { ParticipantProfileModal } from './ParticipantProfileModal'
 import { JuryProfileModal } from './JuryProfileModal'
@@ -85,7 +86,7 @@ export const CreateEventForm = observer(function CreateEventForm() {
   const [juryModalKey, setJuryModalKey] = useState(0)
   /** Строковое состояние полей границ — чтобы можно было стереть ввод и набрать число заново */
   const [boundaryMinStr, setBoundaryMinStr] = useState(() =>
-    String(store.criteria[0]?.minScore ?? 1),
+    String(store.criteria[0]?.minScore ?? 0),
   )
   const [boundaryMaxStr, setBoundaryMaxStr] = useState(() =>
     String(store.criteria[0]?.maxScore ?? 10),
@@ -627,7 +628,7 @@ export const CreateEventForm = observer(function CreateEventForm() {
                     )}
                     <div className={styles.personMeta}>
                       <p className={styles.personName}>{j.fullName || 'Без имени'}</p>
-                      <p className={styles.personSub}>{j.phone || '—'}</p>
+                      <p className={styles.personSub}>{j.phone ? formatRuPhoneMask(j.phone) : '—'}</p>
                     </div>
                     <div className={styles.personRowActions}>
                       <button className={styles.personEditBtn} onClick={() => openEditJury(j)} type="button" aria-label="Изменить">

@@ -111,9 +111,20 @@
   background: #fff;
   border-radius: 28px;
   display: flex;
-  flex-direction: column;
-  gap: 8px;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
   box-sizing: border-box;
+}
+
+.contestInfo {
+  flex: 1 1 0;
+  min-width: 0;
+  display: inline-flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: flex-start;
+  gap: 8px;
 }
 
 .contestDate {
@@ -138,6 +149,57 @@
   color: #0a0f15;
   font-size: 18px;
   line-height: 24px;
+}
+
+.votedBadge {
+  height: 48px;
+  padding: 8px 16px;
+  border-radius: 57px;
+  background: #f0f1f5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+.votedLabel {
+  margin: 0;
+  opacity: 0.8;
+  color: #0a0f15;
+  font-size: 20px;
+  font-weight: 500;
+  line-height: 22px;
+}
+
+.votedCountWrap {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 4px;
+}
+
+.votedCountCurrent,
+.votedCountDivider,
+.votedCountTotal {
+  font-family: 'Golos Text', 'Geist', 'Segoe UI', sans-serif;
+  font-size: 26px;
+  font-weight: 500;
+  line-height: 30px;
+}
+
+.votedCountCurrent {
+  color: #0a0f15;
+}
+
+.votedCountCurrentComplete {
+  color: #00a99d;
+}
+
+.votedCountDivider,
+.votedCountTotal {
+  opacity: 0.3;
+  color: #0a0f15;
 }
 
 .participantSections {
@@ -480,6 +542,15 @@
 @media (max-width: 1300px) {
   .searchLabel {
     width: 320px;
+  }
+
+  .contestCard {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .votedBadge {
+    align-self: flex-start;
   }
 
   .juryCards {

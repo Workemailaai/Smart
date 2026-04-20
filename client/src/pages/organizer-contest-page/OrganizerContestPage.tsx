@@ -65,6 +65,9 @@ export const OrganizerContestPage = observer(() => {
 
   const view = organizerContestStore.view
   const fullName = user.fullName || 'Пользователь'
+  const submittedJuryCount = view?.submittedJuryCount ?? 0
+  const totalJuryCount = view?.totalJuryCount ?? 0
+  const hasAllJurySubmitted = totalJuryCount > 0 && submittedJuryCount >= totalJuryCount
 
   const onLogout = async () => {
     await userStore.logout()
@@ -113,9 +116,25 @@ export const OrganizerContestPage = observer(() => {
           {view ? (
             <>
               <article className={styles.contestCard}>
-                <p className={styles.contestDate}>{formatDate(view.contest.createdAt)}</p>
-                <p className={styles.contestTitle}>{view.contest.title}</p>
-                <p className={styles.contestSubtitle}>{view.contest.description || 'Оценка конкурса'}</p>
+                <div className={styles.contestInfo}>
+                  <p className={styles.contestDate}>{formatDate(view.contest.createdAt)}</p>
+                  <p className={styles.contestTitle}>{view.contest.title}</p>
+                  <p className={styles.contestSubtitle}>{view.contest.description || 'Оценка конкурса'}</p>
+                </div>
+                <div className={styles.votedBadge}>
+                  <span className={styles.votedLabel}>Проголосовало:</span>
+                  <div className={styles.votedCountWrap}>
+                    <span
+                      className={`${styles.votedCountCurrent} ${
+                        hasAllJurySubmitted ? styles.votedCountCurrentComplete : ''
+                      }`}
+                    >
+                      {submittedJuryCount}
+                    </span>
+                    <span className={styles.votedCountDivider}>/</span>
+                    <span className={styles.votedCountTotal}>{totalJuryCount}</span>
+                  </div>
+                </div>
               </article>
 
               <div className={styles.participantSections}>

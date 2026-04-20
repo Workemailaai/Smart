@@ -550,6 +550,15 @@
   background: #0a0f15;
   color: #fff;
   min-width: 225px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  text-align: center;
+}
+
+.primaryButton:disabled {
+  opacity: 0.3;
 }
 
 .infoText,

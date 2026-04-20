@@ -233,6 +233,7 @@ export const JuryContestPage = observer(() => {
                                     max={max}
                                     step={1}
                                     value={clamped}
+                                    disabled={view.mySubmitted}
                                     onChange={(event) =>
                                       juryContestStore.setScore(participant.id, criterion.id, Number(event.target.value))
                                     }
@@ -257,6 +258,7 @@ export const JuryContestPage = observer(() => {
                           className={styles.commentInput}
                           value={juryContestStore.getComment(participant.id)}
                           maxLength={COMMENT_LIMIT}
+                          readOnly={view.mySubmitted}
                           placeholder="Оставьте обратную связь по выступлению"
                           onChange={(event) => juryContestStore.setComment(participant.id, event.target.value)}
                         />
@@ -282,11 +284,7 @@ export const JuryContestPage = observer(() => {
                     disabled={juryContestStore.isSubmitting || view.mySubmitted}
                     onClick={() => void juryContestStore.submit(numericContestId)}
                   >
-                    {view.mySubmitted
-                      ? 'Оценки уже отправлены'
-                      : juryContestStore.isSubmitting
-                        ? 'Отправка...'
-                        : 'Завершить'}
+                    {juryContestStore.isSubmitting ? 'Отправка...' : 'Завершить'}
                   </button>
                 </div>
               </div>

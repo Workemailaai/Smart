@@ -679,7 +679,7 @@ export const CabinetPage = observer(({ section }: CabinetPageProps) => {
                       juryCabinetCompact
                       showVotedColumn
                       key={contest.id}
-                      onOpen={() => navigate(`/cabinet/events/${contest.id}/results`)}
+                      onOpen={() => navigate(`/cabinet/events/${contest.id}/jury`)}
                     />
                   ))}
                 </div>

@@ -208,16 +208,14 @@ export const ContestResultsPage = observer(() => {
             })}
           </div>
 
-          {user.role === 'organizer' ? (
-            <div className={styles.footer}>
-              <button className={styles.backButton} type="button" onClick={() => navigate('/cabinet/events')}>
-                ←
-              </button>
-              <button className={styles.exportButton} type="button" onClick={onExport}>
-                Экспорт
-              </button>
-            </div>
-          ) : null}
+          <div className={styles.footer}>
+            <button className={styles.backButton} type="button" onClick={() => navigate('/cabinet/events')}>
+              ←
+            </button>
+            <button className={styles.exportButton} type="button" onClick={onExport}>
+              Экспорт
+            </button>
+          </div>
         </div>
       ) : null}
     </section>

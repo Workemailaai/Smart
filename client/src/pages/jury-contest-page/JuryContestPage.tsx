@@ -54,8 +54,9 @@ export const JuryContestPage = observer(() => {
 
   const view = juryContestStore.view
   const userName = user.fullName || 'Пользователь'
+  const isCompletedContest = view?.contest.status === 'completed'
   const showCriteriaPriorityStep = Boolean(
-    view && user && juryContestStore.shouldShowCriteriaPriorityStep(user.id),
+    view && user && !isCompletedContest && juryContestStore.shouldShowCriteriaPriorityStep(user.id),
   )
   const [priorityDragFrom, setPriorityDragFrom] = useState<number | null>(null)
   const [priorityDragOver, setPriorityDragOver] = useState<number | null>(null)
@@ -233,7 +234,7 @@ export const JuryContestPage = observer(() => {
                                     max={max}
                                     step={1}
                                     value={clamped}
-                                    disabled={view.mySubmitted}
+                                    disabled={view.mySubmitted || isCompletedContest}
                                     onChange={(event) =>
                                       juryContestStore.setScore(participant.id, criterion.id, Number(event.target.value))
                                     }
@@ -258,7 +259,7 @@ export const JuryContestPage = observer(() => {
                           className={styles.commentInput}
                           value={juryContestStore.getComment(participant.id)}
                           maxLength={COMMENT_LIMIT}
-                          readOnly={view.mySubmitted}
+                          readOnly={view.mySubmitted || isCompletedContest}
                           placeholder="Оставьте обратную связь по выступлению"
                           onChange={(event) => juryContestStore.setComment(participant.id, event.target.value)}
                         />
@@ -278,14 +279,24 @@ export const JuryContestPage = observer(() => {
                   ←
                 </button>
                 <div className={styles.actionsRight}>
-                  <button
-                    type="button"
-                    className={styles.primaryButton}
-                    disabled={juryContestStore.isSubmitting || view.mySubmitted}
-                    onClick={() => void juryContestStore.submit(numericContestId)}
-                  >
-                    {juryContestStore.isSubmitting ? 'Отправка...' : 'Завершить'}
-                  </button>
+                  {isCompletedContest ? (
+                    <button
+                      type="button"
+                      className={styles.primaryButton}
+                      onClick={() => navigate(`/cabinet/events/${numericContestId}/results`)}
+                    >
+                      Результаты
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      className={styles.primaryButton}
+                      disabled={juryContestStore.isSubmitting || view.mySubmitted}
+                      onClick={() => void juryContestStore.submit(numericContestId)}
+                    >
+                      {juryContestStore.isSubmitting ? 'Отправка...' : 'Завершить'}
+                    </button>
+                  )}
                 </div>
               </div>
             </>

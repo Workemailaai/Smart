@@ -29,6 +29,22 @@ const FALLBACK_CONTEST_TYPES: IContestTypeOption[] = [
   { id: 'other', label: 'Другое' },
 ]
 
+const MEDIA_BASE_URL = import.meta.env.VITE_MEDIA_BASE_URL || 'http://localhost:3000'
+
+function resolveMediaUrl(value: string | null) {
+  if (!value) return null
+  if (
+    value.startsWith('http://') ||
+    value.startsWith('https://') ||
+    value.startsWith('blob:') ||
+    value.startsWith('data:')
+  ) {
+    return value
+  }
+  const normalizedPath = value.startsWith('/') ? value : `/${value}`
+  return `${MEDIA_BASE_URL}${normalizedPath}`
+}
+
 const PRIMARY_ORDER = [
   'creative',
   'sports',
@@ -372,7 +388,7 @@ export const CreateEventForm = observer(function CreateEventForm() {
           </div>
           <label className={styles.coverBox}>
             {store.coverPreviewUrl ? (
-              <img alt="" className={styles.coverImg} src={store.coverPreviewUrl} />
+              <img alt="" className={styles.coverImg} src={resolveMediaUrl(store.coverPreviewUrl) ?? undefined} />
             ) : (
               <div className={styles.coverHint}>
                 <div className={styles.coverPlus}>+</div>
@@ -573,7 +589,7 @@ export const CreateEventForm = observer(function CreateEventForm() {
                 {store.participants.map((p) => (
                   <div className={styles.personRow} key={p.localId}>
                     {p.previewUrl ? (
-                      <img alt="" className={styles.avatarSm} src={p.previewUrl} />
+                      <img alt="" className={styles.avatarSm} src={resolveMediaUrl(p.previewUrl) ?? undefined} />
                     ) : (
                       <div className={styles.avatarSm} />
                     )}
@@ -632,7 +648,7 @@ export const CreateEventForm = observer(function CreateEventForm() {
                 {store.jury.map((j) => (
                   <div className={styles.personRow} key={j.localId}>
                     {j.previewUrl ? (
-                      <img alt="" className={styles.avatarSm} src={j.previewUrl} />
+                      <img alt="" className={styles.avatarSm} src={resolveMediaUrl(j.previewUrl) ?? undefined} />
                     ) : (
                       <div className={styles.avatarSm} />
                     )}

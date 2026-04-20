@@ -23,7 +23,7 @@ export interface IContestTypeOption {
   label: string
 }
 
-export type ContestStatus = 'in_progress' | 'judging_completed' | 'completed' | 'archived'
+export type ContestStatus = 'in_progress' | 'judging_completed' | 'completed'
 
 export interface ICriterion {
   id: number

@@ -1,5 +1,5 @@
 import { axiosInstance, type ServerResponseType } from '@/shared'
-import type { ITemplate, ITemplateCriterion } from '../model/template.types'
+import type { ITemplate } from '../model/template.types'
 
 export const getTemplateById = async (id: number): Promise<ServerResponseType<ITemplate>> => {
   try {
@@ -20,13 +20,9 @@ export const getTemplates = async (): Promise<ServerResponseType<ITemplate[]>> =
 }
 
 /** Сохранить каркас мероприятия как шаблон */
-export const createTemplate = async (body: {
-  name: string
-  contestType: string
-  criteria: ITemplateCriterion[]
-}): Promise<ServerResponseType<ITemplate>> => {
+export const createTemplate = async (formData: FormData): Promise<ServerResponseType<ITemplate>> => {
   try {
-    const response = await axiosInstance.post('/templates', body)
+    const response = await axiosInstance.post('/templates', formData)
     return response.data
   } catch (error) {
     const msg =

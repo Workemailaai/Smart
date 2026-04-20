@@ -12,15 +12,19 @@ class ContestStore {
   }
 
   get juryPendingContests() {
-    return this.contests.filter((contest) => !contest.mySubmitted && contest.status !== 'archived')
+    return this.contests.filter((contest) => !contest.mySubmitted && contest.status === 'in_progress')
   }
 
   get juryRatedContests() {
-    return this.contests.filter((contest) => contest.mySubmitted && contest.status !== 'archived')
+    return this.contests.filter(
+      (contest) =>
+        Boolean(contest.mySubmitted) &&
+        (contest.status === 'in_progress' || contest.status === 'judging_completed'),
+    )
   }
 
-  get juryArchivedContests() {
-    return this.contests.filter((contest) => contest.status === 'archived')
+  get juryCompletedContests() {
+    return this.contests.filter((contest) => contest.status === 'completed')
   }
 
   get organizerInProgressContests() {
@@ -31,10 +35,6 @@ class ContestStore {
 
   get organizerCompletedContests() {
     return this.contests.filter((contest) => contest.status === 'completed')
-  }
-
-  get organizerArchivedContests() {
-    return this.contests.filter((contest) => contest.status === 'archived')
   }
 
   fetchContests = async () => {

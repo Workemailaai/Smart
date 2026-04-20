@@ -14,12 +14,29 @@ class TemplateController {
   static async createTemplate(req, res, next) {
     try {
       TemplateController.ensureOrganizer(req);
-      requireFields(req.body, ["name", "criteria"]);
+      let body = req.body || {};
+      if (typeof req.body?.payload === "string") {
+        try {
+          body = JSON.parse(req.body.payload);
+        } catch {
+          throw new ApiError(400, "Поле payload должно быть корректным JSON");
+        }
+      }
+      requireFields(body, ["name", "criteria"]);
+      const filesByField = {};
+      for (const file of req.files || []) {
+        if (filesByField[file.fieldname]) {
+          throw new ApiError(400, `Дублируется файл в поле ${file.fieldname}`);
+        }
+        filesByField[file.fieldname] = file;
+      }
       const template = await TemplateService.createTemplate({
-        name: req.body.name,
-        criteria: req.body.criteria,
+        name: body.name,
+        criteria: body.criteria,
         organizerId: req.user.id,
-        contestType: req.body.contestType
+        contestType: body.contestType,
+        snapshot: body.snapshot,
+        coverFile: filesByField.cover
       });
       return res
         .status(201)

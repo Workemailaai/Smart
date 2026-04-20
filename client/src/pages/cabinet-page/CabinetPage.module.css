@@ -129,6 +129,12 @@
   opacity: 1;
 }
 
+.menuItemDisabled {
+  cursor: default;
+  pointer-events: none;
+  opacity: 0.35;
+}
+
 .menuLabel {
   flex: 1 1 0;
 }
@@ -390,6 +396,10 @@
 }
 
 .tableHeaderAction {
+  text-align: right;
+}
+
+.tableHeaderVotes {
   text-align: right;
 }
 
@@ -783,6 +793,12 @@
   justify-content: center;
   text-decoration: none;
   transition: background-color 0.15s ease;
+}
+
+.juryBottomNavLinkDisabled {
+  opacity: 0.5;
+  cursor: default;
+  pointer-events: none;
 }
 
 .juryBottomNavLinkActive {

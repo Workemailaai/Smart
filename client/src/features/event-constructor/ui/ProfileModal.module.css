@@ -130,6 +130,12 @@
   opacity: 0.4;
 }
 
+.error {
+  margin: 12px 0 0;
+  color: #c32626;
+  font-size: 14px;
+}
+
 .footer {
   display: flex;
   justify-content: space-between;

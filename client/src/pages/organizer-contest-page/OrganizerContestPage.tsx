@@ -230,7 +230,7 @@ export const OrganizerContestPage = observer(() => {
                     ←
                   </span>
                 </button>
-                {view.contest.status === 'completed' || view.contest.status === 'archived' ? (
+                {view.contest.status === 'completed' ? (
                   <button
                     type="button"
                     className={styles.primaryButton}
@@ -249,9 +249,7 @@ export const OrganizerContestPage = observer(() => {
                   </button>
                 )}
               </div>
-              {!view.canComplete &&
-              view.contest.status !== 'completed' &&
-              view.contest.status !== 'archived' ? (
+              {!view.canComplete && view.contest.status !== 'completed' ? (
                 <p className={styles.completeHint}>
                   Кнопка «Завершить конкурс» станет активна, когда все жюри отправят оценки.
                 </p>

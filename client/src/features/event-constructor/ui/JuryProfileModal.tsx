@@ -5,11 +5,17 @@ import styles from './ProfileModal.module.css'
 
 type JuryProfileModalProps = {
   initial: DraftJury | null
+  existingPhoneNumbers: string[]
   onClose: () => void
   onSave: (draft: Omit<DraftJury, 'localId'>) => void
 }
 
-export function JuryProfileModal({ initial, onClose, onSave }: JuryProfileModalProps) {
+export function JuryProfileModal({
+  initial,
+  existingPhoneNumbers,
+  onClose,
+  onSave,
+}: JuryProfileModalProps) {
   const [fullName, setFullName] = useState(() => initial?.fullName ?? '')
   const [phone, setPhone] = useState(() => formatRuPhoneMask(initial?.phone ?? ''))
   const [position, setPosition] = useState(() => initial?.position ?? '')
@@ -17,6 +23,7 @@ export function JuryProfileModal({ initial, onClose, onSave }: JuryProfileModalP
   const [isPasswordVisible, setIsPasswordVisible] = useState(false)
   const [file, setFile] = useState<File | null>(null)
   const [previewUrl, setPreviewUrl] = useState<string | null>(() => initial?.previewUrl ?? null)
+  const [errorMessage, setErrorMessage] = useState<string | null>(null)
 
   const onPickFile = (e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0]
@@ -29,12 +36,31 @@ export function JuryProfileModal({ initial, onClose, onSave }: JuryProfileModalP
   }
 
   const handleSave = () => {
+    const normalizedPhone = normalizePhoneDigits(phone)
+    if (!fullName.trim()) {
+      setErrorMessage('Укажите ФИО жюри')
+      return
+    }
+    if (!/^\+7\d{10}$/.test(normalizedPhone)) {
+      setErrorMessage('Проверьте номер телефона (+7 и 10 цифр)')
+      return
+    }
+    if ((password || initial?.password || '').length < 6) {
+      setErrorMessage('Пароль жюри не короче 6 символов')
+      return
+    }
+    const existingPhoneSet = new Set(existingPhoneNumbers.map((phoneNumber) => normalizePhoneDigits(phoneNumber)))
+    if (existingPhoneSet.has(normalizedPhone)) {
+      setErrorMessage('В этом мероприятии жюри с таким телефоном уже добавлено')
+      return
+    }
+    setErrorMessage(null)
     const nextFile = file ?? initial?.file ?? null
     const nextPreview = file ? previewUrl : initial?.previewUrl ?? null
     const nextPassword = password || initial?.password || ''
     onSave({
       fullName,
-      phone: normalizePhoneDigits(phone),
+      phone: normalizedPhone,
       position,
       password: nextPassword,
       file: nextFile,
@@ -117,6 +143,7 @@ export function JuryProfileModal({ initial, onClose, onSave }: JuryProfileModalP
             </div>
           </div>
         </div>
+        {errorMessage ? <p className={styles.error}>{errorMessage}</p> : null}
         <div className={styles.footer}>
           <button className={styles.backBtn} onClick={onClose} type="button" aria-label="Назад">
             ←

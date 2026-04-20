@@ -20,7 +20,6 @@ class JuryContestStore {
   draftScores = new Map<string, number>()
   draftComments = new Map<number, string>()
   isLoading = false
-  isSaving = false
   isSubmitting = false
   /** Сохранение порядка показателей на экране приоритетов */
   isSavingPriorityOrder = false
@@ -202,22 +201,6 @@ class JuryContestStore {
       participantId: participant.id,
       comment: this.getComment(participant.id),
     }))
-  }
-
-  async save(contestId: number) {
-    this.isSaving = true
-    this.error = null
-    try {
-      await putScoresBatch(contestId, this.buildPayload(), this.buildCommentsPayload())
-    } catch (error) {
-      runInAction(() => {
-        this.error = (error as Error)?.message || 'Не удалось сохранить оценки'
-      })
-    } finally {
-      runInAction(() => {
-        this.isSaving = false
-      })
-    }
   }
 
   async submit(contestId: number) {

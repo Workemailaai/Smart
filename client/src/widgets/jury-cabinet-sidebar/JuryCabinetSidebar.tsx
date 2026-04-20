@@ -10,14 +10,13 @@ function getInitials(name: string) {
     .join('')
 }
 
-type OrganizerCabinetSidebarProps = {
+type JuryCabinetSidebarProps = {
   fullName: string
   phone: string
   onLogout: () => void | Promise<void>
 }
 
-/** Единый сайдбар организатора (иконки, активное состояние) — как в кабинете */
-export function OrganizerCabinetSidebar({ fullName, phone, onLogout }: OrganizerCabinetSidebarProps) {
+export function JuryCabinetSidebar({ fullName, phone, onLogout }: JuryCabinetSidebarProps) {
   return (
     <aside className={styles.sidebar}>
       <div>
@@ -30,20 +29,13 @@ export function OrganizerCabinetSidebar({ fullName, phone, onLogout }: Organizer
           </div>
           <p className={styles.name}>{fullName}</p>
           <p className={styles.phone}>{phone}</p>
-          <span className={styles.roleBadge}>Организатор</span>
+          <span className={styles.roleBadge}>Жюри</span>
         </div>
 
         <nav className={styles.menu}>
           <NavLink className={({ isActive }) => (isActive ? styles.activeItem : styles.menuItem)} to="/cabinet/events">
             <span aria-hidden className={`${styles.navIcon} ${styles.navIconEvents}`} />
             <span className={styles.menuLabel}>Мероприятия</span>
-          </NavLink>
-          <NavLink
-            className={({ isActive }) => (isActive ? styles.activeItem : styles.menuItem)}
-            to="/cabinet/constructor"
-          >
-            <span aria-hidden className={`${styles.navIcon} ${styles.navIconConstructor}`} />
-            <span className={styles.menuLabel}>Конструктор</span>
           </NavLink>
           <span className={`${styles.menuItem} ${styles.menuItemDisabled}`} aria-disabled="true">
             <span aria-hidden className={`${styles.navIcon} ${styles.navIconSettings}`} />

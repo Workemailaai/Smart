@@ -33,6 +33,11 @@ module.exports = (sequelize, DataTypes) => {
         allowNull: false,
         defaultValue: "creative"
       },
+      snapshot: {
+        type: DataTypes.JSON,
+        allowNull: false,
+        defaultValue: {}
+      },
       organizerId: {
         type: DataTypes.INTEGER,
         allowNull: false

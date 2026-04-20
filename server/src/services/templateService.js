@@ -50,8 +50,86 @@ class TemplateService {
     });
   }
 
+  static normalizeTemplateSnapshot(snapshot, fallbackContestType, fallbackCriteria) {
+    const source = snapshot && typeof snapshot === "object" ? snapshot : {};
+    const contestType = source.contestType != null ? String(source.contestType) : fallbackContestType;
+    if (!CONTEST_TYPES.includes(contestType)) {
+      throw new ApiError(400, "Некорректный тип конкурса в шаблоне");
+    }
+    const criteria = TemplateService.normalizeSkeletonCriteria(source.criteria ?? fallbackCriteria);
+    const title = source.title != null ? String(source.title).trim() : "";
+    const participantsRaw = Array.isArray(source.participants) ? source.participants : [];
+    const juryRaw = Array.isArray(source.jury) ? source.jury : [];
+    const participants = participantsRaw.map((participant, participantIndex) => {
+      const fullName = participant?.fullName != null ? String(participant.fullName).trim() : "";
+      if (!fullName) {
+        throw new ApiError(400, `Пустое ФИО участника в позиции ${participantIndex + 1}`);
+      }
+      return {
+        fullName,
+        extraInfo:
+          participant?.extraInfo != null && String(participant.extraInfo).trim() !== ""
+            ? String(participant.extraInfo).trim()
+            : null,
+        country:
+          participant?.country != null && String(participant.country).trim() !== ""
+            ? String(participant.country).trim()
+            : null
+      };
+    });
+    const usedPhones = new Set();
+    const jury = juryRaw.map((juryMember, juryIndex) => {
+      const fullName = juryMember?.fullName != null ? String(juryMember.fullName).trim() : "";
+      if (!fullName) {
+        throw new ApiError(400, `Пустое ФИО жюри в позиции ${juryIndex + 1}`);
+      }
+      const phoneRaw = juryMember?.phone != null ? String(juryMember.phone) : "";
+      const phone = phoneRaw ? phoneRaw.replace(/\s+/g, "") : "";
+      if (!/^\+7\d{10}$/.test(phone)) {
+        throw new ApiError(400, `Некорректный телефон жюри в позиции ${juryIndex + 1}`);
+      }
+      if (usedPhones.has(phone)) {
+        throw new ApiError(400, "В шаблоне жюри номер телефона повторяется");
+      }
+      usedPhones.add(phone);
+      const password = juryMember?.password != null ? String(juryMember.password) : "";
+      if (!password || password.length < 6) {
+        throw new ApiError(400, `Пароль жюри не короче 6 символов (позиция ${juryIndex + 1})`);
+      }
+      return {
+        fullName,
+        phone,
+        position:
+          juryMember?.position != null && String(juryMember.position).trim() !== ""
+            ? String(juryMember.position).trim()
+            : null,
+        password
+      };
+    });
+    return {
+      title,
+      contestType,
+      coverImageUrl:
+        source.coverImageUrl != null && String(source.coverImageUrl).trim() !== ""
+          ? String(source.coverImageUrl).trim()
+          : null,
+      useCriteriaWeights: Boolean(source.useCriteriaWeights),
+      juryPreferencesEnabled: Boolean(source.juryPreferencesEnabled),
+      criteria,
+      participants,
+      jury
+    };
+  }
+
   /** Создание шаблона мероприятия (каркас) */
-  static async createTemplate({ name, criteria, organizerId, contestType }) {
+  static async createTemplate({
+    name,
+    criteria,
+    organizerId,
+    contestType,
+    snapshot,
+    coverFile
+  }) {
     const title = name != null ? String(name).trim() : "";
     if (!title) {
       throw new ApiError(400, "Укажите название шаблона");
@@ -60,11 +138,24 @@ class TemplateService {
     if (!CONTEST_TYPES.includes(type)) {
       throw new ApiError(400, "Некорректный тип конкурса в шаблоне");
     }
-    const normalizedCriteria = TemplateService.normalizeSkeletonCriteria(criteria);
+    if (coverFile && !String(coverFile.mimetype || "").startsWith("image/")) {
+      throw new ApiError(400, "Обложка шаблона должна быть изображением");
+    }
+    const normalizedSnapshot = TemplateService.normalizeTemplateSnapshot(
+      snapshot,
+      type,
+      criteria
+    );
+    const coverImageUrl = coverFile ? `/media/contests/${coverFile.filename}` : null;
+    if (coverImageUrl) {
+      normalizedSnapshot.coverImageUrl = coverImageUrl;
+    }
+    const normalizedCriteria = normalizedSnapshot.criteria;
     return EventTemplate.create({
       name: title,
       criteria: normalizedCriteria,
       contestType: type,
+      snapshot: normalizedSnapshot,
       organizerId
     });
   }

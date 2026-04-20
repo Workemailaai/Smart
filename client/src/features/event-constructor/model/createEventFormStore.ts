@@ -30,6 +30,17 @@ export type DraftJury = {
   previewUrl: string | null
 }
 
+export type EventTemplateSnapshot = {
+  title: string
+  contestType: string
+  coverImageUrl: string | null
+  useCriteriaWeights: boolean
+  juryPreferencesEnabled: boolean
+  criteria: { name: string; minScore: number; maxScore: number }[]
+  participants: { fullName: string; extraInfo: string | null; country: string | null }[]
+  jury: { fullName: string; phone: string; position: string | null; password: string }[]
+}
+
 class CreateEventFormStore {
   title = ''
   description = ''
@@ -193,8 +204,18 @@ class CreateEventFormStore {
   }
 
   applyTemplate(t: ITemplate) {
-    this.contestType = t.contestType || 'creative'
-    const rows = normalizeTemplateCriteria(t.criteria).map((c) => ({
+    const snapshot = t.snapshot
+    if (this.coverPreviewUrl?.startsWith('blob:')) {
+      URL.revokeObjectURL(this.coverPreviewUrl)
+    }
+    this.coverFile = null
+    this.coverPreviewUrl = snapshot?.coverImageUrl || null
+    this.title = snapshot?.title?.trim() || ''
+    this.contestType = snapshot?.contestType || t.contestType || 'creative'
+    this.useCriteriaWeights = Boolean(snapshot?.useCriteriaWeights)
+    this.juryPreferencesEnabled = Boolean(snapshot?.juryPreferencesEnabled)
+    const sourceCriteria = snapshot?.criteria ?? t.criteria
+    const rows = normalizeTemplateCriteria(sourceCriteria).map((c) => ({
       localId: newLocalId(),
       name: c.name,
       minScore: c.minScore ?? 1,
@@ -202,12 +223,29 @@ class CreateEventFormStore {
     }))
     if (!rows.length) {
       this.criteria = []
-      return
+    } else {
+      /* Одни границы для всех показателей — выравниваем по первому критерию */
+      const unifiedMin = rows[0].minScore
+      const unifiedMax = rows[0].maxScore
+      this.criteria = rows.map((r) => ({ ...r, minScore: unifiedMin, maxScore: unifiedMax }))
     }
-    /* Одни границы для всех показателей — выравниваем по первому критерию */
-    const unifiedMin = rows[0].minScore
-    const unifiedMax = rows[0].maxScore
-    this.criteria = rows.map((r) => ({ ...r, minScore: unifiedMin, maxScore: unifiedMax }))
+    this.participants = (snapshot?.participants ?? []).map((participant) => ({
+      localId: newLocalId(),
+      fullName: String(participant.fullName || ''),
+      extraInfo: String(participant.extraInfo || ''),
+      country: String(participant.country || ''),
+      file: null,
+      previewUrl: null,
+    }))
+    this.jury = (snapshot?.jury ?? []).map((juryMember) => ({
+      localId: newLocalId(),
+      fullName: String(juryMember.fullName || ''),
+      phone: normalizePhoneDigits(String(juryMember.phone || '')),
+      position: String(juryMember.position || ''),
+      password: String(juryMember.password || ''),
+      file: null,
+      previewUrl: null,
+    }))
   }
 
   /** Валидация перед отправкой */
@@ -277,17 +315,29 @@ class CreateEventFormStore {
     return fd
   }
 
-  getSkeletonForTemplate(): {
-    contestType: string
-    criteria: { name: string; minScore: number; maxScore: number }[]
-  } {
+  getSnapshotForTemplate(): EventTemplateSnapshot {
     const filledCriteria = this.criteria.filter((c) => c.name.trim())
     return {
+      title: this.title.trim(),
       contestType: this.contestType,
+      coverImageUrl: this.coverPreviewUrl && !this.coverPreviewUrl.startsWith('blob:') ? this.coverPreviewUrl : null,
+      useCriteriaWeights: this.useCriteriaWeights,
+      juryPreferencesEnabled: this.juryPreferencesEnabled,
       criteria: filledCriteria.map((c) => ({
         name: c.name.trim(),
         minScore: Math.round(Number(c.minScore)),
         maxScore: Math.round(Number(c.maxScore)),
+      })),
+      participants: this.participants.map((participant) => ({
+        fullName: participant.fullName.trim(),
+        extraInfo: participant.extraInfo.trim() || null,
+        country: participant.country.trim() || null,
+      })),
+      jury: this.jury.map((juryMember) => ({
+        fullName: juryMember.fullName.trim(),
+        phone: normalizePhoneDigits(juryMember.phone),
+        position: juryMember.position.trim() || null,
+        password: juryMember.password,
       })),
     }
   }

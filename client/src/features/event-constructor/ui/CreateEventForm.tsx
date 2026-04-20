@@ -239,8 +239,8 @@ export const CreateEventForm = observer(function CreateEventForm() {
       store.templateMessage = err
       return
     }
-    const sk = store.getSkeletonForTemplate()
-    if (sk.criteria.length === 0) {
+    const snapshot = store.getSnapshotForTemplate()
+    if (snapshot.criteria.length === 0) {
       store.templateMessage = 'Добавьте критерии с названиями для шаблона'
       return
     }
@@ -248,11 +248,20 @@ export const CreateEventForm = observer(function CreateEventForm() {
     if (!name || !name.trim()) return
     store.isSavingTemplate = true
     try {
-      await createTemplate({
-        name: name.trim(),
-        contestType: sk.contestType,
-        criteria: sk.criteria,
-      })
+      const formData = new FormData()
+      formData.append(
+        'payload',
+        JSON.stringify({
+          name: name.trim(),
+          contestType: snapshot.contestType,
+          criteria: snapshot.criteria,
+          snapshot,
+        }),
+      )
+      if (store.coverFile) {
+        formData.append('cover', store.coverFile)
+      }
+      await createTemplate(formData)
       store.templateMessage = 'Шаблон сохранён'
       void templateStore.fetchTemplates()
     } catch (e) {
@@ -692,6 +701,9 @@ export const CreateEventForm = observer(function CreateEventForm() {
       {juryModalOpen ? (
         <JuryProfileModal
           key={juryDraft ? juryDraft.localId : `new-${juryModalKey}`}
+          existingPhoneNumbers={store.jury
+            .filter((juryMember) => juryMember.localId !== juryDraft?.localId)
+            .map((juryMember) => juryMember.phone)}
           initial={juryDraft}
           onClose={() => setJuryModalOpen(false)}
           onSave={(draft) => {

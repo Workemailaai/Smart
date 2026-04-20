@@ -5,17 +5,42 @@ export interface ITemplateCriterion {
   minScore?: number
 }
 
+export interface ITemplateParticipant {
+  fullName: string
+  extraInfo: string | null
+  country: string | null
+}
+
+export interface ITemplateJuryMember {
+  fullName: string
+  phone: string
+  position: string | null
+  password: string
+}
+
+export interface ITemplateSnapshot {
+  title: string
+  contestType: string
+  coverImageUrl: string | null
+  useCriteriaWeights: boolean
+  juryPreferencesEnabled: boolean
+  criteria: ITemplateCriterion[]
+  participants: ITemplateParticipant[]
+  jury: ITemplateJuryMember[]
+}
+
 export interface ITemplate {
   id: number
   name: string
   criteria: ITemplateCriterion[] | string[]
   contestType?: string
+  snapshot?: ITemplateSnapshot
   organizerId: number
   createdAt: string
   updatedAt: string
 }
 
-export function normalizeTemplateCriteria(criteria: ITemplate['criteria']): ITemplateCriterion[] {
+export function normalizeTemplateCriteria(criteria: ITemplate['criteria'] | ITemplateCriterion[]): ITemplateCriterion[] {
   if (!Array.isArray(criteria)) return []
   return criteria.map((c) => {
     if (typeof c === 'string') {

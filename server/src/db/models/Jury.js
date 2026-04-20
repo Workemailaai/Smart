@@ -35,6 +35,10 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.STRING(200),
         allowNull: true
       },
+      displayName: {
+        type: DataTypes.STRING(255),
+        allowNull: true
+      },
       /** Порядок приоритета критериев для этого жюри в конкурсе (массив id критериев) */
       criterionOrder: {
         type: DataTypes.JSON,

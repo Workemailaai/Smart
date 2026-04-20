@@ -1,8 +1,9 @@
 import { observer } from 'mobx-react-lite'
 import { useEffect, useState } from 'react'
-import { NavLink, Navigate, useNavigate, useParams } from 'react-router'
+import { Navigate, useNavigate, useParams } from 'react-router'
 import { userStore } from '@/entities/user'
 import { juryContestStore } from '@/features/jury-contest/model/juryContestStore'
+import { JuryCabinetSidebar } from '@/widgets/jury-cabinet-sidebar/JuryCabinetSidebar'
 import { orderCriteriaForJury } from '@/shared/lib/weightedScores.js'
 import styles from './JuryContestPage.module.css'
 
@@ -66,40 +67,7 @@ export const JuryContestPage = observer(() => {
 
   return (
     <section className={styles.page}>
-      <aside className={styles.sidebar}>
-        <div>
-          <div className={styles.sidebarHeader}>
-            <h1 className={styles.brand}>СмартОценка</h1>
-          </div>
-          <div className={styles.profileCard}>
-            <div className={styles.avatarWrap}>
-              <div className={styles.avatar}>{getInitials(userName)}</div>
-            </div>
-            <p className={styles.name}>{userName}</p>
-            <p className={styles.phone}>{user.phone}</p>
-            <span className={styles.roleBadge}>Жюри</span>
-          </div>
-
-          <nav className={styles.menu}>
-            <NavLink className={({ isActive }) => (isActive ? styles.activeItem : styles.menuItem)} to="/cabinet/events">
-              Мероприятия
-            </NavLink>
-            <NavLink className={({ isActive }) => (isActive ? styles.activeItem : styles.menuItem)} to="/cabinet/settings">
-              Настройки
-            </NavLink>
-            <NavLink className={({ isActive }) => (isActive ? styles.activeItem : styles.menuItem)} to="/cabinet/info">
-              Информация
-            </NavLink>
-          </nav>
-        </div>
-
-        <div className={styles.sidebarFooter}>
-          <button className={styles.logoutButton} onClick={() => void onLogout()} type="button">
-            Выход
-          </button>
-          <p className={styles.versionText}>v 1.0.0{'\n'}© 2026 СмартОценка</p>
-        </div>
-      </aside>
+      <JuryCabinetSidebar fullName={userName} phone={user.phone} onLogout={onLogout} />
 
       <div className={styles.content}>
         <header className={styles.topBar}>
@@ -310,14 +278,6 @@ export const JuryContestPage = observer(() => {
                 <div className={styles.actionsRight}>
                   <button
                     type="button"
-                    className={styles.secondaryButton}
-                    disabled={juryContestStore.isSaving}
-                    onClick={() => void juryContestStore.save(numericContestId)}
-                  >
-                    {juryContestStore.isSaving ? 'Сохранение...' : 'Сохранить'}
-                  </button>
-                  <button
-                    type="button"
                     className={styles.primaryButton}
                     disabled={juryContestStore.isSubmitting || view.mySubmitted}
                     onClick={() => void juryContestStore.submit(numericContestId)}
@@ -326,7 +286,7 @@ export const JuryContestPage = observer(() => {
                       ? 'Оценки уже отправлены'
                       : juryContestStore.isSubmitting
                         ? 'Отправка...'
-                        : 'Отправить оценивание'}
+                        : 'Завершить'}
                   </button>
                 </div>
               </div>

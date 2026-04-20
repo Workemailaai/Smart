@@ -13,6 +13,8 @@ type ContestCardProps = {
   /** Рядом с карандашом: красная зона удаления (раскрывается при hover по полоске) */
   onDelete?: () => void
   onOpen?: () => void
+  /** Показывать колонку "Проголосовало" вместо колонки действий */
+  showVotedColumn?: boolean
 }
 
 const formatDate = (date: string) =>
@@ -30,6 +32,7 @@ export function ContestCard({
   organizerLayout = false,
   onDelete,
   onOpen,
+  showVotedColumn = false,
 }: ContestCardProps) {
   const coverUrl = resolveMediaUrl(contest.coverImageUrl)
   const subtitle = contest.description?.trim() || 'Оценка конкурса'
@@ -117,23 +120,26 @@ export function ContestCard({
 
   const contestTypeTitle = contest.contestType || 'Не указан'
 
+  const isClickableRow = Boolean(showVotedColumn && onOpen)
+  const votedText = `${contest.submittedJuryCount ?? 0}/${contest.totalJuryCount ?? 0}`
+
   return (
     <article
-      aria-label={juryCabinetCompact && onOpen ? `Перейти к конкурсу «${contest.title}»` : undefined}
-      className={`${styles.card} ${juryCabinetCompact ? styles.juryCabinetCompact : ''}`}
-      onClick={juryCabinetCompact && onOpen ? () => onOpen() : undefined}
+      aria-label={isClickableRow || (juryCabinetCompact && onOpen) ? `Перейти к конкурсу «${contest.title}»` : undefined}
+      className={`${styles.card} ${juryCabinetCompact ? styles.juryCabinetCompact : ''} ${showVotedColumn ? styles.cardWithVotes : ''} ${isClickableRow ? styles.cardClickable : ''}`}
+      onClick={isClickableRow || (juryCabinetCompact && onOpen) ? () => onOpen?.() : undefined}
       onKeyDown={
-        juryCabinetCompact && onOpen
+        isClickableRow || (juryCabinetCompact && onOpen)
           ? (event) => {
               if (event.key === 'Enter' || event.key === ' ') {
                 event.preventDefault()
-                onOpen()
+                onOpen?.()
               }
             }
           : undefined
       }
-      role={juryCabinetCompact && onOpen ? 'button' : undefined}
-      tabIndex={juryCabinetCompact && onOpen ? 0 : undefined}
+      role={isClickableRow || (juryCabinetCompact && onOpen) ? 'button' : undefined}
+      tabIndex={isClickableRow || (juryCabinetCompact && onOpen) ? 0 : undefined}
     >
       <div className={styles.coverCell}>
         {coverUrl ? (
@@ -147,20 +153,24 @@ export function ContestCard({
       <p className={styles.date}>{formatDate(contest.updatedAt || contest.createdAt)}</p>
       <p className={styles.type}>{contestTypeTitle}</p>
 
-      <div className={styles.actionCell}>
-        {variant === 'results' ? (
-          <button className={styles.resultsButton} type="button" onClick={onOpen}>
-            Результаты
-          </button>
-        ) : (
-          <div className={styles.pendingAction}>
-            <button className={styles.actionCircle} type="button" onClick={onOpen}>
-              →
+      {showVotedColumn ? (
+        <p className={styles.votedCell}>{votedText}</p>
+      ) : (
+        <div className={styles.actionCell}>
+          {variant === 'results' ? (
+            <button className={styles.resultsButton} type="button" onClick={onOpen}>
+              Результаты
             </button>
-            {withAlertStripe ? <span className={styles.alertStripe} /> : null}
-          </div>
-        )}
-      </div>
+          ) : (
+            <div className={styles.pendingAction}>
+              <button className={styles.actionCircle} type="button" onClick={onOpen}>
+                →
+              </button>
+              {withAlertStripe ? <span className={styles.alertStripe} /> : null}
+            </div>
+          )}
+        </div>
+      )}
     </article>
   )
 }

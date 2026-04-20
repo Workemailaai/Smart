@@ -59,7 +59,6 @@ class JuryService {
       if (!isPasswordValid) {
         throw new ApiError(401, "Неверный пароль для существующей учётной записи жюри");
       }
-      await user.update({ fullName: nameTrim }, { transaction });
     } else {
       throw new ApiError(
         409,
@@ -82,6 +81,7 @@ class JuryService {
       {
         contestId,
         userId: user.id,
+        displayName: nameTrim,
         photoUrl: photoUrl || null,
         position: positionTrim
       },

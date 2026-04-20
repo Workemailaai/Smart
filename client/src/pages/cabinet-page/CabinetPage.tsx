@@ -5,6 +5,7 @@ import { ContestCard, contestStore, getContestTypes, type IContest } from '@/ent
 import { TemplateCard, templateStore } from '@/entities/template'
 import { userStore } from '@/entities/user'
 import { OrganizerCabinetSidebar } from '@/widgets/organizer-cabinet-sidebar/OrganizerCabinetSidebar'
+import { JuryCabinetSidebar } from '@/widgets/jury-cabinet-sidebar/JuryCabinetSidebar'
 import styles from './CabinetPage.module.css'
 
 type CabinetSection = 'events' | 'constructor' | 'settings' | 'info' | 'profile'
@@ -29,10 +30,10 @@ export const CabinetPage = observer(({ section }: CabinetPageProps) => {
   const [contestTypeOptions, setContestTypeOptions] = useState<{ id: string; label: string }[]>([])
   const [isPendingFilterOpen, setIsPendingFilterOpen] = useState(false)
   const [isRatedFilterOpen, setIsRatedFilterOpen] = useState(false)
-  const [isArchivedFilterOpen, setIsArchivedFilterOpen] = useState(false)
+  const [isCompletedFilterOpen, setIsCompletedFilterOpen] = useState(false)
   const [pendingFilterType, setPendingFilterType] = useState('all')
   const [ratedFilterType, setRatedFilterType] = useState('all')
-  const [archivedFilterType, setArchivedFilterType] = useState('all')
+  const [completedFilterType, setCompletedFilterType] = useState('all')
 
   useEffect(() => {
     void contestStore.fetchContests()
@@ -64,6 +65,10 @@ export const CabinetPage = observer(({ section }: CabinetPageProps) => {
     return <Navigate replace to="/cabinet/events" />
   }
 
+  if (section === 'settings' || section === 'info') {
+    return <Navigate replace to="/cabinet/events" />
+  }
+
   if (section === 'profile' && user.role === 'organizer') {
     return <Navigate replace to="/cabinet/events" />
   }
@@ -88,9 +93,9 @@ export const CabinetPage = observer(({ section }: CabinetPageProps) => {
   const ratedContests = isOrganizer
     ? contestStore.organizerCompletedContests
     : contestStore.juryRatedContests
-  const archivedContests = isOrganizer ? contestStore.organizerArchivedContests : contestStore.juryArchivedContests
+  const completedContests = isOrganizer ? [] : contestStore.juryCompletedContests
   const hasNoOrganizerContests =
-    isOrganizer && pendingContests.length === 0 && ratedContests.length === 0 && archivedContests.length === 0
+    isOrganizer && pendingContests.length === 0 && ratedContests.length === 0
   const templates = templateStore.templates
   const titleByType = new Map<string, string>()
   contestTypeOptions.forEach((option) => {
@@ -116,7 +121,7 @@ export const CabinetPage = observer(({ section }: CabinetPageProps) => {
 
   const filteredPendingContests = filterContestsByType(pendingContests, pendingFilterType)
   const filteredRatedContests = filterContestsByType(ratedContests, ratedFilterType)
-  const filteredArchivedContests = filterContestsByType(archivedContests, archivedFilterType)
+  const filteredCompletedContests = filterContestsByType(completedContests, completedFilterType)
 
   const onLogout = async () => {
     await userStore.logout()
@@ -131,48 +136,7 @@ export const CabinetPage = observer(({ section }: CabinetPageProps) => {
       {isOrganizer ? (
         <OrganizerCabinetSidebar fullName={fullName} phone={user.phone} onLogout={onLogout} />
       ) : (
-        <aside className={styles.sidebar}>
-          <div>
-            <div className={styles.sidebarHeader}>
-              <h1 className={styles.brand}>СмартОценка</h1>
-            </div>
-            <div className={styles.profileCard}>
-              <div className={styles.avatarWrap}>
-                <div className={styles.avatar}>{getInitials(fullName)}</div>
-              </div>
-              <p className={styles.name}>{fullName}</p>
-              <p className={styles.phone}>{user.phone}</p>
-              <span className={styles.roleBadge}>{roleTitle}</span>
-            </div>
-
-            <nav className={styles.menu}>
-              <NavLink className={({ isActive }) => (isActive ? styles.activeItem : styles.menuItem)} to="/cabinet/events">
-                <span aria-hidden className={`${styles.navIcon} ${styles.navIconEvents}`} />
-                <span className={styles.menuLabel}>Мероприятия</span>
-              </NavLink>
-              <NavLink className={({ isActive }) => (isActive ? styles.activeItem : styles.menuItem)} to="/cabinet/profile">
-                <span aria-hidden className={`${styles.navIcon} ${styles.navIconProfile}`} />
-                <span className={styles.menuLabel}>Профиль</span>
-              </NavLink>
-              <NavLink className={({ isActive }) => (isActive ? styles.activeItem : styles.menuItem)} to="/cabinet/settings">
-                <span aria-hidden className={`${styles.navIcon} ${styles.navIconSettings}`} />
-                <span className={styles.menuLabel}>Настройки</span>
-              </NavLink>
-              <NavLink className={({ isActive }) => (isActive ? styles.activeItem : styles.menuItem)} to="/cabinet/info">
-                <span aria-hidden className={`${styles.navIcon} ${styles.navIconInfo}`} />
-                <span className={styles.menuLabel}>Информация</span>
-              </NavLink>
-            </nav>
-          </div>
-
-          <div className={styles.sidebarFooter}>
-            <button className={styles.logoutButton} onClick={() => void onLogout()} type="button">
-              <span aria-hidden className={styles.logoutIcon} />
-              <span>Выход</span>
-            </button>
-            <p className={styles.versionText}>v 1.0.0{'\n'}© 2026 СмартОценка</p>
-          </div>
-        </aside>
+        <JuryCabinetSidebar fullName={fullName} phone={user.phone} onLogout={onLogout} />
       )}
 
       {!isOrganizer ? (
@@ -182,38 +146,26 @@ export const CabinetPage = observer(({ section }: CabinetPageProps) => {
               className={({ isActive }) =>
                 `${styles.juryBottomNavLink} ${isActive ? styles.juryBottomNavLinkActive : ''}`
               }
-              to="/cabinet/events"
-              aria-label="Мероприятия"
-            >
-              <span className={`${styles.juryBottomNavIcon} ${styles.juryBottomNavIconEvents}`} aria-hidden />
-            </NavLink>
-            <NavLink
-              className={({ isActive }) =>
-                `${styles.juryBottomNavLink} ${isActive ? styles.juryBottomNavLinkActive : ''}`
-              }
-              to="/cabinet/settings"
-              aria-label="Настройки"
-            >
-              <span className={`${styles.juryBottomNavIcon} ${styles.juryBottomNavIconSettings}`} aria-hidden />
-            </NavLink>
-            <NavLink
-              className={({ isActive }) =>
-                `${styles.juryBottomNavLink} ${isActive ? styles.juryBottomNavLinkActive : ''}`
-              }
-              to="/cabinet/info"
-              aria-label="Информация"
-            >
-              <span className={`${styles.juryBottomNavIcon} ${styles.juryBottomNavIconInfo}`} aria-hidden />
-            </NavLink>
-            <NavLink
-              className={({ isActive }) =>
-                `${styles.juryBottomNavLink} ${isActive ? styles.juryBottomNavLinkActive : ''}`
-              }
               to="/cabinet/profile"
               aria-label="Профиль"
             >
               <span className={`${styles.juryBottomNavIcon} ${styles.juryBottomNavIconProfile}`} aria-hidden />
             </NavLink>
+            <NavLink
+              className={({ isActive }) =>
+                `${styles.juryBottomNavLink} ${isActive ? styles.juryBottomNavLinkActive : ''}`
+              }
+              to="/cabinet/events"
+              aria-label="Мероприятия"
+            >
+              <span className={`${styles.juryBottomNavIcon} ${styles.juryBottomNavIconEvents}`} aria-hidden />
+            </NavLink>
+            <span className={`${styles.juryBottomNavLink} ${styles.juryBottomNavLinkDisabled}`} aria-label="Настройки">
+              <span className={`${styles.juryBottomNavIcon} ${styles.juryBottomNavIconSettings}`} aria-hidden />
+            </span>
+            <span className={`${styles.juryBottomNavLink} ${styles.juryBottomNavLinkDisabled}`} aria-label="Информация">
+              <span className={`${styles.juryBottomNavIcon} ${styles.juryBottomNavIconInfo}`} aria-hidden />
+            </span>
           </div>
         </nav>
       ) : null}
@@ -299,12 +251,7 @@ export const CabinetPage = observer(({ section }: CabinetPageProps) => {
                 </div>
                 <span className={styles.juryProfileBadge}>{roleTitle}</span>
               </div>
-              <button
-                className={styles.juryProfileSideBtn}
-                type="button"
-                onClick={() => navigate('/cabinet/settings')}
-                aria-label="Открыть настройки"
-              >
+              <button className={styles.juryProfileSideBtn} type="button" aria-label="Раздел в разработке" disabled>
                 <span className={styles.juryProfileSideBtnIcon} aria-hidden>
                   <img src="/nav/setting.svg" alt="" width={18} height={18} />
                 </span>
@@ -348,7 +295,7 @@ export const CabinetPage = observer(({ section }: CabinetPageProps) => {
                         onClick={() => {
                           setIsPendingFilterOpen((prev) => !prev)
                           setIsRatedFilterOpen(false)
-                          setIsArchivedFilterOpen(false)
+                          setIsCompletedFilterOpen(false)
                         }}
                       >
                         <span>{getSelectedFilterTitle(pendingFilterType)}</span>
@@ -406,7 +353,7 @@ export const CabinetPage = observer(({ section }: CabinetPageProps) => {
                         onClick={() => {
                           setIsPendingFilterOpen((prev) => !prev)
                           setIsRatedFilterOpen(false)
-                          setIsArchivedFilterOpen(false)
+                          setIsCompletedFilterOpen(false)
                         }}
                       >
                         <span>{getSelectedFilterTitle(pendingFilterType)}</span>
@@ -437,7 +384,7 @@ export const CabinetPage = observer(({ section }: CabinetPageProps) => {
                       <span>Название конкурса</span>
                       <span>Дата</span>
                       <span>Тип конкурса</span>
-                      <span className={styles.tableHeaderAction}>Действие</span>
+                      <span className={styles.tableHeaderVotes}>Проголосовало</span>
                     </div>
                     {contestStore.isLoading ? <p className={`${styles.helperText} ${styles.eventsHelperText}`}>Загрузка мероприятий...</p> : null}
                     {contestStore.error ? <p className={styles.errorText}>{contestStore.error}</p> : null}
@@ -448,6 +395,7 @@ export const CabinetPage = observer(({ section }: CabinetPageProps) => {
                       <ContestCard
                         contest={contest}
                         juryCabinetCompact
+                        showVotedColumn
                         key={contest.id}
                         onOpen={() => navigate(`/cabinet/events/${contest.id}/jury`)}
                       />
@@ -475,7 +423,7 @@ export const CabinetPage = observer(({ section }: CabinetPageProps) => {
                         onClick={() => {
                           setIsRatedFilterOpen((prev) => !prev)
                           setIsPendingFilterOpen(false)
-                          setIsArchivedFilterOpen(false)
+                          setIsCompletedFilterOpen(false)
                         }}
                       >
                         <span>{getSelectedFilterTitle(ratedFilterType)}</span>
@@ -519,11 +467,11 @@ export const CabinetPage = observer(({ section }: CabinetPageProps) => {
                 <>
                   <div className={styles.sectionHeader}>
                     <div className={styles.sectionTitleWrap}>
-                      <span className={`${styles.sectionDot} ${styles.sectionDotGreen}`}>
+                      <span className={`${styles.sectionDot} ${styles.sectionDotOrange}`}>
                         <span />
                       </span>
-                      <h3 className={styles.sectionTitle}>Оцененные</h3>
-                      <span className={`${styles.sectionCount} ${styles.sectionCountGreen}`}>({filteredRatedContests.length})</span>
+                      <h3 className={styles.sectionTitle}>Ждут результата</h3>
+                      <span className={`${styles.sectionCount} ${styles.sectionCountOrange}`}>({filteredRatedContests.length})</span>
                     </div>
                     <div className={styles.filterBox}>
                       <button
@@ -532,7 +480,7 @@ export const CabinetPage = observer(({ section }: CabinetPageProps) => {
                         onClick={() => {
                           setIsRatedFilterOpen((prev) => !prev)
                           setIsPendingFilterOpen(false)
-                          setIsArchivedFilterOpen(false)
+                          setIsCompletedFilterOpen(false)
                         }}
                       >
                         <span>{getSelectedFilterTitle(ratedFilterType)}</span>
@@ -563,7 +511,7 @@ export const CabinetPage = observer(({ section }: CabinetPageProps) => {
                       <span>Название конкурса</span>
                       <span>Дата</span>
                       <span>Тип конкурса</span>
-                      <span className={styles.tableHeaderAction}>Действие</span>
+                      <span className={styles.tableHeaderVotes}>Проголосовало</span>
                     </div>
                     {!contestStore.isLoading && !contestStore.error && filteredRatedContests.length === 0 ? (
                       <p className={`${styles.helperText} ${styles.eventsHelperText}`}>Пока нет оцененных мероприятий</p>
@@ -572,15 +520,9 @@ export const CabinetPage = observer(({ section }: CabinetPageProps) => {
                       <ContestCard
                         contest={contest}
                         juryCabinetCompact
+                        showVotedColumn
                         key={contest.id}
-                        variant={contest.status === 'archived' ? 'results' : 'pending'}
-                        onOpen={() =>
-                          navigate(
-                            contest.status === 'archived'
-                              ? `/cabinet/events/${contest.id}/results`
-                              : `/cabinet/events/${contest.id}/jury`,
-                          )
-                        }
+                        onOpen={() => navigate(`/cabinet/events/${contest.id}/jury`)}
                       />
                     ))}
                   </div>
@@ -588,128 +530,74 @@ export const CabinetPage = observer(({ section }: CabinetPageProps) => {
               )}
             </section>
 
-            <section className={isOrganizer ? styles.eventsSectionOrganizer : styles.eventsCard}>
-              {isOrganizer ? (
-                <div className={styles.eventsSectionBlock}>
-                  <div className={styles.sectionHeader}>
-                    <div className={styles.sectionTitleWrap}>
-                      <span className={`${styles.sectionDot} ${styles.sectionDotOrange}`}>
-                        <span />
-                      </span>
-                      <h3 className={styles.sectionTitle}>Архив</h3>
-                      <span className={`${styles.sectionCount} ${styles.sectionCountOrange}`}>({filteredArchivedContests.length})</span>
-                    </div>
-                    <div className={styles.filterBox}>
-                      <button
-                        className={styles.filterButton}
-                        type="button"
-                        onClick={() => {
-                          setIsArchivedFilterOpen((prev) => !prev)
-                          setIsPendingFilterOpen(false)
-                          setIsRatedFilterOpen(false)
-                        }}
-                      >
-                        <span>{getSelectedFilterTitle(archivedFilterType)}</span>
-                        <span aria-hidden className={styles.filterChevron} />
-                      </button>
-                      {isArchivedFilterOpen ? (
-                        <div className={styles.filterDropdown}>
-                          {availableContestTypeOptions.map((option) => (
-                            <button
-                              key={`archived-${option.id}`}
-                              className={`${styles.filterOption} ${archivedFilterType === option.id ? styles.filterOptionActive : ''}`}
-                              type="button"
-                              onClick={() => {
-                                setArchivedFilterType(option.id)
-                                setIsArchivedFilterOpen(false)
-                              }}
-                            >
-                              {option.label}
-                            </button>
-                          ))}
-                        </div>
-                      ) : null}
-                    </div>
+            {!isOrganizer ? (
+              <section className={styles.eventsCard}>
+                <div className={styles.sectionHeader}>
+                  <div className={styles.sectionTitleWrap}>
+                    <span className={`${styles.sectionDot} ${styles.sectionDotGreen}`}>
+                      <span />
+                    </span>
+                    <h3 className={styles.sectionTitle}>Завершенные</h3>
+                    <span className={`${styles.sectionCount} ${styles.sectionCountGreen}`}>
+                      ({filteredCompletedContests.length})
+                    </span>
                   </div>
-                  {!contestStore.isLoading && !contestStore.error && filteredArchivedContests.length === 0 ? (
-                    <p className={`${styles.helperText} ${styles.eventsHelperText}`}>Архив пуст</p>
+                  <div className={styles.filterBox}>
+                    <button
+                      className={styles.filterButton}
+                      type="button"
+                      onClick={() => {
+                        setIsCompletedFilterOpen((prev) => !prev)
+                        setIsPendingFilterOpen(false)
+                        setIsRatedFilterOpen(false)
+                      }}
+                    >
+                      <span>{getSelectedFilterTitle(completedFilterType)}</span>
+                      <span aria-hidden className={styles.filterChevron} />
+                    </button>
+                    {isCompletedFilterOpen ? (
+                      <div className={styles.filterDropdown}>
+                        {availableContestTypeOptions.map((option) => (
+                          <button
+                            key={`completed-${option.id}`}
+                            className={`${styles.filterOption} ${completedFilterType === option.id ? styles.filterOptionActive : ''}`}
+                            type="button"
+                            onClick={() => {
+                              setCompletedFilterType(option.id)
+                              setIsCompletedFilterOpen(false)
+                            }}
+                          >
+                            {option.label}
+                          </button>
+                        ))}
+                      </div>
+                    ) : null}
+                  </div>
+                </div>
+                <div className={styles.eventsBody}>
+                  <div className={styles.tableHeader}>
+                    <span className={styles.tableHeaderCover}>Обложка</span>
+                    <span>Название конкурса</span>
+                    <span>Дата</span>
+                    <span>Тип конкурса</span>
+                    <span className={styles.tableHeaderVotes}>Проголосовало</span>
+                  </div>
+                  {!contestStore.isLoading && !contestStore.error && filteredCompletedContests.length === 0 ? (
+                    <p className={`${styles.helperText} ${styles.eventsHelperText}`}>Пока нет завершенных мероприятий</p>
                   ) : null}
-                  {filteredArchivedContests.map((contest) => (
+                  {filteredCompletedContests.map((contest) => (
                     <ContestCard
                       contest={contest}
+                      juryCabinetCompact
+                      showVotedColumn
                       key={contest.id}
-                      organizerLayout
-                      variant="results"
                       onOpen={() => navigate(`/cabinet/events/${contest.id}/results`)}
                     />
                   ))}
                 </div>
-              ) : (
-                <>
-                  <div className={styles.sectionHeader}>
-                    <div className={styles.sectionTitleWrap}>
-                      <span className={`${styles.sectionDot} ${styles.sectionDotOrange}`}>
-                        <span />
-                      </span>
-                      <h3 className={styles.sectionTitle}>Архив</h3>
-                      <span className={`${styles.sectionCount} ${styles.sectionCountOrange}`}>({filteredArchivedContests.length})</span>
-                    </div>
-                    <div className={styles.filterBox}>
-                      <button
-                        className={styles.filterButton}
-                        type="button"
-                        onClick={() => {
-                          setIsArchivedFilterOpen((prev) => !prev)
-                          setIsPendingFilterOpen(false)
-                          setIsRatedFilterOpen(false)
-                        }}
-                      >
-                        <span>{getSelectedFilterTitle(archivedFilterType)}</span>
-                        <span aria-hidden className={styles.filterChevron} />
-                      </button>
-                      {isArchivedFilterOpen ? (
-                        <div className={styles.filterDropdown}>
-                          {availableContestTypeOptions.map((option) => (
-                            <button
-                              key={`archived-${option.id}`}
-                              className={`${styles.filterOption} ${archivedFilterType === option.id ? styles.filterOptionActive : ''}`}
-                              type="button"
-                              onClick={() => {
-                                setArchivedFilterType(option.id)
-                                setIsArchivedFilterOpen(false)
-                              }}
-                            >
-                              {option.label}
-                            </button>
-                          ))}
-                        </div>
-                      ) : null}
-                    </div>
-                  </div>
-                  <div className={styles.eventsBody}>
-                    <div className={styles.tableHeader}>
-                      <span className={styles.tableHeaderCover}>Обложка</span>
-                      <span>Название конкурса</span>
-                      <span>Дата</span>
-                      <span>Тип конкурса</span>
-                      <span className={styles.tableHeaderAction}>Действие</span>
-                    </div>
-                    {!contestStore.isLoading && !contestStore.error && filteredArchivedContests.length === 0 ? (
-                      <p className={`${styles.helperText} ${styles.eventsHelperText}`}>Архив пуст</p>
-                    ) : null}
-                    {filteredArchivedContests.map((contest) => (
-                      <ContestCard
-                        contest={contest}
-                        juryCabinetCompact
-                        key={contest.id}
-                        variant="results"
-                        onOpen={() => navigate(`/cabinet/events/${contest.id}/results`)}
-                      />
-                    ))}
-                  </div>
-                </>
-              )}
-                </section>
+              </section>
+            ) : null}
+
               </>
             )}
           </div>

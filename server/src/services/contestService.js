@@ -35,8 +35,7 @@ class ContestService {
   static contestStatuses = {
     inProgress: "in_progress",
     judgingCompleted: "judging_completed",
-    completed: "completed",
-    archived: "archived"
+    completed: "completed"
   };
 
   static getExpectedScoreCount(criteriaCount, participantsCount) {
@@ -194,13 +193,22 @@ class ContestService {
         const myAssignment = byContestId.get(contest.id);
         const criteriaCount = await Criterion.count({ where: { contestId: contest.id } });
         const participantsCount = await Participant.count({ where: { contestId: contest.id } });
+        const juryMembers = await Jury.findAll({ where: { contestId: contest.id }, attributes: ["id"] });
         const expectedScoreCount = ContestService.getExpectedScoreCount(criteriaCount, participantsCount);
         const myScoreCount = myAssignment
           ? await Score.count({ where: { contestId: contest.id, juryId: myAssignment.id } })
           : 0;
+        const scoreCountByJuryId = await ContestService.getScoreCountByJury(contest.id);
+        const submittedJuryCount = ContestService.countSubmittedJury({
+          scoreCountByJuryId,
+          juryMembers,
+          expectedScoreCount
+        });
         result.push({
           ...contest.get({ plain: true }),
-          mySubmitted: expectedScoreCount > 0 && myScoreCount >= expectedScoreCount
+          mySubmitted: expectedScoreCount > 0 && myScoreCount >= expectedScoreCount,
+          submittedJuryCount,
+          totalJuryCount: juryMembers.length
         });
       }
       return result;
@@ -429,7 +437,7 @@ class ContestService {
           return {
             juryId: juryMember.id,
             userId: juryMember.userId,
-            fullName: juryMember.user?.fullName || "Жюри",
+            fullName: juryMember.displayName || juryMember.user?.fullName || "Жюри",
             phone: juryMember.user?.phone || "",
             position: juryMember.position,
             photoUrl: juryMember.photoUrl,
@@ -481,7 +489,7 @@ class ContestService {
           return {
             juryId: juryMember.id,
             userId: juryMember.userId,
-            fullName: juryMember.user?.fullName || "Жюри",
+            fullName: juryMember.displayName || juryMember.user?.fullName || "Жюри",
             phone: juryMember.user?.phone || "",
             position: juryMember.position,
             photoUrl: juryMember.photoUrl,
@@ -535,8 +543,7 @@ class ContestService {
         throw new ApiError(403, "Только организатор может просматривать результаты этого мероприятия");
       }
       if (
-        contest.status !== ContestService.contestStatuses.completed &&
-        contest.status !== ContestService.contestStatuses.archived
+        contest.status !== ContestService.contestStatuses.completed
       ) {
         throw new ApiError(422, "Результаты доступны после завершения мероприятия");
       }
@@ -545,8 +552,8 @@ class ContestService {
       if (!assignment) {
         throw new ApiError(403, "Это мероприятие недоступно для данного жюри");
       }
-      if (contest.status !== ContestService.contestStatuses.archived) {
-        throw new ApiError(422, "Жюри может смотреть результаты только в архиве");
+      if (contest.status !== ContestService.contestStatuses.completed) {
+        throw new ApiError(422, "Жюри может смотреть результаты только после завершения мероприятия");
       }
     } else {
       throw new ApiError(403, "Недостаточно прав для просмотра результатов");

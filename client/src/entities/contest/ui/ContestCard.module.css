@@ -8,6 +8,18 @@
   gap: 16px;
 }
 
+.cardWithVotes {
+  grid-template-columns: 96px minmax(220px, 1fr) 184px 276px 160px;
+}
+
+.cardClickable {
+  cursor: pointer;
+}
+
+.cardClickable:focus-visible {
+  box-shadow: 0 0 0 2px #00a99d;
+}
+
 .coverCell {
   width: 96px;
   display: flex;
@@ -61,6 +73,15 @@
   display: flex;
   justify-content: flex-end;
   align-items: center;
+}
+
+.votedCell {
+  margin: 0;
+  text-align: right;
+  color: #0a0f15;
+  font-size: 16px;
+  line-height: 16px;
+  font-weight: 500;
 }
 
 .pendingAction {
@@ -258,6 +279,11 @@
   .resultsButton {
     font-size: 14px;
   }
+
+  .votedCell {
+    font-size: 14px;
+    line-height: 14px;
+  }
 }
 
 /* Кабинет жюри: строка списка как в мобильном макете (≤430px) */
@@ -279,7 +305,8 @@
   }
 
   .card.juryCabinetCompact .coverCell,
-  .card.juryCabinetCompact .actionCell {
+  .card.juryCabinetCompact .actionCell,
+  .card.juryCabinetCompact .votedCell {
     display: none;
   }
 

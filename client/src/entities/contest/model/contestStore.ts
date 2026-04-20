@@ -28,9 +28,11 @@ class ContestStore {
   }
 
   get organizerInProgressContests() {
-    return this.contests.filter(
-      (contest) => contest.status === 'in_progress' || contest.status === 'judging_completed',
-    )
+    return this.contests.filter((contest) => contest.status === 'in_progress')
+  }
+
+  get organizerReadyToPublishContests() {
+    return this.contests.filter((contest) => contest.status === 'judging_completed')
   }
 
   get organizerCompletedContests() {

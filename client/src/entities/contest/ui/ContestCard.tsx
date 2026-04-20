@@ -17,9 +17,8 @@ type ContestCardProps = {
   withAlertStripe?: boolean
   /** Компактный список кабинета жюри на узком экране (≤430px, стили в CSS) */
   juryCabinetCompact?: boolean
-  /** Список организатора: макет колонка дата / название / подпись, без обложки и таблицы */
+  /** Список организатора: строка таблицы + удаление + клик по всей карточке */
   organizerLayout?: boolean
-  /** Рядом с карандашом: красная зона удаления (раскрывается при hover по полоске) */
   onDelete?: () => void
   onOpen?: () => void
   /** Показывать колонку "Проголосовало" вместо колонки действий */
@@ -44,88 +43,6 @@ export function ContestCard({
   showVotedColumn = false,
 }: ContestCardProps) {
   const coverUrl = resolveMediaUrl(contest.coverImageUrl)
-  const subtitle = contest.description?.trim() || 'Оценка конкурса'
-
-  const organizerCardInner = (
-    <>
-      <div className={styles.cardOrganizerMain}>
-        <p className={styles.dateOrganizer}>{formatDate(contest.updatedAt || contest.createdAt)}</p>
-        <p className={styles.titleOrganizer}>{contest.title}</p>
-        <p className={styles.subtitleOrganizer}>{subtitle}</p>
-      </div>
-      <div className={styles.actionCellOrganizer}>
-        {variant === 'results' ? (
-          withAlertStripe ? (
-            <div className={styles.organizerActionsRow}>
-              <button className={styles.resultsButton} type="button" onClick={() => onOpen?.()}>
-                Результаты
-              </button>
-              <div className={styles.organizerDeleteWrap}>
-                <button
-                  className={styles.organizerDeleteStripe}
-                  type="button"
-                  aria-label="Удалить мероприятие"
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    void onDelete?.()
-                  }}
-                >
-                  <svg className={styles.organizerDeleteX} width="24" height="24" viewBox="0 0 24 24" aria-hidden>
-                    <path
-                      d="M7 7L17 17M17 7L7 17"
-                      stroke="white"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                    />
-                  </svg>
-                </button>
-              </div>
-            </div>
-          ) : (
-            <button className={styles.resultsButton} type="button" onClick={onOpen}>
-              Результаты
-            </button>
-          )
-        ) : (
-          <div className={styles.organizerActionsRow}>
-            <button className={styles.organizerEditBtn} type="button" onClick={onOpen} aria-label="Открыть мероприятие">
-              <img alt="" className={styles.organizerEditIcon} src="/card-edit.svg" width={24} height={24} />
-            </button>
-            {withAlertStripe ? (
-              <div className={styles.organizerDeleteWrap}>
-                <button
-                  className={styles.organizerDeleteStripe}
-                  type="button"
-                  aria-label="Удалить мероприятие"
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    void onDelete?.()
-                  }}
-                >
-                  <svg className={styles.organizerDeleteX} width="24" height="24" viewBox="0 0 24 24" aria-hidden>
-                    <path
-                      d="M7 7L17 17M17 7L7 17"
-                      stroke="white"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                    />
-                  </svg>
-                </button>
-              </div>
-            ) : null}
-          </div>
-        )}
-      </div>
-    </>
-  )
-
-  if (organizerLayout) {
-    return (
-      <article className={`${styles.card} ${styles.cardOrganizer}`}>
-        {organizerCardInner}
-      </article>
-    )
-  }
 
   const contestTypeTitle = contest.contestType
     ? CONTEST_TYPE_LABELS[contest.contestType] || contest.contestType
@@ -133,6 +50,49 @@ export function ContestCard({
 
   const isClickableRow = Boolean(showVotedColumn && onOpen)
   const votedText = `${contest.submittedJuryCount ?? 0}/${contest.totalJuryCount ?? 0}`
+
+  if (organizerLayout) {
+    return (
+      <article
+        aria-label={onOpen ? `Перейти к конкурсу «${contest.title}»` : undefined}
+        className={`${styles.card} ${styles.cardWithVotes} ${styles.cardWithOrganizerActions} ${onOpen ? styles.cardClickable : ''}`}
+        onClick={onOpen ? () => onOpen() : undefined}
+        onKeyDown={
+          onOpen
+            ? (event) => {
+                if (event.key === 'Enter' || event.key === ' ') {
+                  event.preventDefault()
+                  onOpen()
+                }
+              }
+            : undefined
+        }
+        role={onOpen ? 'button' : undefined}
+        tabIndex={onOpen ? 0 : undefined}
+      >
+        <div className={styles.coverCell}>
+          {coverUrl ? (
+            <img className={styles.coverImage} src={coverUrl} alt={`Обложка конкурса ${contest.title}`} />
+          ) : (
+            <span className={styles.coverPlaceholder}>—</span>
+          )}
+        </div>
+        <p className={styles.title}>{contest.title}</p>
+        <p className={styles.date}>{formatDate(contest.updatedAt || contest.createdAt)}</p>
+        <p className={styles.type}>{contestTypeTitle}</p>
+        <p className={styles.votedCell}>{votedText}</p>
+        <button
+          className={styles.organizerDeleteButton}
+          type="button"
+          aria-label="Удалить мероприятие"
+          onClick={(event) => {
+            event.stopPropagation()
+            void onDelete?.()
+          }}
+        />
+      </article>
+    )
+  }
 
   return (
     <article

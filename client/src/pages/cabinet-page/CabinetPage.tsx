@@ -279,9 +279,9 @@ export const CabinetPage = observer(({ section }: CabinetPageProps) => {
               </div>
             ) : (
               <>
-                <section className={isOrganizer ? styles.eventsSectionOrganizer : styles.eventsCard}>
+                <section className={styles.eventsCard}>
               {isOrganizer ? (
-                <div className={styles.eventsSectionBlock}>
+                <>
                   <div className={styles.sectionHeader}>
                     <div className={styles.sectionTitleWrap}>
                       <span className={`${styles.sectionDot} ${styles.sectionDotOrange}`}>
@@ -322,29 +322,31 @@ export const CabinetPage = observer(({ section }: CabinetPageProps) => {
                       ) : null}
                     </div>
                   </div>
-                  {contestStore.isLoading ? <p className={`${styles.helperText} ${styles.eventsHelperText}`}>Загрузка мероприятий...</p> : null}
-                  {contestStore.error ? <p className={styles.errorText}>{contestStore.error}</p> : null}
-                  <div className={styles.tableHeader}>
-                    <span className={styles.tableHeaderCover}>Обложка</span>
-                    <span>Название конкурса</span>
-                    <span>Дата</span>
-                    <span>Тип конкурса</span>
-                    <span className={styles.tableHeaderVotes}>Проголосовало</span>
-                    <span className={styles.tableHeaderAction} />
+                  <div className={styles.eventsBody}>
+                    {contestStore.isLoading ? <p className={`${styles.helperText} ${styles.eventsHelperText}`}>Загрузка мероприятий...</p> : null}
+                    {contestStore.error ? <p className={styles.errorText}>{contestStore.error}</p> : null}
+                    <div className={styles.tableHeader}>
+                      <span className={styles.tableHeaderCover}>Обложка</span>
+                      <span>Название конкурса</span>
+                      <span>Дата</span>
+                      <span>Тип конкурса</span>
+                      <span className={styles.tableHeaderVotes}>Проголосовало</span>
+                      <span className={styles.tableHeaderAction} />
+                    </div>
+                    {!contestStore.isLoading && !contestStore.error && filteredRatedContests.length === 0 ? (
+                      <p className={`${styles.helperText} ${styles.eventsHelperText}`}>Пока нет мероприятий</p>
+                    ) : null}
+                    {filteredRatedContests.map((contest) => (
+                      <ContestCard
+                        contest={contest}
+                        key={contest.id}
+                        organizerLayout
+                        onDelete={() => contestStore.deleteContest(contest.id)}
+                        onOpen={() => navigate(`/cabinet/events/${contest.id}/organizer`)}
+                      />
+                    ))}
                   </div>
-                  {!contestStore.isLoading && !contestStore.error && filteredRatedContests.length === 0 ? (
-                    <p className={`${styles.helperText} ${styles.eventsHelperText}`}>Пока нет мероприятий</p>
-                  ) : null}
-                  {filteredRatedContests.map((contest) => (
-                    <ContestCard
-                      contest={contest}
-                      key={contest.id}
-                      organizerLayout
-                      onDelete={() => contestStore.deleteContest(contest.id)}
-                      onOpen={() => navigate(`/cabinet/events/${contest.id}/organizer`)}
-                    />
-                  ))}
-                </div>
+                </>
               ) : (
                 <>
                   <div className={styles.sectionHeader}>
@@ -414,9 +416,9 @@ export const CabinetPage = observer(({ section }: CabinetPageProps) => {
               )}
             </section>
 
-                <section className={isOrganizer ? styles.eventsSectionOrganizer : styles.eventsCard}>
+                <section className={styles.eventsCard}>
               {isOrganizer ? (
-                <div className={styles.eventsSectionBlock}>
+                <>
                   <div className={styles.sectionHeader}>
                     <div className={styles.sectionTitleWrap}>
                       <span className={`${styles.sectionDot} ${styles.sectionDotBlue}`}>
@@ -457,27 +459,29 @@ export const CabinetPage = observer(({ section }: CabinetPageProps) => {
                       ) : null}
                     </div>
                   </div>
-                  <div className={styles.tableHeader}>
-                    <span className={styles.tableHeaderCover}>Обложка</span>
-                    <span>Название конкурса</span>
-                    <span>Дата</span>
-                    <span>Тип конкурса</span>
-                    <span className={styles.tableHeaderVotes}>Проголосовало</span>
-                    <span className={styles.tableHeaderAction} />
+                  <div className={styles.eventsBody}>
+                    <div className={styles.tableHeader}>
+                      <span className={styles.tableHeaderCover}>Обложка</span>
+                      <span>Название конкурса</span>
+                      <span>Дата</span>
+                      <span>Тип конкурса</span>
+                      <span className={styles.tableHeaderVotes}>Проголосовало</span>
+                      <span className={styles.tableHeaderAction} />
+                    </div>
+                    {!contestStore.isLoading && !contestStore.error && filteredPendingContests.length === 0 ? (
+                      <p className={`${styles.helperText} ${styles.eventsHelperText}`}>Пока нет оцененных мероприятий</p>
+                    ) : null}
+                    {filteredPendingContests.map((contest) => (
+                      <ContestCard
+                        contest={contest}
+                        key={contest.id}
+                        organizerLayout
+                        onDelete={() => contestStore.deleteContest(contest.id)}
+                        onOpen={() => navigate(`/cabinet/events/${contest.id}/organizer`)}
+                      />
+                    ))}
                   </div>
-                  {!contestStore.isLoading && !contestStore.error && filteredPendingContests.length === 0 ? (
-                    <p className={`${styles.helperText} ${styles.eventsHelperText}`}>Пока нет оцененных мероприятий</p>
-                  ) : null}
-                  {filteredPendingContests.map((contest) => (
-                    <ContestCard
-                      contest={contest}
-                      key={contest.id}
-                      organizerLayout
-                      onDelete={() => contestStore.deleteContest(contest.id)}
-                      onOpen={() => navigate(`/cabinet/events/${contest.id}/organizer`)}
-                    />
-                  ))}
-                </div>
+                </>
               ) : (
                 <>
                   <div className={styles.sectionHeader}>
@@ -546,8 +550,8 @@ export const CabinetPage = observer(({ section }: CabinetPageProps) => {
             </section>
 
             {isOrganizer ? (
-              <section className={styles.eventsSectionOrganizer}>
-                <div className={styles.eventsSectionBlock}>
+              <section className={styles.eventsCard}>
+                <>
                   <div className={styles.sectionHeader}>
                     <div className={styles.sectionTitleWrap}>
                       <span className={`${styles.sectionDot} ${styles.sectionDotGreen}`}>
@@ -590,27 +594,29 @@ export const CabinetPage = observer(({ section }: CabinetPageProps) => {
                       ) : null}
                     </div>
                   </div>
-                  <div className={styles.tableHeader}>
-                    <span className={styles.tableHeaderCover}>Обложка</span>
-                    <span>Название конкурса</span>
-                    <span>Дата</span>
-                    <span>Тип конкурса</span>
-                    <span className={styles.tableHeaderVotes}>Проголосовало</span>
-                    <span className={styles.tableHeaderAction} />
+                  <div className={styles.eventsBody}>
+                    <div className={styles.tableHeader}>
+                      <span className={styles.tableHeaderCover}>Обложка</span>
+                      <span>Название конкурса</span>
+                      <span>Дата</span>
+                      <span>Тип конкурса</span>
+                      <span className={styles.tableHeaderVotes}>Проголосовало</span>
+                      <span className={styles.tableHeaderAction} />
+                    </div>
+                    {!contestStore.isLoading && !contestStore.error && filteredCompletedContests.length === 0 ? (
+                      <p className={`${styles.helperText} ${styles.eventsHelperText}`}>Пока нет завершенных мероприятий</p>
+                    ) : null}
+                    {filteredCompletedContests.map((contest) => (
+                      <ContestCard
+                        contest={contest}
+                        key={contest.id}
+                        organizerLayout
+                        onDelete={() => contestStore.deleteContest(contest.id)}
+                        onOpen={() => navigate(`/cabinet/events/${contest.id}/organizer`)}
+                      />
+                    ))}
                   </div>
-                  {!contestStore.isLoading && !contestStore.error && filteredCompletedContests.length === 0 ? (
-                    <p className={`${styles.helperText} ${styles.eventsHelperText}`}>Пока нет завершенных мероприятий</p>
-                  ) : null}
-                  {filteredCompletedContests.map((contest) => (
-                    <ContestCard
-                      contest={contest}
-                      key={contest.id}
-                      organizerLayout
-                      onDelete={() => contestStore.deleteContest(contest.id)}
-                      onOpen={() => navigate(`/cabinet/events/${contest.id}/organizer`)}
-                    />
-                  ))}
-                </div>
+                </>
               </section>
             ) : (
               <section className={styles.eventsCard}>

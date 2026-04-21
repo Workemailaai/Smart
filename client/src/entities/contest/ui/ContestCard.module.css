@@ -13,7 +13,7 @@
 }
 
 .cardWithOrganizerActions {
-  grid-template-columns: 96px minmax(220px, 1fr) 184px 276px 160px 48px;
+  grid-template-columns: 96px 380px 160px 260px 160px minmax(0, 1fr);
 }
 
 .cardClickable {
@@ -180,10 +180,49 @@
   border: none;
   background: transparent url('/delete-contest-button.svg') center / 36px 36px no-repeat;
   cursor: pointer;
+  justify-self: end;
 }
 
 .organizerDeleteButton:hover {
   background-image: url('/delete-contest-button-red.svg');
+}
+
+.organizerDeleteButtonComplete {
+  background-image: url('/delete-contest-button.svg');
+}
+
+.organizerDeleteButtonComplete:hover {
+  background-image: url('/delete-contest-button.svg');
+}
+
+.organizerVotedCell {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: #0a0f15;
+  font-size: 18px;
+  line-height: 18px;
+  font-weight: 500;
+}
+
+.organizerVotedCurrent {
+  color: #0a0f15;
+  font-size: 18px;
+  font-weight: 500;
+  line-height: 18px;
+}
+
+.organizerVotedDivider,
+.organizerVotedTotal {
+  color: rgb(10 15 21 / 30%);
+  font-size: 18px;
+  font-weight: 400;
+  line-height: 24px;
+}
+
+.organizerVotedCellComplete .organizerVotedCurrent {
+  color: #00a99d;
 }
 
 .pendingAction {
@@ -228,7 +267,7 @@
   }
 
   .cardWithOrganizerActions {
-    grid-template-columns: 84px minmax(200px, 1fr) 150px 220px 130px 48px;
+    grid-template-columns: 84px 300px 150px 220px 130px minmax(0, 1fr);
   }
 
   .coverImage,
@@ -261,6 +300,13 @@
   .card.juryCabinetCompact .date,
   .card.juryCabinetCompact .type,
   .card.juryCabinetCompact .juryCompactVotes {
+    font-size: 16px;
+  }
+
+  .organizerVotedCell,
+  .organizerVotedCurrent,
+  .organizerVotedDivider,
+  .organizerVotedTotal {
     font-size: 16px;
   }
 }

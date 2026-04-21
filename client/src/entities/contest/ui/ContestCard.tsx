@@ -83,9 +83,16 @@ export function ContestCard({
         <p className={styles.title}>{contest.title}</p>
         <p className={styles.date}>{formatDate(contest.updatedAt || contest.createdAt)}</p>
         <p className={styles.type}>{contestTypeTitle}</p>
-        <p className={styles.votedCell}>{votedText}</p>
+        <div
+          className={`${styles.organizerVotedCell} ${isAllJurySubmitted ? styles.organizerVotedCellComplete : ''}`}
+          aria-label={`Проголосовало ${votedText}`}
+        >
+          <span className={styles.organizerVotedCurrent}>{submittedJuryCount}</span>
+          <span className={styles.organizerVotedDivider}>/</span>
+          <span className={styles.organizerVotedTotal}>{totalJuryCount}</span>
+        </div>
         <button
-          className={styles.organizerDeleteButton}
+          className={`${styles.organizerDeleteButton} ${isAllJurySubmitted ? styles.organizerDeleteButtonComplete : ''}`}
           type="button"
           aria-label="Удалить мероприятие"
           onClick={(event) => {

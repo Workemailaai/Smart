@@ -399,6 +399,10 @@
   text-align: right;
 }
 
+.tableHeaderWithAction {
+  grid-template-columns: 96px 380px 160px 260px 160px minmax(0, 1fr);
+}
+
 .tableHeaderVotes {
   text-align: left;
 }
@@ -753,6 +757,10 @@
     grid-template-columns: 84px minmax(200px, 1fr) 150px 220px 130px;
     gap: 10px;
     font-size: 14px;
+  }
+
+  .tableHeaderWithAction {
+    grid-template-columns: 84px 300px 150px 220px 130px minmax(0, 1fr);
   }
 }
 

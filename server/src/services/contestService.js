@@ -85,6 +85,7 @@ class ContestService {
     }
 
     const t = await sequelize.transaction();
+    let removableMediaPaths = [];
     try {
       const mediaPaths = MediaFileService.collectContestMediaPaths({
         contest,

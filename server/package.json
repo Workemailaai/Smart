@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "nodemon src/app.js",
     "start": "node src/app.js",
+    "lint": "eslint .",
     "db:migrate": "sequelize-cli db:migrate",
     "db:seed": "sequelize-cli db:seed:all",
     "db": "sequelize db:drop && sequelize db:create && sequelize db:migrate"

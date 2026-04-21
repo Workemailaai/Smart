@@ -712,3 +712,114 @@
     font-size: 20px;
   }
 }
+
+@media (max-width: 430px) {
+  .page {
+    display: block;
+    min-height: 100svh;
+    background: #f0f1f5;
+  }
+
+  .page > :first-child {
+    display: none;
+  }
+
+  .content {
+    min-height: 100svh;
+  }
+
+  .topBar {
+    display: none;
+  }
+
+  .main {
+    padding: 0 16px 16px;
+  }
+
+  .priorityLayout {
+    gap: 12px;
+  }
+
+  .contestCard {
+    padding: 16px 0 24px;
+    background: transparent;
+    border-radius: 0;
+    gap: 8px;
+  }
+
+  .contestDate,
+  .contestTitle,
+  .contestSubtitle {
+    text-align: center;
+  }
+
+  .contestDate,
+  .contestSubtitle {
+    font-size: 12px;
+    line-height: 12px;
+  }
+
+  .contestTitle {
+    font-size: 24px;
+    line-height: 24px;
+  }
+
+  .priorityPanel {
+    padding: 8px;
+    border-radius: 20px;
+    gap: 8px;
+  }
+
+  .priorityPanelHeader {
+    padding: 8px;
+    gap: 4px;
+  }
+
+  .priorityPanelTitle {
+    font-size: 18px;
+    line-height: 20px;
+  }
+
+  .priorityPanelHint {
+    font-size: 12px;
+    line-height: 12px;
+  }
+
+  .priorityRow {
+    gap: 0;
+  }
+
+  .priorityIndexBadge {
+    display: none;
+  }
+
+  .priorityNamePlate {
+    min-height: 48px;
+    padding: 8px 12px;
+    border-radius: 12px;
+    justify-content: space-between;
+  }
+
+  .priorityNameText {
+    font-size: 16px;
+    line-height: 20px;
+  }
+
+  .priorityActions {
+    margin-top: 8px;
+    width: 100%;
+  }
+
+  .priorityBackCircle {
+    display: none;
+  }
+
+  .priorityNextButton {
+    width: 100%;
+    min-width: 0;
+    height: 48px;
+    font-size: 16px;
+    line-height: 20px;
+  }
+
+}

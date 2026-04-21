@@ -1,0 +1,61 @@
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgb(10 15 21 / 40%);
+}
+
+.sheet {
+  position: relative;
+  width: 100%;
+  max-width: 430px;
+  max-height: calc(100svh - 120px);
+  background: #f0f1f5;
+  border-top-left-radius: 32px;
+  border-top-right-radius: 32px;
+  overflow: hidden;
+  touch-action: none;
+  will-change: transform;
+  transition: transform 0.22s ease;
+}
+
+.sheetDragging {
+  transition: none;
+}
+
+.handleButton {
+  width: 100%;
+  height: 24px;
+  border: none;
+  background: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  touch-action: none;
+  cursor: grab;
+}
+
+.handleButton:active {
+  cursor: grabbing;
+}
+
+.handle {
+  width: 36px;
+  height: 5px;
+  border-radius: 100px;
+  background: rgb(60 60 67 / 36%);
+}
+
+.content {
+  max-height: calc(100svh - 144px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}

@@ -66,6 +66,91 @@ export const JuryContestPage = observer(() => {
     navigate('/')
   }
 
+  const priorityStepContent =
+    view && showCriteriaPriorityStep ? (
+      <div className={styles.priorityLayout}>
+        <article className={styles.contestCard}>
+          <p className={styles.contestDate}>{formatDate(view.contest.createdAt)}</p>
+          <p className={styles.contestTitle}>{view.contest.title}</p>
+          <p className={styles.contestSubtitle}>{view.contest.description || 'Оценка конкурса'}</p>
+        </article>
+
+        <div className={styles.priorityPanel}>
+          <div className={styles.priorityPanelHeader}>
+            <h3 className={styles.priorityPanelTitle}>Приоритет показателей оценивания</h3>
+            <p className={styles.priorityPanelHint}>Расставьте показатели по приоритетам</p>
+          </div>
+          {juryContestStore.priorityDraftIds.map((criterionId, index) => {
+            const criterion = view.criteria.find((criterionItem) => criterionItem.id === criterionId)
+            if (!criterion) return null
+            const isDragging = priorityDragFrom === index
+            const isOver = priorityDragOver === index && priorityDragFrom !== null && priorityDragFrom !== index
+            return (
+              <div
+                className={`${styles.priorityRow} ${isDragging ? styles.priorityRowDragging : ''} ${
+                  isOver ? styles.priorityRowDragOver : ''
+                }`}
+                draggable
+                key={criterionId}
+                onDragEnd={() => {
+                  setPriorityDragFrom(null)
+                  setPriorityDragOver(null)
+                }}
+                onDragOver={(event) => {
+                  if (priorityDragFrom === null) return
+                  event.preventDefault()
+                  event.dataTransfer.dropEffect = 'move'
+                  setPriorityDragOver(index)
+                }}
+                onDragStart={(event) => {
+                  event.dataTransfer.setData('text/plain', String(index))
+                  event.dataTransfer.effectAllowed = 'move'
+                  setPriorityDragFrom(index)
+                }}
+                onDrop={(event) => {
+                  event.preventDefault()
+                  const raw = event.dataTransfer.getData('text/plain')
+                  const from = Number.parseInt(raw, 10)
+                  if (Number.isNaN(from)) {
+                    setPriorityDragFrom(null)
+                    setPriorityDragOver(null)
+                    return
+                  }
+                  juryContestStore.movePriorityCriterion(from, index)
+                  setPriorityDragFrom(null)
+                  setPriorityDragOver(null)
+                }}
+              >
+                <div className={styles.priorityIndexBadge}>{index + 1}</div>
+                <div className={styles.priorityNamePlate}>
+                  <span className={styles.priorityNameText}>{criterion.name}</span>
+                </div>
+              </div>
+            )
+          })}
+        </div>
+
+        <div className={styles.priorityActions}>
+          <button
+            aria-label="Назад к списку мероприятий"
+            className={styles.priorityBackCircle}
+            type="button"
+            onClick={() => navigate('/cabinet/events')}
+          >
+            ←
+          </button>
+          <button
+            className={styles.priorityNextButton}
+            disabled={juryContestStore.isSavingPriorityOrder}
+            type="button"
+            onClick={() => void juryContestStore.confirmPriorityOrder(numericContestId, user.id)}
+          >
+            {juryContestStore.isSavingPriorityOrder ? 'Сохранение...' : 'Далее'}
+          </button>
+        </div>
+      </div>
+    ) : null
+
   return (
     <section className={styles.page}>
       <JuryCabinetSidebar fullName={userName} phone={user.phone} onLogout={onLogout} />
@@ -92,92 +177,7 @@ export const JuryContestPage = observer(() => {
           {juryContestStore.isLoading ? <p className={styles.infoText}>Загрузка мероприятия...</p> : null}
           {juryContestStore.error ? <p className={styles.errorText}>{juryContestStore.error}</p> : null}
 
-          {view && showCriteriaPriorityStep ? (
-            <>
-              <div className={styles.priorityLayout}>
-                <article className={styles.contestCard}>
-                  <p className={styles.contestDate}>{formatDate(view.contest.createdAt)}</p>
-                  <p className={styles.contestTitle}>{view.contest.title}</p>
-                  <p className={styles.contestSubtitle}>{view.contest.description || 'Оценка конкурса'}</p>
-                </article>
-
-                <div className={styles.priorityPanel}>
-                  <div className={styles.priorityPanelHeader}>
-                    <h3 className={styles.priorityPanelTitle}>Приоритет показателей оценивания</h3>
-                    <p className={styles.priorityPanelHint}>Расставьте показатели по приоритетам</p>
-                  </div>
-                  {juryContestStore.priorityDraftIds.map((criterionId, index) => {
-                    const criterion = view.criteria.find((c) => c.id === criterionId)
-                    if (!criterion) return null
-                    const isDragging = priorityDragFrom === index
-                    const isOver =
-                      priorityDragOver === index && priorityDragFrom !== null && priorityDragFrom !== index
-                    return (
-                      <div
-                        className={`${styles.priorityRow} ${isDragging ? styles.priorityRowDragging : ''} ${
-                          isOver ? styles.priorityRowDragOver : ''
-                        }`}
-                        draggable
-                        key={criterionId}
-                        onDragEnd={() => {
-                          setPriorityDragFrom(null)
-                          setPriorityDragOver(null)
-                        }}
-                        onDragOver={(event) => {
-                          if (priorityDragFrom === null) return
-                          event.preventDefault()
-                          event.dataTransfer.dropEffect = 'move'
-                          setPriorityDragOver(index)
-                        }}
-                        onDragStart={(event) => {
-                          event.dataTransfer.setData('text/plain', String(index))
-                          event.dataTransfer.effectAllowed = 'move'
-                          setPriorityDragFrom(index)
-                        }}
-                        onDrop={(event) => {
-                          event.preventDefault()
-                          const raw = event.dataTransfer.getData('text/plain')
-                          const from = Number.parseInt(raw, 10)
-                          if (Number.isNaN(from)) {
-                            setPriorityDragFrom(null)
-                            setPriorityDragOver(null)
-                            return
-                          }
-                          juryContestStore.movePriorityCriterion(from, index)
-                          setPriorityDragFrom(null)
-                          setPriorityDragOver(null)
-                        }}
-                      >
-                        <div className={styles.priorityIndexBadge}>{index + 1}</div>
-                        <div className={styles.priorityNamePlate}>
-                          <span className={styles.priorityNameText}>{criterion.name}</span>
-                        </div>
-                      </div>
-                    )
-                  })}
-                </div>
-              </div>
-
-              <div className={styles.priorityActions}>
-                <button
-                  aria-label="Назад к списку мероприятий"
-                  className={styles.priorityBackCircle}
-                  type="button"
-                  onClick={() => navigate('/cabinet/events')}
-                >
-                  ←
-                </button>
-                <button
-                  className={styles.priorityNextButton}
-                  disabled={juryContestStore.isSavingPriorityOrder}
-                  type="button"
-                  onClick={() => void juryContestStore.confirmPriorityOrder(numericContestId, user.id)}
-                >
-                  {juryContestStore.isSavingPriorityOrder ? 'Сохранение...' : 'Далее'}
-                </button>
-              </div>
-            </>
-          ) : null}
+          {view && showCriteriaPriorityStep ? priorityStepContent : null}
 
           {view && !showCriteriaPriorityStep ? (
             <>

@@ -1,9 +1,12 @@
 import { observer } from 'mobx-react-lite'
-import { useEffect, useState } from 'react'
-import { NavLink, Navigate, useNavigate } from 'react-router'
+import { useEffect, useRef, useState } from 'react'
+import { NavLink, Navigate, useNavigate, useSearchParams } from 'react-router'
 import { ContestCard, contestStore, getContestTypes, type IContest } from '@/entities/contest'
 import { TemplateCard, templateStore } from '@/entities/template'
 import { userStore } from '@/entities/user'
+import { juryContestStore } from '@/features/jury-contest/model/juryContestStore'
+import { BottomSheet } from '@/shared/ui/bottom-sheet/BottomSheet'
+import { orderCriteriaForJury } from '@/shared/lib/weightedScores.js'
 import { formatRuPhoneMask } from '@/shared/lib/ruPhone'
 import { OrganizerCabinetSidebar } from '@/widgets/organizer-cabinet-sidebar/OrganizerCabinetSidebar'
 import { JuryCabinetSidebar } from '@/widgets/jury-cabinet-sidebar/JuryCabinetSidebar'
@@ -15,6 +18,9 @@ type CabinetPageProps = {
   section: CabinetSection
 }
 
+const MEDIA_BASE_URL = import.meta.env.VITE_MEDIA_BASE_URL || 'http://localhost:3000'
+const COMMENT_LIMIT = 500
+
 function getInitials(name: string) {
   return name
     .split(' ')
@@ -24,8 +30,24 @@ function getInitials(name: string) {
     .join('')
 }
 
+function resolveMediaUrl(path: string | null) {
+  if (!path) return null
+  if (path.startsWith('http://') || path.startsWith('https://')) return path
+  const normalizedPath = path.startsWith('/') ? path : `/${path}`
+  return `${MEDIA_BASE_URL}${normalizedPath}`
+}
+
+function formatDate(value: string) {
+  return new Date(value).toLocaleDateString('ru-RU', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+  })
+}
+
 export const CabinetPage = observer(({ section }: CabinetPageProps) => {
   const navigate = useNavigate()
+  const [searchParams, setSearchParams] = useSearchParams()
   const user = userStore.user
   const isOrganizer = user?.role === 'organizer'
   const [contestTypeOptions, setContestTypeOptions] = useState<{ id: string; label: string }[]>([])
@@ -35,6 +57,12 @@ export const CabinetPage = observer(({ section }: CabinetPageProps) => {
   const [pendingFilterType, setPendingFilterType] = useState('all')
   const [ratedFilterType, setRatedFilterType] = useState('all')
   const [completedFilterType, setCompletedFilterType] = useState('all')
+  const [isMobileViewport, setIsMobileViewport] = useState(() =>
+    typeof window !== 'undefined' ? window.matchMedia('(max-width: 430px)').matches : false,
+  )
+  const [touchDragFrom, setTouchDragFrom] = useState<number | null>(null)
+  const [touchDragOver, setTouchDragOver] = useState<number | null>(null)
+  const touchPointerIdRef = useRef<number | null>(null)
 
   useEffect(() => {
     void contestStore.fetchContests()
@@ -56,6 +84,18 @@ export const CabinetPage = observer(({ section }: CabinetPageProps) => {
       }
     }
     void loadContestTypes()
+  }, [])
+
+  useEffect(() => {
+    const mediaQueryList = window.matchMedia('(max-width: 430px)')
+    const onChange = (event: MediaQueryListEvent) => {
+      setIsMobileViewport(event.matches)
+    }
+    setIsMobileViewport(mediaQueryList.matches)
+    mediaQueryList.addEventListener('change', onChange)
+    return () => {
+      mediaQueryList.removeEventListener('change', onChange)
+    }
   }, [])
 
   if (!user) {
@@ -124,10 +164,66 @@ export const CabinetPage = observer(({ section }: CabinetPageProps) => {
   const filteredPendingContests = filterContestsByType(pendingContests, pendingFilterType)
   const filteredRatedContests = filterContestsByType(ratedContests, ratedFilterType)
   const filteredCompletedContests = filterContestsByType(completedContests, completedFilterType)
+  const juryContestIdParam = searchParams.get('juryContestId')
+  const juryContestId = juryContestIdParam ? Number.parseInt(juryContestIdParam, 10) : Number.NaN
+  const isJuryContestModalOpen = !Number.isNaN(juryContestId) && section === 'events' && !isOrganizer
+  const isPriorityStepVisible =
+    isJuryContestModalOpen &&
+    Boolean(user && juryContestStore.view && juryContestStore.shouldShowCriteriaPriorityStep(user.id))
+  const isCompletedContest = juryContestStore.view?.contest.status === 'completed'
+  const isScoringStepVisible = isJuryContestModalOpen && Boolean(juryContestStore.view) && !isPriorityStepVisible
+  const isReadonlyScoring = Boolean(juryContestStore.view && (juryContestStore.view.mySubmitted || isCompletedContest))
+
+  useEffect(() => {
+    if (!isJuryContestModalOpen || Number.isNaN(juryContestId)) {
+      juryContestStore.reset()
+      return
+    }
+    void juryContestStore.loadContest(juryContestId)
+  }, [isJuryContestModalOpen, juryContestId])
 
   const onLogout = async () => {
     await userStore.logout()
     navigate('/')
+  }
+
+  const closeJuryContestModal = () => {
+    const nextSearchParams = new URLSearchParams(searchParams)
+    nextSearchParams.delete('juryContestId')
+    setSearchParams(nextSearchParams, { replace: true })
+    setTouchDragFrom(null)
+    setTouchDragOver(null)
+    juryContestStore.reset()
+  }
+
+  const openJuryContestModal = (contestId: number) => {
+    const nextSearchParams = new URLSearchParams(searchParams)
+    nextSearchParams.set('juryContestId', String(contestId))
+    setSearchParams(nextSearchParams, { replace: false })
+  }
+
+  const onJuryContestOpen = async (contest: IContest) => {
+    if (!isMobileViewport) {
+      navigate(`/cabinet/events/${contest.id}/jury`)
+      return
+    }
+    openJuryContestModal(contest.id)
+  }
+
+  const onPriorityContinue = async () => {
+    if (!user || Number.isNaN(juryContestId)) return
+    await juryContestStore.confirmPriorityOrder(juryContestId, user.id)
+  }
+
+  const onSubmitScores = async () => {
+    if (Number.isNaN(juryContestId)) return
+    await juryContestStore.submit(juryContestId)
+  }
+
+  const onOpenResults = () => {
+    if (Number.isNaN(juryContestId)) return
+    closeJuryContestModal()
+    navigate(`/cabinet/events/${juryContestId}/results`)
   }
 
   return (
@@ -404,7 +500,7 @@ export const CabinetPage = observer(({ section }: CabinetPageProps) => {
                         juryCabinetCompact
                         showVotedColumn
                         key={contest.id}
-                        onOpen={() => navigate(`/cabinet/events/${contest.id}/jury`)}
+                        onOpen={() => void onJuryContestOpen(contest)}
                       />
                     ))}
                   </div>
@@ -537,7 +633,7 @@ export const CabinetPage = observer(({ section }: CabinetPageProps) => {
                         juryCabinetCompact
                         showVotedColumn
                         key={contest.id}
-                        onOpen={() => navigate(`/cabinet/events/${contest.id}/jury`)}
+                        onOpen={() => void onJuryContestOpen(contest)}
                       />
                     ))}
                   </div>
@@ -675,7 +771,7 @@ export const CabinetPage = observer(({ section }: CabinetPageProps) => {
                       juryCabinetCompact
                       showVotedColumn
                       key={contest.id}
-                      onOpen={() => navigate(`/cabinet/events/${contest.id}/jury`)}
+                      onOpen={() => void onJuryContestOpen(contest)}
                     />
                   ))}
                 </div>
@@ -691,6 +787,219 @@ export const CabinetPage = observer(({ section }: CabinetPageProps) => {
           </div>
         )}
       </div>
+      {isJuryContestModalOpen && isMobileViewport ? (
+        <BottomSheet
+          isOpen
+          onClose={closeJuryContestModal}
+          contentClassName={styles.juryPrioritySheetContent}
+        >
+          {juryContestStore.isLoading ? <p className={styles.helperText}>Загрузка мероприятия...</p> : null}
+          {juryContestStore.error ? <p className={styles.errorText}>{juryContestStore.error}</p> : null}
+          {isPriorityStepVisible && juryContestStore.view ? (
+            <div className={styles.juryPriorityLayout}>
+              <article className={styles.juryPriorityContestCard}>
+                <p className={styles.juryPriorityContestDate}>
+                  {new Date(juryContestStore.view.contest.createdAt).toLocaleDateString('ru-RU')}
+                </p>
+                <p className={styles.juryPriorityContestTitle}>{juryContestStore.view.contest.title}</p>
+                <p className={styles.juryPriorityContestSubtitle}>
+                  {juryContestStore.view.contest.description || 'Оценка конкурса'}
+                </p>
+              </article>
+
+              <div className={styles.juryPriorityPanel}>
+                <div className={styles.juryPriorityPanelHeader}>
+                  <h3 className={styles.juryPriorityPanelTitle}>Приоритет показателей оценивания</h3>
+                  <p className={styles.juryPriorityPanelHint}>Расставьте показатели по приоритетам</p>
+                </div>
+                {juryContestStore.priorityDraftIds.map((criterionId, index) => {
+                  const criterion = juryContestStore.view?.criteria.find((criterionItem) => criterionItem.id === criterionId)
+                  if (!criterion) return null
+                  const isDragging = touchDragFrom === index
+                  const isOver = touchDragOver === index && touchDragFrom !== null && touchDragFrom !== index
+                  return (
+                    <div
+                      className={`${styles.juryPriorityRow} ${isDragging ? styles.juryPriorityRowDragging : ''} ${
+                        isOver ? styles.juryPriorityRowDragOver : ''
+                      }`}
+                      data-priority-row-index={index}
+                      key={criterionId}
+                      onPointerDown={(event) => {
+                        touchPointerIdRef.current = event.pointerId
+                        setTouchDragFrom(index)
+                        setTouchDragOver(index)
+                        event.currentTarget.setPointerCapture(event.pointerId)
+                      }}
+                      onPointerMove={(event) => {
+                        if (touchPointerIdRef.current !== event.pointerId) return
+                        event.preventDefault()
+                        const hoverElement = document.elementFromPoint(event.clientX, event.clientY)
+                        const hoverRowElement = hoverElement?.closest('[data-priority-row-index]')
+                        if (!hoverRowElement) return
+                        const rawIndex = hoverRowElement.getAttribute('data-priority-row-index')
+                        const overIndex = rawIndex ? Number.parseInt(rawIndex, 10) : Number.NaN
+                        if (Number.isNaN(overIndex)) return
+                        setTouchDragOver(overIndex)
+                      }}
+                      onPointerUp={(event) => {
+                        if (touchPointerIdRef.current !== event.pointerId) return
+                        const from = touchDragFrom
+                        const to = touchDragOver
+                        touchPointerIdRef.current = null
+                        setTouchDragFrom(null)
+                        setTouchDragOver(null)
+                        if (from === null || to === null || from === to) return
+                        juryContestStore.movePriorityCriterion(from, to)
+                      }}
+                      onPointerCancel={(event) => {
+                        if (touchPointerIdRef.current !== event.pointerId) return
+                        touchPointerIdRef.current = null
+                        setTouchDragFrom(null)
+                        setTouchDragOver(null)
+                      }}
+                    >
+                      <div className={styles.juryPriorityNamePlate}>
+                        <span className={styles.juryPriorityNameText}>{criterion.name}</span>
+                        <span aria-hidden className={styles.juryPriorityDragHandle}>
+                          ⋮⋮
+                        </span>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+              <button
+                className={styles.juryPrioritySaveButton}
+                disabled={juryContestStore.isSavingPriorityOrder}
+                type="button"
+                onClick={() => void onPriorityContinue()}
+              >
+                {juryContestStore.isSavingPriorityOrder ? 'Сохранение...' : 'Сохранить и продолжить'}
+              </button>
+            </div>
+          ) : null}
+          {isScoringStepVisible && juryContestStore.view ? (
+            <div className={styles.juryScoreLayout}>
+              <article className={styles.juryPriorityContestCard}>
+                <p className={styles.juryPriorityContestDate}>{formatDate(juryContestStore.view.contest.createdAt)}</p>
+                <p className={styles.juryPriorityContestTitle}>{juryContestStore.view.contest.title}</p>
+                <p className={styles.juryPriorityContestSubtitle}>
+                  {juryContestStore.view.contest.description || 'Оценка конкурса'}
+                </p>
+              </article>
+
+              <div className={styles.juryScoreParticipantList}>
+                {juryContestStore.view.participants.map((participant) => {
+                  const photoUrl = resolveMediaUrl(participant.photoUrl)
+                  return (
+                    <details className={styles.juryScoreParticipantSection} key={participant.id}>
+                      <summary className={styles.juryScoreParticipantSummary}>
+                        <div className={styles.juryScoreParticipantMain}>
+                          {photoUrl ? (
+                            <img className={styles.juryScoreParticipantPhoto} src={photoUrl} alt={participant.fullName} />
+                          ) : (
+                            <div className={styles.juryScoreParticipantPhoto}>{getInitials(participant.fullName)}</div>
+                          )}
+                          <div className={styles.juryScoreParticipantMeta}>
+                            <span className={styles.juryScoreParticipantName}>
+                              {participant.fullName}
+                              {participant.extraInfo ? `, ${participant.extraInfo}` : ''}
+                            </span>
+                            <span className={styles.juryScoreParticipantCountry}>
+                              {participant.country || 'Страна не указана'}
+                            </span>
+                          </div>
+                        </div>
+                        <strong className={styles.juryScoreAverageBadge}>
+                          {juryContestStore.getParticipantAverage(participant.id)} / 10
+                        </strong>
+                      </summary>
+
+                      <div className={styles.juryScoreCriteriaWrap}>
+                        {orderCriteriaForJury(
+                          juryContestStore.view?.criteria ?? [],
+                          juryContestStore.view?.myCriterionOrder ?? null,
+                        ).map((criterion) => {
+                          const min = criterion.minScore ?? 0
+                          const max = criterion.maxScore
+                          const range = Math.max(1, max - min)
+                          const value = juryContestStore.getScore(participant.id, criterion.id, min)
+                          const clamped = Math.min(max, Math.max(min, value))
+                          const percent = range > 0 ? ((clamped - min) / range) * 100 : 0
+                          return (
+                            <label className={styles.juryScoreCriterionRow} key={criterion.id}>
+                              <div className={styles.juryScoreCriterionLabel}>{criterion.name}</div>
+                              <div className={styles.juryScoreSliderWrap}>
+                                <span className={styles.juryScoreBoundaryValue}>{min}</span>
+                                <div className={styles.juryScoreSliderTrackWrap}>
+                                  <div className={styles.juryScoreSliderTrack}>
+                                    <div className={styles.juryScoreSliderProgress} style={{ width: `${percent}%` }} />
+                                  </div>
+                                  <input
+                                    className={styles.juryScoreSliderInput}
+                                    type="range"
+                                    min={min}
+                                    max={max}
+                                    step={1}
+                                    value={clamped}
+                                    disabled={isReadonlyScoring}
+                                    onChange={(event) =>
+                                      juryContestStore.setScore(participant.id, criterion.id, Number(event.target.value))
+                                    }
+                                  />
+                                  <span className={styles.juryScoreSliderValue} style={{ left: `calc(${percent}% - 18px)` }}>
+                                    {clamped}
+                                  </span>
+                                </div>
+                                <span className={styles.juryScoreBoundaryValue}>{max}</span>
+                              </div>
+                            </label>
+                          )
+                        })}
+                      </div>
+
+                      <div className={styles.juryScoreCommentCard}>
+                        <label className={styles.juryScoreCommentLabel} htmlFor={`sheet-comment-${participant.id}`}>
+                          Комментарий для участника
+                        </label>
+                        <textarea
+                          id={`sheet-comment-${participant.id}`}
+                          className={styles.juryScoreCommentInput}
+                          value={juryContestStore.getComment(participant.id)}
+                          maxLength={COMMENT_LIMIT}
+                          readOnly={isReadonlyScoring}
+                          placeholder="Оставьте обратную связь по выступлению"
+                          onChange={(event) => juryContestStore.setComment(participant.id, event.target.value)}
+                        />
+                        <div className={styles.juryScoreCommentCounter}>
+                          {juryContestStore.getComment(participant.id).length}
+                          <span className={styles.juryScoreCommentDivider}>/</span>
+                          {COMMENT_LIMIT}
+                        </div>
+                      </div>
+                    </details>
+                  )
+                })}
+              </div>
+
+              {isCompletedContest ? (
+                <button className={styles.juryPrioritySaveButton} type="button" onClick={onOpenResults}>
+                  Результаты
+                </button>
+              ) : (
+                <button
+                  className={styles.juryPrioritySaveButton}
+                  disabled={juryContestStore.isSubmitting || Boolean(juryContestStore.view.mySubmitted)}
+                  type="button"
+                  onClick={() => void onSubmitScores()}
+                >
+                  {juryContestStore.isSubmitting ? 'Отправка...' : 'Завершить'}
+                </button>
+              )}
+            </div>
+          ) : null}
+        </BottomSheet>
+      ) : null}
     </section>
   )
 })

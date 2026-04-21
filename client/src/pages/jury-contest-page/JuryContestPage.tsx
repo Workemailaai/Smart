@@ -49,6 +49,9 @@ export const JuryContestPage = observer(() => {
     }
   }, [numericContestId])
 
+  const [priorityDragFrom, setPriorityDragFrom] = useState<number | null>(null)
+  const [priorityDragOver, setPriorityDragOver] = useState<number | null>(null)
+
   if (!user) return <Navigate replace to="/" />
   if (user.role !== 'jury') return <Navigate replace to="/cabinet/events" />
 
@@ -58,8 +61,6 @@ export const JuryContestPage = observer(() => {
   const showCriteriaPriorityStep = Boolean(
     view && user && !isCompletedContest && juryContestStore.shouldShowCriteriaPriorityStep(user.id),
   )
-  const [priorityDragFrom, setPriorityDragFrom] = useState<number | null>(null)
-  const [priorityDragOver, setPriorityDragOver] = useState<number | null>(null)
 
   const onLogout = async () => {
     await userStore.logout()

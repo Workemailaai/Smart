@@ -109,7 +109,7 @@ export interface IContestResultsParticipant {
 }
 
 export interface IContestResultsView {
-  contest: Pick<IContest, 'id' | 'title' | 'coverImageUrl' | 'status'>
+  contest: Pick<IContest, 'id' | 'title' | 'coverImageUrl' | 'status' | 'createdAt' | 'updatedAt'>
   topThree: IContestResultsParticipant[]
   others: IContestResultsParticipant[]
 }

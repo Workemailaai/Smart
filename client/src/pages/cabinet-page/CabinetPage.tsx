@@ -63,6 +63,9 @@ export const CabinetPage = observer(({ section }: CabinetPageProps) => {
   const [touchDragFrom, setTouchDragFrom] = useState<number | null>(null)
   const [touchDragOver, setTouchDragOver] = useState<number | null>(null)
   const touchPointerIdRef = useRef<number | null>(null)
+  const juryContestIdParam = searchParams.get('juryContestId')
+  const juryContestId = juryContestIdParam ? Number.parseInt(juryContestIdParam, 10) : Number.NaN
+  const isJuryContestModalOpen = !Number.isNaN(juryContestId) && section === 'events' && !isOrganizer
 
   useEffect(() => {
     void contestStore.fetchContests()
@@ -97,6 +100,14 @@ export const CabinetPage = observer(({ section }: CabinetPageProps) => {
       mediaQueryList.removeEventListener('change', onChange)
     }
   }, [])
+
+  useEffect(() => {
+    if (!user || !isJuryContestModalOpen || Number.isNaN(juryContestId)) {
+      juryContestStore.reset()
+      return
+    }
+    void juryContestStore.loadContest(juryContestId)
+  }, [user, isJuryContestModalOpen, juryContestId])
 
   if (!user) {
     return <Navigate replace to="/" />
@@ -164,23 +175,12 @@ export const CabinetPage = observer(({ section }: CabinetPageProps) => {
   const filteredPendingContests = filterContestsByType(pendingContests, pendingFilterType)
   const filteredRatedContests = filterContestsByType(ratedContests, ratedFilterType)
   const filteredCompletedContests = filterContestsByType(completedContests, completedFilterType)
-  const juryContestIdParam = searchParams.get('juryContestId')
-  const juryContestId = juryContestIdParam ? Number.parseInt(juryContestIdParam, 10) : Number.NaN
-  const isJuryContestModalOpen = !Number.isNaN(juryContestId) && section === 'events' && !isOrganizer
   const isPriorityStepVisible =
     isJuryContestModalOpen &&
     Boolean(user && juryContestStore.view && juryContestStore.shouldShowCriteriaPriorityStep(user.id))
   const isCompletedContest = juryContestStore.view?.contest.status === 'completed'
   const isScoringStepVisible = isJuryContestModalOpen && Boolean(juryContestStore.view) && !isPriorityStepVisible
   const isReadonlyScoring = Boolean(juryContestStore.view && (juryContestStore.view.mySubmitted || isCompletedContest))
-
-  useEffect(() => {
-    if (!isJuryContestModalOpen || Number.isNaN(juryContestId)) {
-      juryContestStore.reset()
-      return
-    }
-    void juryContestStore.loadContest(juryContestId)
-  }, [isJuryContestModalOpen, juryContestId])
 
   const onLogout = async () => {
     await userStore.logout()

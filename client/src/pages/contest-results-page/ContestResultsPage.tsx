@@ -17,6 +17,17 @@ function formatScore(score: number | null | undefined) {
   return String(normalized).replace('.', ',')
 }
 
+function formatContestDate(dateValue: string) {
+  const parsedDate = new Date(dateValue)
+  if (Number.isNaN(parsedDate.getTime())) {
+    return 'Дата не указана'
+  }
+  const day = String(parsedDate.getDate()).padStart(2, '0')
+  const month = String(parsedDate.getMonth() + 1).padStart(2, '0')
+  const year = parsedDate.getFullYear()
+  return `${day}.${month}.${year}`
+}
+
 function getInitials(fullName: string) {
   return fullName
     .split(' ')
@@ -113,6 +124,7 @@ export const ContestResultsPage = observer(() => {
   if (user.role !== 'organizer' && user.role !== 'jury') return <Navigate replace to="/cabinet/events" />
 
   const rows = view ? [...view.topThree, ...view.others] : []
+  const contestDateText = view ? formatContestDate(view.contest.updatedAt || view.contest.createdAt) : ''
 
   const onExport = () => {
     if (!view) return
@@ -156,6 +168,59 @@ export const ContestResultsPage = observer(() => {
 
       {view ? (
         <div className={styles.panel}>
+          {user.role === 'jury' ? (
+            <div className={styles.mobileJuryTopSection}>
+              <div className={styles.mobileJuryTopBar}>
+                <button className={styles.mobileJuryBackButton} type="button" onClick={() => navigate('/cabinet/events')}>
+                  <img src="/back-button.svg" alt="Назад" />
+                </button>
+                <div className={styles.mobileJuryContestMeta}>
+                  <p className={styles.mobileJuryContestDate}>{contestDateText}</p>
+                  <h1 className={styles.mobileJuryContestTitle}>{view.contest.title}</h1>
+                  <p className={styles.mobileJuryContestSubtitle}>Оценка конкурса</p>
+                </div>
+              </div>
+
+              <div className={styles.mobileJuryPodium}>
+                {orderedTop.map((participant) => {
+                  const isWinner = participant.place === 1
+                  const photoUrl = resolveParticipantPhotoUrl(participant.photoUrl)
+                  return (
+                    <article key={`mobile-top-${participant.participantId}`} className={styles.mobileJuryPodiumCard}>
+                      {isWinner ? (
+                        <img className={styles.mobileJuryCrown} src="/crown-2.svg" alt="Победитель" />
+                      ) : (
+                        <div className={styles.mobileJuryPlaceBadge}>#{participant.place}</div>
+                      )}
+                      {photoUrl ? (
+                        <img
+                          className={isWinner ? styles.mobileJuryWinnerPhoto : styles.mobileJuryPodiumPhoto}
+                          src={photoUrl}
+                          alt={participant.fullName}
+                        />
+                      ) : (
+                        <div className={isWinner ? styles.mobileJuryWinnerPhoto : styles.mobileJuryPodiumPhoto}>
+                          {getInitials(participant.fullName)}
+                        </div>
+                      )}
+                      <div className={styles.mobileJuryPodiumMeta}>
+                        <p className={isWinner ? styles.mobileJuryWinnerName : styles.mobileJuryPodiumName}>
+                          {participant.fullName}
+                        </p>
+                        <p className={styles.mobileJuryPodiumCountry}>{participant.country || 'Страна не указана'}</p>
+                      </div>
+                      <p className={styles.mobileJuryPodiumScore}>
+                        <span className={styles.mobileJuryPodiumScoreCurrent}>{formatScore(participant.score)}</span>
+                        <span className={styles.mobileJuryPodiumScoreDivider}>/</span>
+                        <span className={styles.mobileJuryPodiumScoreMax}>10</span>
+                      </p>
+                    </article>
+                  )
+                })}
+              </div>
+            </div>
+          ) : null}
+
           <div className={styles.podium}>
             {orderedTop.map((participant) => {
               const isWinner = participant.place === 1
@@ -163,7 +228,7 @@ export const ContestResultsPage = observer(() => {
               return (
                 <article key={participant.participantId} className={isWinner ? styles.winnerCard : styles.topCard}>
                   <div className={styles.placeBadge}>#{participant.place}</div>
-                  {isWinner ? <div className={styles.crown}>★</div> : null}
+                  {isWinner ? <img className={styles.crown} src="/crown-2.svg" alt="Победитель" /> : null}
                   {photoUrl ? (
                     <img
                       className={isWinner ? styles.winnerPhoto : styles.topPhoto}
@@ -182,6 +247,43 @@ export const ContestResultsPage = observer(() => {
               )
             })}
           </div>
+
+          {user.role === 'jury' ? (
+            <div className={styles.mobileJuryListSheet}>
+              <div className={styles.mobileJuryListHandle} />
+              <div className={styles.mobileJuryList}>
+                {view.others.map((participant) => {
+                  const photoUrl = resolveParticipantPhotoUrl(participant.photoUrl)
+                  return (
+                    <article className={styles.mobileJuryListItem} key={`mobile-row-${participant.participantId}`}>
+                      <div className={styles.mobileJuryListMain}>
+                        {photoUrl ? (
+                          <img className={styles.mobileJuryListPhoto} src={photoUrl} alt={participant.fullName} />
+                        ) : (
+                          <div className={styles.mobileJuryListPhoto}>{getInitials(participant.fullName)}</div>
+                        )}
+                        <div className={styles.mobileJuryListMeta}>
+                          <p className={styles.mobileJuryListName}>
+                            {participant.fullName}
+                            {participant.extraInfo ? `, ${participant.extraInfo}` : ''}
+                          </p>
+                          <p className={styles.mobileJuryListCountry}>{participant.country || 'Страна не указана'}</p>
+                        </div>
+                      </div>
+                      <div className={styles.mobileJuryListBadges}>
+                        <div className={styles.mobileJuryScoreBadge}>
+                          <span className={styles.mobileJuryScoreCurrent}>{formatScore(participant.score)}</span>
+                          <span className={styles.mobileJuryScoreDivider}>/</span>
+                          <span className={styles.mobileJuryScoreMax}>10</span>
+                        </div>
+                        <div className={styles.mobileJuryPlaceValue}>{participant.place}</div>
+                      </div>
+                    </article>
+                  )
+                })}
+              </div>
+            </div>
+          ) : null}
 
           <div className={styles.list}>
             {view.others.map((participant) => {

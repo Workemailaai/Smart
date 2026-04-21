@@ -661,7 +661,9 @@ class ContestService {
         id: contest.id,
         title: contest.title,
         coverImageUrl: contest.coverImageUrl,
-        status: contest.status
+        status: contest.status,
+        createdAt: contest.createdAt,
+        updatedAt: contest.updatedAt
       },
       topThree: withPlaces.slice(0, 3),
       others: withPlaces.slice(3)

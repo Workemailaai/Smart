@@ -43,6 +43,11 @@ class ContestService {
     return criteriaCount * participantsCount;
   }
 
+  static normalizeFiniteNumber(value, fallback = 0) {
+    const normalized = Number(value);
+    return Number.isFinite(normalized) ? normalized : fallback;
+  }
+
   static countSubmittedJury({ scoreCountByJuryId, juryMembers, expectedScoreCount }) {
     if (expectedScoreCount === 0 || juryMembers.length === 0) {
       return 0;
@@ -588,9 +593,12 @@ class ContestService {
       }
       ranked = participantsSorted
         .map((participant, idx) => {
-          const vals = contest.juryMembers.map((jm) => perJuryTotals[jm.id][idx] ?? 0);
+          const vals = contest.juryMembers.map((jm) =>
+            ContestService.normalizeFiniteNumber(perJuryTotals[jm.id]?.[idx], 0)
+          );
+          const sum = vals.reduce((acc, current) => acc + current, 0);
           const average = vals.length
-            ? Number((vals.reduce((a, b) => a + b, 0) / vals.length).toFixed(2))
+            ? Number((sum / vals.length).toFixed(2))
             : 0;
           return {
             participantId: participant.id,
@@ -598,7 +606,7 @@ class ContestService {
             extraInfo: participant.extraInfo,
             country: participant.country,
             photoUrl: participant.photoUrl,
-            score: average,
+            score: ContestService.normalizeFiniteNumber(average, 0),
             place: 0
           };
         })
@@ -628,7 +636,7 @@ class ContestService {
             extraInfo: participant.extraInfo,
             country: participant.country,
             photoUrl: participant.photoUrl,
-            score: average,
+            score: ContestService.normalizeFiniteNumber(average, 0),
             place: 0
           };
         })

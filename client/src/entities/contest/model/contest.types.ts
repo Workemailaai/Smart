@@ -104,7 +104,7 @@ export interface IContestResultsParticipant {
   extraInfo: string | null
   country: string | null
   photoUrl: string | null
-  score: number
+  score: number | null
   place: number
 }
 

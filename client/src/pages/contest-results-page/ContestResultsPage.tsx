@@ -11,8 +11,9 @@ const SERVER_RESULTS_FALLBACK_CANDIDATES = ['.jpg', '.jpeg', '.png', '.webp', '.
   (ext) => `${MEDIA_BASE_URL}${SERVER_RESULTS_FALLBACK_BASE}${ext}`,
 )
 
-function formatScore(score: number) {
-  const normalized = Number(score.toFixed(2))
+function formatScore(score: number | null | undefined) {
+  const safeScore = Number.isFinite(Number(score)) ? Number(score) : 0
+  const normalized = Number(safeScore.toFixed(2))
   return String(normalized).replace('.', ',')
 }
 

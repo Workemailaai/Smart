@@ -218,6 +218,7 @@ export const CabinetPage = observer(({ section }: CabinetPageProps) => {
   const onSubmitScores = async () => {
     if (Number.isNaN(juryContestId)) return
     await juryContestStore.submit(juryContestId)
+    await contestStore.fetchContests()
   }
 
   const onOpenResults = () => {

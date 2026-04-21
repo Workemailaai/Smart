@@ -135,9 +135,10 @@
 
 @media (max-width: 430px) {
   .page {
+    margin-top: calc(-1 * var(--mobile-statusbar-offset));
     align-items: flex-start;
-    min-height: 100dvh;
-    padding-top: max(24px, env(safe-area-inset-top, 0px));
+    min-height: calc(100dvh + var(--mobile-statusbar-offset));
+    padding-top: calc(var(--mobile-statusbar-offset) + max(24px, env(safe-area-inset-top, 0px)));
     padding-right: max(16px, env(safe-area-inset-right, 0px));
     padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px));
     padding-left: max(16px, env(safe-area-inset-left, 0px));    

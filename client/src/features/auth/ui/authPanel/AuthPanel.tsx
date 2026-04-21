@@ -345,11 +345,9 @@ export const AuthPanel = observer(({ mode }: AuthPanelProps) => {
                 type="button"
                 aria-label="К выбору роли: организатор или жюри"
               >
-                <span className={styles.juryBackArrow} aria-hidden>
-                  ←
-                </span>
-                <span className={styles.juryBackToMainText}>К выбору роли</span>
+                <img className={styles.juryBackArrowIcon} src="/back-button.svg" alt="" aria-hidden width={40} height={40} />
               </button>
+              <h2 className={styles.juryMobileTitle}>{currentView.title}</h2>
             </div>
           ) : null}
 

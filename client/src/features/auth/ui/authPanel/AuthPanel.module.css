@@ -276,14 +276,9 @@
 .juryBackToMain {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
   padding: 0;
   border: none;
   background: transparent;
-  color: #ffffff;
-  font-size: 15px;
-  font-weight: 500;
-  line-height: 20px;
   cursor: pointer;
 }
 
@@ -299,17 +294,29 @@
   line-height: 1;
 }
 
+.juryBackArrowIcon {
+  width: 40px;
+  height: 40px;
+  display: block;
+}
+
 .juryBackToMainText {
   text-decoration: underline;
   text-underline-offset: 3px;
 }
 
+.juryMobileTitle {
+  display: none;
+}
+
 @media (max-width: 430px) {
   .page.pageJury {
+    margin-top: calc(-1 * var(--mobile-statusbar-offset));
     align-items: stretch;
     justify-content: flex-start;
-    min-height: 100dvh;
-    padding: max(16px, env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px))
+    min-height: calc(100dvh + var(--mobile-statusbar-offset));
+    padding: calc(var(--mobile-statusbar-offset) + max(16px, env(safe-area-inset-top, 0px)))
+      max(16px, env(safe-area-inset-right, 0px))
       max(16px, env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px));
     background:
       linear-gradient(0deg, rgba(10, 15, 21, 0.5) 0%, rgba(10, 15, 21, 0.5) 100%),
@@ -334,24 +341,39 @@
     flex: 1;
     width: 100%;
     min-height: inherit;
-    padding: 16px;
+    padding: 16px 16px calc(72px + env(safe-area-inset-bottom, 0px));
     border-radius: 32px;
     align-items: stretch;
     justify-content: space-between;
-    overflow: hidden;
+    overflow: visible;
     background: transparent;
     backdrop-filter: none;
     box-shadow: none;
   }
 
   .page.pageJury .juryMobileTopBar {
-    display: flex;
+    display: grid;
+    grid-template-columns: 40px 1fr 40px;
+    align-items: center;
+    column-gap: 12px;
     align-self: stretch;
     margin-bottom: 8px;
   }
 
+  .page.pageJury .juryMobileTitle {
+    display: block;
+    margin: 0;
+    text-align: center;
+    color: #ffffff;
+    font-family: 'Golos Text', 'Geist', 'Segoe UI', sans-serif;
+    font-size: 24px;
+    font-weight: 500;
+    line-height: 24px;
+    grid-column: 2;
+  }
+
   .page.pageJury .formHeader {
-    justify-content: center;
+    display: none;
   }
 
   .page.pageJury .formTitle {
@@ -376,9 +398,14 @@
   }
 
   .page.pageJury .actionArea {
-    margin-top: auto;
-    padding-top: 24px;
-    width: 100%;
+    position: fixed;
+    z-index: 5;
+    left: 50%;
+    transform: translateX(-50%);
+    bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+    width: min(343px, calc(100vw - 32px));
+    margin-top: 0;
+    padding-top: 0;
   }
 
   .page.pageJury .primaryButton {

@@ -236,11 +236,11 @@ export const CabinetPage = observer(({ section }: CabinetPageProps) => {
               <button
                 className={styles.juryProfileSideBtn}
                 type="button"
-                onClick={() => navigate('/cabinet/events')}
-                aria-label="К списку мероприятий"
+                onClick={() => void onLogout()}
+                aria-label="Выйти из аккаунта"
               >
                 <span className={styles.juryProfileSideBtnIcon} aria-hidden>
-                  <img src="/mobile/header-back.svg" alt="" width={18} height={18} />
+                  <img src="/exit/logout.svg" alt="" width={18} height={18} />
                 </span>
               </button>
               <div className={styles.juryProfileCenter}>
@@ -255,14 +255,10 @@ export const CabinetPage = observer(({ section }: CabinetPageProps) => {
               </div>
               <button className={styles.juryProfileSideBtn} type="button" aria-label="Раздел в разработке" disabled>
                 <span className={styles.juryProfileSideBtnIcon} aria-hidden>
-                  <img src="/nav/setting.svg" alt="" width={18} height={18} />
+                  <img src="/card-edit.svg" alt="" width={18} height={18} />
                 </span>
               </button>
             </div>
-            <button className={styles.juryProfileLogout} onClick={() => void onLogout()} type="button">
-              <span aria-hidden className={styles.juryProfileLogoutIcon} />
-              <span>Выйти из аккаунта</span>
-            </button>
           </div>
         ) : section === 'events' ? (
           <div className={styles.eventsLayout}>

@@ -4,6 +4,10 @@
   box-sizing: inherit;
 }
 
+:root {
+  --mobile-statusbar-offset: 62px;
+}
+
 body,
 body *,
 body *::before,
@@ -30,4 +34,11 @@ button {
 ul,
 li {
   list-style: none;  
+}
+
+@media (max-width: 430px) {
+  body {
+    padding-top: var(--mobile-statusbar-offset);
+    background: #f0f1f5;
+  }
 }

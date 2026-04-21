@@ -50,6 +50,9 @@ export function ContestCard({
 
   const isClickableRow = Boolean(showVotedColumn && onOpen)
   const votedText = `${contest.submittedJuryCount ?? 0}/${contest.totalJuryCount ?? 0}`
+  const submittedJuryCount = contest.submittedJuryCount ?? 0
+  const totalJuryCount = contest.totalJuryCount ?? 0
+  const isAllJurySubmitted = totalJuryCount > 0 && submittedJuryCount >= totalJuryCount
 
   if (organizerLayout) {
     return (
@@ -90,6 +93,52 @@ export function ContestCard({
             void onDelete?.()
           }}
         />
+      </article>
+    )
+  }
+
+  if (juryCabinetCompact) {
+    return (
+      <article
+        aria-label={onOpen ? `Перейти к конкурсу «${contest.title}»` : undefined}
+        className={`${styles.card} ${styles.juryCabinetCompact} ${onOpen ? styles.cardClickable : ''}`}
+        onClick={onOpen ? () => onOpen() : undefined}
+        onKeyDown={
+          onOpen
+            ? (event) => {
+                if (event.key === 'Enter' || event.key === ' ') {
+                  event.preventDefault()
+                  onOpen()
+                }
+              }
+            : undefined
+        }
+        role={onOpen ? 'button' : undefined}
+        tabIndex={onOpen ? 0 : undefined}
+      >
+        <div className={styles.juryCompactHeader}>
+          <div className={styles.coverCell}>
+            {coverUrl ? (
+              <img className={styles.coverImage} src={coverUrl} alt={`Обложка конкурса ${contest.title}`} />
+            ) : (
+              <span className={styles.coverPlaceholder}>—</span>
+            )}
+          </div>
+          <p className={styles.title}>{contest.title}</p>
+        </div>
+
+        <div className={styles.juryCompactMeta}>
+          <p className={styles.date}>{formatDate(contest.updatedAt || contest.createdAt)}</p>
+          <p className={styles.type}>{contestTypeTitle}</p>
+          <div
+            className={`${styles.juryCompactVotes} ${isAllJurySubmitted ? styles.juryCompactVotesComplete : ''}`}
+            aria-label={`Проголосовало ${votedText}`}
+          >
+            <span className={styles.juryCompactVotesCurrent}>{submittedJuryCount}</span>
+            <span className={styles.juryCompactVotesDivider}>/</span>
+            <span className={styles.juryCompactVotesTotal}>{totalJuryCount}</span>
+          </div>
+        </div>
       </article>
     )
   }

@@ -881,6 +881,10 @@
   line-height: 0;
 }
 
+.juryProfileSideBtnIcon img {
+  filter: brightness(0);
+}
+
 .juryProfileCenter {
   flex: 1 1 0;
   min-width: 0;
@@ -947,30 +951,6 @@
   font-size: 12px;
   font-weight: 400;
   line-height: 12px;
-}
-
-.juryProfileLogout {
-  margin-top: auto;
-  width: 100%;
-  min-height: 48px;
-  border-radius: 24px;
-  border: 1px solid rgba(10, 15, 21, 0.15);
-  background: #ffffff;
-  color: #0a0f15;
-  font-size: 16px;
-  font-weight: 500;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  cursor: pointer;
-}
-
-.juryProfileLogoutIcon {
-  width: 24px;
-  height: 24px;
-  flex-shrink: 0;
-  background: url('/exit/logout.svg') center / 24px 24px no-repeat;
 }
 
 @media (max-width: 430px) {

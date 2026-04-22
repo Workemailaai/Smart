@@ -893,7 +893,7 @@ export const CabinetPage = observer(({ section }: CabinetPageProps) => {
                     <div className={styles.juryPriorityConfirmBody}>
                       <div className={styles.juryPriorityConfirmTextGroup}>
                         <div className={styles.juryPriorityConfirmTitle}>
-                          Вы увереный, что хотите сохранить указанные приоритеты?
+                          Вы уверены, что хотите сохранить указанные приоритеты?
                         </div>
                         <div className={styles.juryPriorityConfirmSubtitle}>Вы не сможете поменять приоритеты после</div>
                       </div>

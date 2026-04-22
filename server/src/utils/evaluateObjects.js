@@ -1,5 +1,9 @@
-// Шаг 0.05 — как в эталонном калькуляторе (171 разбиение суммы 1 для n=3); при 0.2 строгие p₁>p₂>p₃ на сетке невыполнимы
-const ACCURACY = 0.05;
+// Базовый шаг расчета весов по методике
+const BASE_ACCURACY = 0.05;
+// Шаг сетки для fallback-поиска ближайшего допустимого значения
+const ACCURACY_GRID_STEP = 0.005;
+// Нижняя граница сетки (0.005 => 0.05, 0.045, 0.04, ... , 0.005)
+const MIN_ACCURACY = 0.005;
 
 function transposeArray(array, parametersNumber) {
   if (!Array.isArray(array) || array.length === 0 || !Array.isArray(array[0])) {
@@ -64,7 +68,13 @@ function computeGrade(weightsKit, gradeValues) {
   });
 }
 
-function getGradesWithWeights({ parametersNumber, gradeKits = [], filterConditions = [], maxScale = 10 }) {
+function getGradesWithWeights({
+  parametersNumber,
+  gradeKits = [],
+  filterConditions = [],
+  maxScale = 10,
+  accuracy = BASE_ACCURACY
+}) {
   let gradeExist = gradeKits.length > 0;
   let gradeValues = [];
 
@@ -78,12 +88,12 @@ function getGradesWithWeights({ parametersNumber, gradeKits = [], filterConditio
     }
   }
 
-  const decimalPlaces = ACCURACY.toString().includes(".")
-    ? ACCURACY.toString().split(".").pop().length
+  const decimalPlaces = accuracy.toString().includes(".")
+    ? accuracy.toString().split(".").pop().length
     : 0;
   const scale = 10 ** decimalPlaces;
   const intSum = Math.round(1 * scale);
-  const intStep = Math.round(ACCURACY * scale);
+  const intStep = Math.round(accuracy * scale);
 
   const kits = [];
   const current = new Array(parametersNumber);
@@ -129,6 +139,38 @@ function getGradesWithWeights({ parametersNumber, gradeKits = [], filterConditio
   };
 }
 
+function buildAccuracyGrid() {
+  const accuracyValues = [];
+  for (let accuracyInt = Math.round(BASE_ACCURACY * 1000); accuracyInt >= Math.round(MIN_ACCURACY * 1000); accuracyInt -= Math.round(ACCURACY_GRID_STEP * 1000)) {
+    accuracyValues.push(accuracyInt / 1000);
+  }
+  return accuracyValues;
+}
+
+function resolveAverageWeightsWithFallback({ parametersNumber, filterConditions, maxScale }) {
+  const accuracyGrid = buildAccuracyGrid();
+  for (let accuracyIndex = 0; accuracyIndex < accuracyGrid.length; accuracyIndex++) {
+    const accuracy = accuracyGrid[accuracyIndex];
+    const { averageWeights } = getGradesWithWeights({
+      parametersNumber,
+      filterConditions,
+      maxScale,
+      accuracy
+    });
+    const hasValidWeights =
+      averageWeights.length === parametersNumber &&
+      averageWeights.every((weight) => Number.isFinite(weight) && weight > 0);
+    if (hasValidWeights) {
+      return averageWeights;
+    }
+  }
+
+  console.log(
+    `Ошибка расчета весов: на фиксированной сетке шагов не найден допустимый набор весов. Ориентир 1/n=${(1 / parametersNumber).toFixed(6)}`
+  );
+  throw new Error("Не удалось подобрать шаг для расчета весов");
+}
+
 function evaluateObjects({ grades, priorities, maxScale = 10 }) {
   const parametersNumber = grades.length;
 
@@ -143,7 +185,7 @@ function evaluateObjects({ grades, priorities, maxScale = 10 }) {
     filterConditions.push([sortedIndices[k], 1, sortedIndices[k + 1]]);
   }
 
-  const { averageWeights } = getGradesWithWeights({
+  const averageWeights = resolveAverageWeightsWithFallback({
     parametersNumber,
     filterConditions,
     maxScale

@@ -52,6 +52,7 @@ export const JuryContestPage = observer(() => {
 
   const [priorityDragFrom, setPriorityDragFrom] = useState<number | null>(null)
   const [priorityDragOver, setPriorityDragOver] = useState<number | null>(null)
+  const [isPriorityConfirmOpen, setIsPriorityConfirmOpen] = useState(false)
 
   if (!user) return <Navigate replace to="/" />
   if (user.role !== 'jury') return <Navigate replace to="/cabinet/events" />
@@ -82,6 +83,14 @@ export const JuryContestPage = observer(() => {
     await contestStore.fetchContests()
     if (!juryContestStore.error) {
       navigate('/cabinet/events')
+    }
+  }
+
+  const onConfirmPriorityOrder = async () => {
+    if (!view || !user || !Number.isFinite(numericContestId)) return
+    await juryContestStore.confirmPriorityOrder(numericContestId, user.id)
+    if (!juryContestStore.error) {
+      setIsPriorityConfirmOpen(false)
     }
   }
 
@@ -162,11 +171,44 @@ export const JuryContestPage = observer(() => {
             className={styles.priorityNextButton}
             disabled={juryContestStore.isSavingPriorityOrder}
             type="button"
-            onClick={() => void juryContestStore.confirmPriorityOrder(numericContestId, user.id)}
+            onClick={() => setIsPriorityConfirmOpen(true)}
           >
             {juryContestStore.isSavingPriorityOrder ? 'Сохранение...' : 'Далее'}
           </button>
         </div>
+
+        {isPriorityConfirmOpen ? (
+          <div className={styles.priorityConfirmOverlay} onClick={() => setIsPriorityConfirmOpen(false)}>
+            <div className={styles.priorityConfirmModal} onClick={(event) => event.stopPropagation()}>
+              <div className={styles.priorityConfirmBody}>
+                <div className={styles.priorityConfirmTextGroup}>
+                  <div className={styles.priorityConfirmTitle}>
+                    Вы уверены, что хотите сохранить указанные приоритеты?
+                  </div>
+                  <div className={styles.priorityConfirmSubtitle}>Вы не сможете поменять приоритеты после</div>
+                </div>
+                <div className={styles.priorityConfirmActions}>
+                  <button
+                    type="button"
+                    className={styles.priorityConfirmAcceptButton}
+                    disabled={juryContestStore.isSavingPriorityOrder}
+                    onClick={() => void onConfirmPriorityOrder()}
+                  >
+                    Далее
+                  </button>
+                  <button
+                    type="button"
+                    className={styles.priorityConfirmStayButton}
+                    disabled={juryContestStore.isSavingPriorityOrder}
+                    onClick={() => setIsPriorityConfirmOpen(false)}
+                  >
+                    Остаться
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        ) : null}
       </div>
     ) : null
 

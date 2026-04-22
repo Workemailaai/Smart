@@ -62,6 +62,7 @@ export const CabinetPage = observer(({ section }: CabinetPageProps) => {
   )
   const [touchDragFrom, setTouchDragFrom] = useState<number | null>(null)
   const [touchDragOver, setTouchDragOver] = useState<number | null>(null)
+  const [isMobilePriorityConfirmOpen, setIsMobilePriorityConfirmOpen] = useState(false)
   const touchPointerIdRef = useRef<number | null>(null)
   const juryContestIdParam = searchParams.get('juryContestId')
   const juryContestId = juryContestIdParam ? Number.parseInt(juryContestIdParam, 10) : Number.NaN
@@ -194,6 +195,7 @@ export const CabinetPage = observer(({ section }: CabinetPageProps) => {
     setSearchParams(nextSearchParams, { replace: true })
     setTouchDragFrom(null)
     setTouchDragOver(null)
+    setIsMobilePriorityConfirmOpen(false)
     juryContestStore.reset()
   }
 
@@ -214,6 +216,9 @@ export const CabinetPage = observer(({ section }: CabinetPageProps) => {
   const onPriorityContinue = async () => {
     if (!user || Number.isNaN(juryContestId)) return
     await juryContestStore.confirmPriorityOrder(juryContestId, user.id)
+    if (!juryContestStore.error) {
+      setIsMobilePriorityConfirmOpen(false)
+    }
   }
 
   const onSubmitScores = async () => {
@@ -877,10 +882,43 @@ export const CabinetPage = observer(({ section }: CabinetPageProps) => {
                 className={styles.juryPrioritySaveButton}
                 disabled={juryContestStore.isSavingPriorityOrder}
                 type="button"
-                onClick={() => void onPriorityContinue()}
+                onClick={() => setIsMobilePriorityConfirmOpen(true)}
               >
                 {juryContestStore.isSavingPriorityOrder ? 'Сохранение...' : 'Сохранить и продолжить'}
               </button>
+
+              {isMobilePriorityConfirmOpen ? (
+                <div className={styles.juryPriorityConfirmOverlay} onClick={() => setIsMobilePriorityConfirmOpen(false)}>
+                  <div className={styles.juryPriorityConfirmModal} onClick={(event) => event.stopPropagation()}>
+                    <div className={styles.juryPriorityConfirmBody}>
+                      <div className={styles.juryPriorityConfirmTextGroup}>
+                        <div className={styles.juryPriorityConfirmTitle}>
+                          Вы увереный, что хотите сохранить указанные приоритеты?
+                        </div>
+                        <div className={styles.juryPriorityConfirmSubtitle}>Вы не сможете поменять приоритеты после</div>
+                      </div>
+                      <div className={styles.juryPriorityConfirmActions}>
+                        <button
+                          type="button"
+                          className={styles.juryPriorityConfirmSaveButton}
+                          disabled={juryContestStore.isSavingPriorityOrder}
+                          onClick={() => void onPriorityContinue()}
+                        >
+                          Сохранить
+                        </button>
+                        <button
+                          type="button"
+                          className={styles.juryPriorityConfirmStayButton}
+                          disabled={juryContestStore.isSavingPriorityOrder}
+                          onClick={() => setIsMobilePriorityConfirmOpen(false)}
+                        >
+                          Остаться
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ) : null}
             </div>
           ) : null}
           {isScoringStepVisible && juryContestStore.view ? (

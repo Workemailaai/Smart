@@ -703,6 +703,97 @@
   cursor: not-allowed;
 }
 
+.priorityConfirmOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(10, 15, 21, 0.28);
+  backdrop-filter: blur(8px);
+}
+
+.priorityConfirmModal {
+  width: min(568px, calc(100vw - 32px));
+  padding: 24px;
+  background: #fff;
+  border-radius: 28px;
+}
+
+.priorityConfirmBody {
+  width: 100%;
+  min-height: 252px;
+  border-radius: 24px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 24px;
+}
+
+.priorityConfirmTextGroup {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.priorityConfirmTitle {
+  text-align: center;
+  color: #0a0f15;
+  font-size: 26px;
+  font-family: 'Golos Text', 'Geist', 'Segoe UI', sans-serif;
+  font-weight: 500;
+  line-height: 30px;
+}
+
+.priorityConfirmSubtitle {
+  text-align: center;
+  color: #0a0f15;
+  opacity: 0.8;
+  font-size: 16px;
+  line-height: 16px;
+}
+
+.priorityConfirmActions {
+  width: min(322px, 100%);
+  display: inline-flex;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.priorityConfirmAcceptButton,
+.priorityConfirmStayButton {
+  flex: 1 1 0;
+  height: 48px;
+  border: none;
+  border-radius: 40px;
+  padding: 12px 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  font-weight: 500;
+  line-height: 18px;
+}
+
+.priorityConfirmAcceptButton {
+  background: #e0e5eb;
+  color: #0a0f15;
+}
+
+.priorityConfirmStayButton {
+  background: #ff383c;
+  color: #fff;
+}
+
+.priorityConfirmAcceptButton:disabled,
+.priorityConfirmStayButton:disabled {
+  opacity: 0.6;
+}
+
 @media (max-width: 1300px) {
   .searchLabel {
     width: 320px;

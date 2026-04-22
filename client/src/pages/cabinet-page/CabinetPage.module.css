@@ -1091,6 +1091,96 @@
   opacity: 0.3;
 }
 
+.juryPriorityConfirmOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 2200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(10, 15, 21, 0.45);
+  padding: 16px;
+}
+
+.juryPriorityConfirmModal {
+  width: 300px;
+  max-width: calc(100vw - 32px);
+  padding: 16px;
+  background: #fff;
+  border-radius: 20px;
+}
+
+.juryPriorityConfirmBody {
+  width: 100%;
+  border-radius: 24px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 16px;
+}
+
+.juryPriorityConfirmTextGroup {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.juryPriorityConfirmTitle {
+  text-align: center;
+  color: #0a0f15;
+  font-size: 18px;
+  font-weight: 500;
+  line-height: 20px;
+}
+
+.juryPriorityConfirmSubtitle {
+  text-align: center;
+  color: #0a0f15;
+  opacity: 0.8;
+  font-size: 12px;
+  line-height: 14px;
+}
+
+.juryPriorityConfirmActions {
+  width: 100%;
+  display: inline-flex;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 4px;
+}
+
+.juryPriorityConfirmSaveButton,
+.juryPriorityConfirmStayButton {
+  flex: 1 1 0;
+  height: 48px;
+  border: none;
+  border-radius: 40px;
+  padding: 12px 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 20px;
+}
+
+.juryPriorityConfirmSaveButton {
+  background: #e0e5eb;
+  color: #0a0f15;
+}
+
+.juryPriorityConfirmStayButton {
+  background: #ff383c;
+  color: #fff;
+}
+
+.juryPriorityConfirmSaveButton:disabled,
+.juryPriorityConfirmStayButton:disabled {
+  opacity: 0.6;
+}
+
 .juryScoreLayout {
   display: flex;
   flex-direction: column;

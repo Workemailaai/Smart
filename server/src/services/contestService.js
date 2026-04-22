@@ -435,8 +435,7 @@ class ContestService {
       }
       participants = participantsSorted.map((participant, idx) => {
         const juryCards = contest.juryMembers.map((juryMember) => {
-          const criteriaSortedForJury = orderCriteriaForJury(contest.criteria, juryMember.criterionOrder);
-          const criteria = criteriaSortedForJury.map((criterion) => {
+          const criteria = contest.criteria.map((criterion) => {
             const value =
               scoreMap.get(`${juryMember.id}_${participant.id}_${criterion.id}`) ?? null;
             return {

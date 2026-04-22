@@ -4,7 +4,7 @@ import { Navigate, useNavigate, useParams } from 'react-router'
 import { userStore } from '@/entities/user'
 import { juryContestStore } from '@/features/jury-contest/model/juryContestStore'
 import { JuryCabinetSidebar } from '@/widgets/jury-cabinet-sidebar/JuryCabinetSidebar'
-import { orderCriteriaForJury } from '@/shared/lib/weightedScores.js'
+import { sortCriteriaRows } from '@/shared/lib/weightedScores.js'
 import styles from './JuryContestPage.module.css'
 
 const MEDIA_BASE_URL = import.meta.env.VITE_MEDIA_BASE_URL || 'http://localhost:3000'
@@ -212,7 +212,7 @@ export const JuryContestPage = observer(() => {
                       </summary>
 
                       <div className={styles.criteriaWrap}>
-                        {orderCriteriaForJury(view.criteria, view.myCriterionOrder ?? null).map((criterion) => {
+                        {sortCriteriaRows(view.criteria).map((criterion) => {
                           const min = criterion.minScore ?? 0
                           const max = criterion.maxScore
                           const range = Math.max(1, max - min)

@@ -6,7 +6,7 @@ import { TemplateCard, templateStore } from '@/entities/template'
 import { userStore } from '@/entities/user'
 import { juryContestStore } from '@/features/jury-contest/model/juryContestStore'
 import { BottomSheet } from '@/shared/ui/bottom-sheet/BottomSheet'
-import { orderCriteriaForJury } from '@/shared/lib/weightedScores.js'
+import { sortCriteriaRows } from '@/shared/lib/weightedScores.js'
 import { formatRuPhoneMask } from '@/shared/lib/ruPhone'
 import { OrganizerCabinetSidebar } from '@/widgets/organizer-cabinet-sidebar/OrganizerCabinetSidebar'
 import { JuryCabinetSidebar } from '@/widgets/jury-cabinet-sidebar/JuryCabinetSidebar'
@@ -917,10 +917,7 @@ export const CabinetPage = observer(({ section }: CabinetPageProps) => {
                       </summary>
 
                       <div className={styles.juryScoreCriteriaWrap}>
-                        {orderCriteriaForJury(
-                          juryContestStore.view?.criteria ?? [],
-                          juryContestStore.view?.myCriterionOrder ?? null,
-                        ).map((criterion) => {
+                        {sortCriteriaRows(juryContestStore.view?.criteria ?? []).map((criterion) => {
                           const min = criterion.minScore ?? 0
                           const max = criterion.maxScore
                           const range = Math.max(1, max - min)

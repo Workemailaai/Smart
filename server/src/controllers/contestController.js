@@ -158,6 +158,22 @@ class ContestController {
     }
   }
 
+  /** Перевод жюри в режим переголосования */
+  static async revokeJurySubmission(req, res, next) {
+    try {
+      if (req.user.role !== "jury") {
+        throw new ApiError(403, "Только жюри может переголосовать");
+      }
+      const data = await ContestService.revokeJurySubmission({
+        contestId: Number(req.params.id),
+        userId: req.user.id
+      });
+      return res.status(200).json(formatResponse(200, "Отправка оценок отменена", data));
+    } catch (error) {
+      return next(error);
+    }
+  }
+
   /** Удаление мероприятия организатором (только на этапе оценивания) */
   static async deleteContest(req, res, next) {
     try {

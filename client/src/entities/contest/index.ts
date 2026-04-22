@@ -19,6 +19,7 @@ export {
   putJuryCriteriaOrder,
   putScoresBatch,
   submitJuryContest,
+  revokeJurySubmission,
   completeContest,
   deleteContest,
 } from './api/contestApi'

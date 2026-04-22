@@ -180,7 +180,8 @@ export const CabinetPage = observer(({ section }: CabinetPageProps) => {
     Boolean(user && juryContestStore.view && juryContestStore.shouldShowCriteriaPriorityStep(user.id))
   const isCompletedContest = juryContestStore.view?.contest.status === 'completed'
   const isScoringStepVisible = isJuryContestModalOpen && Boolean(juryContestStore.view) && !isPriorityStepVisible
-  const isReadonlyScoring = Boolean(juryContestStore.view && (juryContestStore.view.mySubmitted || isCompletedContest))
+  const isScoreEditingLocked = juryContestStore.isScoreEditingLocked()
+  const canStartRevote = juryContestStore.canRevote()
 
   const onLogout = async () => {
     await userStore.logout()
@@ -218,6 +219,12 @@ export const CabinetPage = observer(({ section }: CabinetPageProps) => {
   const onSubmitScores = async () => {
     if (Number.isNaN(juryContestId)) return
     await juryContestStore.submit(juryContestId)
+    await contestStore.fetchContests()
+  }
+
+  const onStartRevote = async () => {
+    if (Number.isNaN(juryContestId)) return
+    await juryContestStore.startRevote(juryContestId)
     await contestStore.fetchContests()
   }
 
@@ -940,7 +947,7 @@ export const CabinetPage = observer(({ section }: CabinetPageProps) => {
                                     max={max}
                                     step={1}
                                     value={clamped}
-                                    disabled={isReadonlyScoring}
+                                    disabled={isScoreEditingLocked}
                                     onChange={(event) =>
                                       juryContestStore.setScore(participant.id, criterion.id, Number(event.target.value))
                                     }
@@ -965,7 +972,7 @@ export const CabinetPage = observer(({ section }: CabinetPageProps) => {
                           className={styles.juryScoreCommentInput}
                           value={juryContestStore.getComment(participant.id)}
                           maxLength={COMMENT_LIMIT}
-                          readOnly={isReadonlyScoring}
+                          readOnly={isScoreEditingLocked}
                           placeholder="Оставьте обратную связь по выступлению"
                           onChange={(event) => juryContestStore.setComment(participant.id, event.target.value)}
                         />
@@ -985,14 +992,31 @@ export const CabinetPage = observer(({ section }: CabinetPageProps) => {
                   Результаты
                 </button>
               ) : (
-                <button
-                  className={styles.juryPrioritySaveButton}
-                  disabled={juryContestStore.isSubmitting || Boolean(juryContestStore.view.mySubmitted)}
-                  type="button"
-                  onClick={() => void onSubmitScores()}
-                >
-                  {juryContestStore.isSubmitting ? 'Отправка...' : 'Завершить'}
-                </button>
+                <>
+                  <button
+                    className={styles.juryPrioritySaveButton}
+                    disabled={!canStartRevote || juryContestStore.isRevokingSubmission || juryContestStore.isSubmitting}
+                    type="button"
+                    onClick={() => void onStartRevote()}
+                  >
+                    {juryContestStore.isRevokingSubmission ? 'Подготовка...' : 'Переголосовать'}
+                  </button>
+                  <button
+                    className={styles.juryPrioritySaveButton}
+                    disabled={
+                      juryContestStore.isSubmitting ||
+                      (Boolean(juryContestStore.view.mySubmitted) && !juryContestStore.isRevoteMode)
+                    }
+                    type="button"
+                    onClick={() => void onSubmitScores()}
+                  >
+                    {juryContestStore.isSubmitting
+                      ? 'Отправка...'
+                      : juryContestStore.isRevoteMode
+                        ? 'Отправить повторно'
+                        : 'Завершить'}
+                  </button>
+                </>
               )}
             </div>
           ) : null}

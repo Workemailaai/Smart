@@ -22,6 +22,7 @@ router.put("/:id/criteria-order", ContestController.reorderJuryCriteria);
 router.get("/:id/organizer-view", ContestController.getOrganizerContestView);
 router.get("/:id/results-view", ContestController.getContestResultsView);
 router.post("/:id/jury-submit", ContestController.submitJuryScores);
+router.post("/:id/jury-revote", ContestController.revokeJurySubmission);
 router.post("/:id/complete", ContestController.completeContest);
 
 module.exports = router;

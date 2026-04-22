@@ -48,17 +48,11 @@ class ContestService {
     return Number.isFinite(normalized) ? normalized : fallback;
   }
 
-  static countSubmittedJury({ scoreCountByJuryId, juryMembers, expectedScoreCount }) {
+  static countSubmittedJury({ juryMembers, expectedScoreCount }) {
     if (expectedScoreCount === 0 || juryMembers.length === 0) {
       return 0;
     }
-    let submitted = 0;
-    for (const member of juryMembers) {
-      const key = String(member.id);
-      const count = Number(scoreCountByJuryId[key] || 0);
-      if (count >= expectedScoreCount) submitted += 1;
-    }
-    return submitted;
+    return juryMembers.filter((member) => Boolean(member.isSubmitted)).length;
   }
 
   /**
@@ -175,11 +169,12 @@ class ContestService {
       for (const contest of contests) {
         const criteriaCount = await Criterion.count({ where: { contestId: contest.id } });
         const participantsCount = await Participant.count({ where: { contestId: contest.id } });
-        const juryMembers = await Jury.findAll({ where: { contestId: contest.id }, attributes: ["id"] });
+        const juryMembers = await Jury.findAll({
+          where: { contestId: contest.id },
+          attributes: ["id", "isSubmitted"]
+        });
         const expectedScoreCount = ContestService.getExpectedScoreCount(criteriaCount, participantsCount);
-        const scoreCountByJuryId = await ContestService.getScoreCountByJury(contest.id);
         const submittedJuryCount = ContestService.countSubmittedJury({
-          scoreCountByJuryId,
           juryMembers,
           expectedScoreCount
         });
@@ -192,35 +187,33 @@ class ContestService {
       return result;
     }
     if (user.role === "jury") {
-      const rows = await Jury.findAll({
+      const assignments = await Jury.findAll({
         where: { userId: user.id },
-        attributes: ["id", "contestId"]
+        attributes: ["id", "contestId", "isSubmitted"]
       });
-      const ids = [...new Set(rows.map((r) => r.contestId))];
+      const ids = [...new Set(assignments.map((row) => row.contestId))];
       if (ids.length === 0) {
         return [];
       }
       const contests = await Contest.findAll({ where: { id: ids } });
-      const byContestId = new Map(rows.map((item) => [item.contestId, item]));
+      const assignmentByContestId = new Map(assignments.map((assignment) => [assignment.contestId, assignment]));
       const result = [];
       for (const contest of contests) {
-        const myAssignment = byContestId.get(contest.id);
+        const myAssignment = assignmentByContestId.get(contest.id);
         const criteriaCount = await Criterion.count({ where: { contestId: contest.id } });
         const participantsCount = await Participant.count({ where: { contestId: contest.id } });
-        const juryMembers = await Jury.findAll({ where: { contestId: contest.id }, attributes: ["id"] });
+        const juryMembers = await Jury.findAll({
+          where: { contestId: contest.id },
+          attributes: ["id", "isSubmitted"]
+        });
         const expectedScoreCount = ContestService.getExpectedScoreCount(criteriaCount, participantsCount);
-        const myScoreCount = myAssignment
-          ? await Score.count({ where: { contestId: contest.id, juryId: myAssignment.id } })
-          : 0;
-        const scoreCountByJuryId = await ContestService.getScoreCountByJury(contest.id);
         const submittedJuryCount = ContestService.countSubmittedJury({
-          scoreCountByJuryId,
           juryMembers,
           expectedScoreCount
         });
         result.push({
           ...contest.get({ plain: true }),
-          mySubmitted: expectedScoreCount > 0 && myScoreCount >= expectedScoreCount,
+          mySubmitted: Boolean(myAssignment?.isSubmitted),
           submittedJuryCount,
           totalJuryCount: juryMembers.length
         });
@@ -285,7 +278,7 @@ class ContestService {
       contest.criteria.length,
       contest.participants.length
     );
-    const mySubmitted = expectedScoreCount > 0 && myScores.length >= expectedScoreCount;
+    const mySubmitted = Boolean(myAssignment.isSubmitted);
 
     const criteriaForResponse = orderCriteriaForJury(contest.criteria, myAssignment.criterionOrder);
     const criteriaPlain = criteriaForResponse.map((c) => c.get({ plain: true }));
@@ -374,12 +367,14 @@ class ContestService {
       throw new ApiError(422, "Заполните оценки по всем критериям для каждого участника");
     }
 
-    const scoreCountByJuryId = await ContestService.getScoreCountByJury(contestId);
-    const submittedJuryCount = ContestService.countSubmittedJury({
-      scoreCountByJuryId,
-      juryMembers: contest.juryMembers,
-      expectedScoreCount
-    });
+    const previousSubmittedJuryIds = new Set(
+      contest.juryMembers
+        .filter((juryMember) => Boolean(juryMember.isSubmitted))
+        .map((juryMember) => Number(juryMember.id))
+    );
+    previousSubmittedJuryIds.add(Number(myAssignment.id));
+    const submittedJuryCount = previousSubmittedJuryIds.size;
+    await myAssignment.update({ isSubmitted: true });
 
     if (
       contest.juryMembers.length > 0 &&
@@ -396,6 +391,41 @@ class ContestService {
         submittedJuryCount >= contest.juryMembers.length
           ? ContestService.contestStatuses.judgingCompleted
           : ContestService.contestStatuses.inProgress
+    };
+  }
+
+  /** Жюри снимает отправку оценок, чтобы скорректировать значения и отправить повторно. */
+  static async revokeJurySubmission({ contestId, userId }) {
+    const contest = await ContestService.getContestWithDependencies(contestId);
+    const myAssignment = contest.juryMembers.find((item) => item.userId === userId);
+    if (!myAssignment) {
+      throw new ApiError(403, "Это мероприятие недоступно для данного жюри");
+    }
+    if (contest.status === ContestService.contestStatuses.completed) {
+      throw new ApiError(422, "Нельзя переголосовать после завершения мероприятия");
+    }
+
+    if (!myAssignment.isSubmitted) {
+      return {
+        submittedJuryCount: contest.juryMembers.filter((juryMember) => Boolean(juryMember.isSubmitted)).length,
+        totalJuryCount: contest.juryMembers.length,
+        status: contest.status
+      };
+    }
+
+    await myAssignment.update({ isSubmitted: false });
+    const submittedJuryCount = contest.juryMembers.filter(
+      (juryMember) => Boolean(juryMember.isSubmitted) && juryMember.id !== myAssignment.id
+    ).length;
+
+    if (contest.status === ContestService.contestStatuses.judgingCompleted) {
+      await contest.update({ status: ContestService.contestStatuses.inProgress });
+    }
+
+    return {
+      submittedJuryCount,
+      totalJuryCount: contest.juryMembers.length,
+      status: ContestService.contestStatuses.inProgress
     };
   }
 
@@ -529,9 +559,7 @@ class ContestService {
       contest.criteria.length,
       contest.participants.length
     );
-    const scoreCountByJuryId = await ContestService.getScoreCountByJury(contestId);
     const submittedJuryCount = ContestService.countSubmittedJury({
-      scoreCountByJuryId,
       juryMembers: contest.juryMembers,
       expectedScoreCount
     });

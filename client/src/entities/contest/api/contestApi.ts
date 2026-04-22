@@ -80,6 +80,13 @@ export const submitJuryContest = async (contestId: number): Promise<ServerRespon
   return response.data
 }
 
+export const revokeJurySubmission = async (
+  contestId: number,
+): Promise<ServerResponseType<{ submittedJuryCount: number; totalJuryCount: number; status: string }>> => {
+  const response = await axiosInstance.post(`/contests/${contestId}/jury-revote`)
+  return response.data
+}
+
 export const completeContest = async (contestId: number): Promise<ServerResponseType<IContest>> => {
   const response = await axiosInstance.post(`/contests/${contestId}/complete`)
   return response.data

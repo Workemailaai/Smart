@@ -1,6 +1,7 @@
 import { observer } from 'mobx-react-lite'
 import { useEffect, useState } from 'react'
 import { Navigate, useNavigate, useParams } from 'react-router'
+import { contestStore } from '@/entities/contest'
 import { userStore } from '@/entities/user'
 import { juryContestStore } from '@/features/jury-contest/model/juryContestStore'
 import { JuryCabinetSidebar } from '@/widgets/jury-cabinet-sidebar/JuryCabinetSidebar'
@@ -61,10 +62,24 @@ export const JuryContestPage = observer(() => {
   const showCriteriaPriorityStep = Boolean(
     view && user && !isCompletedContest && juryContestStore.shouldShowCriteriaPriorityStep(user.id),
   )
+  const isScoreEditingLocked = juryContestStore.isScoreEditingLocked()
+  const canStartRevote = juryContestStore.canRevote()
 
   const onLogout = async () => {
     await userStore.logout()
     navigate('/')
+  }
+
+  const onStartRevote = async () => {
+    if (!Number.isFinite(numericContestId)) return
+    await juryContestStore.startRevote(numericContestId)
+    await contestStore.fetchContests()
+  }
+
+  const onSubmitScores = async () => {
+    if (!Number.isFinite(numericContestId)) return
+    await juryContestStore.submit(numericContestId)
+    await contestStore.fetchContests()
   }
 
   const priorityStepContent =
@@ -235,7 +250,7 @@ export const JuryContestPage = observer(() => {
                                     max={max}
                                     step={1}
                                     value={clamped}
-                                    disabled={view.mySubmitted || isCompletedContest}
+                                    disabled={isScoreEditingLocked}
                                     onChange={(event) =>
                                       juryContestStore.setScore(participant.id, criterion.id, Number(event.target.value))
                                     }
@@ -260,7 +275,7 @@ export const JuryContestPage = observer(() => {
                           className={styles.commentInput}
                           value={juryContestStore.getComment(participant.id)}
                           maxLength={COMMENT_LIMIT}
-                          readOnly={view.mySubmitted || isCompletedContest}
+                          readOnly={isScoreEditingLocked}
                           placeholder="Оставьте обратную связь по выступлению"
                           onChange={(event) => juryContestStore.setComment(participant.id, event.target.value)}
                         />
@@ -289,14 +304,28 @@ export const JuryContestPage = observer(() => {
                       Результаты
                     </button>
                   ) : (
-                    <button
-                      type="button"
-                      className={styles.primaryButton}
-                      disabled={juryContestStore.isSubmitting || view.mySubmitted}
-                      onClick={() => void juryContestStore.submit(numericContestId)}
-                    >
-                      {juryContestStore.isSubmitting ? 'Отправка...' : 'Завершить'}
-                    </button>
+                    <>
+                      <button
+                        type="button"
+                        className={styles.primaryButton}
+                        disabled={!canStartRevote || juryContestStore.isRevokingSubmission || juryContestStore.isSubmitting}
+                        onClick={() => void onStartRevote()}
+                      >
+                        {juryContestStore.isRevokingSubmission ? 'Подготовка...' : 'Переголосовать'}
+                      </button>
+                      <button
+                        type="button"
+                        className={styles.primaryButton}
+                        disabled={juryContestStore.isSubmitting || (view.mySubmitted && !juryContestStore.isRevoteMode)}
+                        onClick={() => void onSubmitScores()}
+                      >
+                        {juryContestStore.isSubmitting
+                          ? 'Отправка...'
+                          : juryContestStore.isRevoteMode
+                            ? 'Отправить повторно'
+                            : 'Завершить'}
+                      </button>
+                    </>
                   )}
                 </div>
               </div>

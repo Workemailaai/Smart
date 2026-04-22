@@ -4,6 +4,7 @@ import {
   type IParticipantCommentItem,
   putJuryCriteriaOrder,
   putScoresBatch,
+  revokeJurySubmission,
   submitJuryContest,
   type IJuryContestView,
   type IScoreItem,
@@ -21,6 +22,8 @@ class JuryContestStore {
   draftComments = new Map<number, string>()
   isLoading = false
   isSubmitting = false
+  isRevokingSubmission = false
+  isRevoteMode = false
   /** Сохранение порядка показателей на экране приоритетов */
   isSavingPriorityOrder = false
   error: string | null = null
@@ -37,23 +40,49 @@ class JuryContestStore {
     this.draftComments.clear()
     this.error = null
     this.priorityDraftIds = []
+    this.isRevokingSubmission = false
+    this.isRevoteMode = false
   }
 
-  async loadContest(contestId: number) {
+  async loadContest(contestId: number, options?: { preserveDraft?: boolean }) {
     this.isLoading = true
     this.error = null
+    const shouldPreserveDraft = Boolean(options?.preserveDraft)
+    const previousDraftScores = shouldPreserveDraft ? new Map(this.draftScores) : null
+    const previousDraftComments = shouldPreserveDraft ? new Map(this.draftComments) : null
     try {
       const response = await getJuryContestView(contestId)
       runInAction(() => {
         this.view = response.data
+        const serverDraftScores = new Map<string, number>()
+        const serverDraftComments = new Map<number, string>()
+        response.data.myScores.forEach((scoreItem) => {
+          serverDraftScores.set(this.getKey(scoreItem.participantId, scoreItem.criterionId), scoreItem.value)
+        })
+        response.data.myComments.forEach((commentItem) => {
+          serverDraftComments.set(commentItem.participantId, commentItem.comment || '')
+        })
         this.draftScores.clear()
         this.draftComments.clear()
-        response.data.myScores.forEach((item) => {
-          this.draftScores.set(this.getKey(item.participantId, item.criterionId), item.value)
+        serverDraftScores.forEach((value, key) => {
+          this.draftScores.set(key, value)
         })
-        response.data.myComments.forEach((item) => {
-          this.draftComments.set(item.participantId, item.comment || '')
+        serverDraftComments.forEach((value, key) => {
+          this.draftComments.set(key, value)
         })
+        if (shouldPreserveDraft && previousDraftScores) {
+          previousDraftScores.forEach((value, key) => {
+            this.draftScores.set(key, value)
+          })
+        }
+        if (shouldPreserveDraft && previousDraftComments) {
+          previousDraftComments.forEach((value, key) => {
+            this.draftComments.set(key, value)
+          })
+        }
+        if (response.data.mySubmitted) {
+          this.isRevoteMode = false
+        }
         this.syncPriorityDraftFromView()
       })
     } catch (error) {
@@ -156,6 +185,39 @@ class JuryContestStore {
     return this.draftComments.get(participantId) ?? ''
   }
 
+  canRevote() {
+    if (!this.view) return false
+    return this.view.mySubmitted && this.view.contest.status !== 'completed' && !this.isRevoteMode
+  }
+
+  isScoreEditingLocked() {
+    if (!this.view) return true
+    if (this.view.contest.status === 'completed') return true
+    if (this.isRevoteMode) return false
+    return this.view.mySubmitted
+  }
+
+  async startRevote(contestId: number) {
+    if (!this.view || this.view.contest.status === 'completed') return
+    this.isRevokingSubmission = true
+    this.error = null
+    try {
+      await revokeJurySubmission(contestId)
+      runInAction(() => {
+        this.isRevoteMode = true
+      })
+      await this.loadContest(contestId, { preserveDraft: true })
+    } catch (error) {
+      runInAction(() => {
+        this.error = (error as Error)?.message || 'Не удалось включить режим переголосования'
+      })
+    } finally {
+      runInAction(() => {
+        this.isRevokingSubmission = false
+      })
+    }
+  }
+
   getParticipantAverage(participantId: number) {
     if (!this.view) return 0
     const n = this.view.criteria.length
@@ -209,6 +271,9 @@ class JuryContestStore {
     try {
       await putScoresBatch(contestId, this.buildPayload(), this.buildCommentsPayload())
       await submitJuryContest(contestId)
+      runInAction(() => {
+        this.isRevoteMode = false
+      })
       await this.loadContest(contestId)
     } catch (error) {
       runInAction(() => {

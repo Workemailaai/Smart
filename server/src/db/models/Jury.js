@@ -43,6 +43,12 @@ module.exports = (sequelize, DataTypes) => {
       criterionOrder: {
         type: DataTypes.JSON,
         allowNull: true
+      },
+      /** Флаг отправки оценок жюри по мероприятию */
+      isSubmitted: {
+        type: DataTypes.BOOLEAN,
+        allowNull: false,
+        defaultValue: false
       }
     },
     {

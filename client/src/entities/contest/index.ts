@@ -13,6 +13,7 @@ export {
   getContests,
   getContestTypes,
   getContestResultsView,
+  downloadContestExportReport,
   createContestFull,
   getJuryContestView,
   getOrganizerContestView,

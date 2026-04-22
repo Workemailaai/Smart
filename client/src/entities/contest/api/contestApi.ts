@@ -111,3 +111,10 @@ export const getContestResultsView = async (
   return response.data
 }
 
+export const downloadContestExportReport = async (contestId: number): Promise<Blob> => {
+  const response = await axiosInstance.get(`/contests/${contestId}/export-report`, {
+    responseType: 'blob',
+  })
+  return response.data as Blob
+}
+

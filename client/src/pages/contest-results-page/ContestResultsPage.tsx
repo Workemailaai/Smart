@@ -1,7 +1,12 @@
 import { observer } from 'mobx-react-lite'
 import { useEffect, useMemo, useState } from 'react'
 import { Navigate, useNavigate, useParams } from 'react-router'
-import { getContestResultsView, type IContestResultsParticipant, type IContestResultsView } from '@/entities/contest'
+import {
+  downloadContestExportReport,
+  getContestResultsView,
+  type IContestResultsParticipant,
+  type IContestResultsView,
+} from '@/entities/contest'
 import { userStore } from '@/entities/user'
 import styles from './ContestResultsPage.module.css'
 
@@ -62,6 +67,7 @@ export const ContestResultsPage = observer(() => {
   const numericContestId = Number(contestId)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [isExporting, setIsExporting] = useState(false)
   const [view, setView] = useState<IContestResultsView | null>(null)
   const [backgroundImageUrl, setBackgroundImageUrl] = useState(SERVER_RESULTS_FALLBACK_CANDIDATES[0])
 
@@ -123,30 +129,28 @@ export const ContestResultsPage = observer(() => {
   if (!user) return <Navigate replace to="/" />
   if (user.role !== 'organizer' && user.role !== 'jury') return <Navigate replace to="/cabinet/events" />
 
-  const rows = view ? [...view.topThree, ...view.others] : []
   const contestDateText = view ? formatContestDate(view.contest.updatedAt || view.contest.createdAt) : ''
 
   const onExport = () => {
-    if (!view) return
-    const csvRows = [
-      ['Место', 'Участник', 'Доп. информация', 'Страна', 'Средний балл'],
-      ...rows.map((item) => [
-        String(item.place),
-        item.fullName,
-        item.extraInfo || '',
-        item.country || '',
-        String(item.score),
-      ]),
-    ]
-    const content = csvRows.map((line) => line.map((cell) => `"${cell.replaceAll('"', '""')}"`).join(';')).join('\n')
-    const blob = new Blob([content], { type: 'text/csv;charset=utf-8;' })
-    const link = document.createElement('a')
-    link.href = URL.createObjectURL(blob)
-    link.download = `contest-results-${view.contest.id}.csv`
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
-    URL.revokeObjectURL(link.href)
+    if (!view || user?.role !== 'organizer') return
+    void (async () => {
+      setIsExporting(true)
+      setError(null)
+      try {
+        const blob = await downloadContestExportReport(view.contest.id)
+        const link = document.createElement('a')
+        link.href = URL.createObjectURL(blob)
+        link.download = `contest-${view.contest.id}-report.xlsx`
+        document.body.appendChild(link)
+        link.click()
+        document.body.removeChild(link)
+        URL.revokeObjectURL(link.href)
+      } catch (exportError) {
+        setError((exportError as Error)?.message || 'Не удалось экспортировать отчет')
+      } finally {
+        setIsExporting(false)
+      }
+    })()
   }
 
   return (
@@ -315,9 +319,11 @@ export const ContestResultsPage = observer(() => {
             <button className={styles.backButton} type="button" onClick={() => navigate('/cabinet/events')}>
               ←
             </button>
-            <button className={styles.exportButton} type="button" onClick={onExport}>
-              Экспорт
-            </button>
+            {user.role === 'organizer' ? (
+              <button className={styles.exportButton} type="button" onClick={onExport} disabled={isExporting}>
+                {isExporting ? 'Экспорт...' : 'Экспорт'}
+              </button>
+            ) : null}
           </div>
         </div>
       ) : null}

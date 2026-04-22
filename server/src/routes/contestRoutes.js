@@ -21,6 +21,7 @@ router.get("/:id/jury-view", ContestController.getJuryContestView);
 router.put("/:id/criteria-order", ContestController.reorderJuryCriteria);
 router.get("/:id/organizer-view", ContestController.getOrganizerContestView);
 router.get("/:id/results-view", ContestController.getContestResultsView);
+router.get("/:id/export-report", ContestController.exportContestReport);
 router.post("/:id/jury-submit", ContestController.submitJuryScores);
 router.post("/:id/jury-revote", ContestController.revokeJurySubmission);
 router.post("/:id/complete", ContestController.completeContest);

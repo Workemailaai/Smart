@@ -22,7 +22,6 @@ const views: Record<AuthPanelMode, ViewConfig> = {
     subtitle: 'Профиль организатора',
     fields: ['Имя / Организация', '+7 (999) 656-86-85', 'Пароль', 'Повторите пароль'],
     submitText: 'Зарегистрироваться',
-    secondaryAction: 'Быстрый вход через VK',
     bottomText: 'Уже зарегистрированы?',
     bottomLink: 'Войти',
     bottomTarget: 'signInOrg'
@@ -32,7 +31,6 @@ const views: Record<AuthPanelMode, ViewConfig> = {
     subtitle: 'Профиль организатора',
     fields: ['Телефон', 'Пароль'],
     submitText: 'Войти',
-    secondaryAction: 'Быстрый вход через VK',
     bottomText: 'Нет аккаунта?',
     bottomLink: 'Зарегистрироваться',
     bottomTarget: 'signUpOrg'

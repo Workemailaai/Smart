@@ -1,4 +1,5 @@
 const ContestService = require("../services/contestService");
+const ContestExportService = require("../services/contestExportService");
 const ApiError = require("../utils/ApiError");
 const formatResponse = require("../utils/formatResponse");
 const { requireFields } = require("../utils/validators");
@@ -215,6 +216,30 @@ class ContestController {
       return res
         .status(200)
         .json(formatResponse(200, "Результаты мероприятия", data));
+    } catch (error) {
+      return next(error);
+    }
+  }
+
+  static async exportContestReport(req, res, next) {
+    try {
+      if (req.user.role !== "organizer") {
+        throw new ApiError(403, "Только организатор может экспортировать отчет");
+      }
+      const contestId = Number(req.params.id);
+      const fileBuffer = await ContestExportService.generateContestWorkbookBuffer({
+        contestId,
+        userId: req.user.id
+      });
+      res.setHeader(
+        "Content-Type",
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+      );
+      res.setHeader(
+        "Content-Disposition",
+        `attachment; filename="contest-${contestId}-report.xlsx"`
+      );
+      return res.status(200).send(Buffer.from(fileBuffer));
     } catch (error) {
       return next(error);
     }

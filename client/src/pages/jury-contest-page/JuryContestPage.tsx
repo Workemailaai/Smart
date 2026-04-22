@@ -80,6 +80,9 @@ export const JuryContestPage = observer(() => {
     if (!Number.isFinite(numericContestId)) return
     await juryContestStore.submit(numericContestId)
     await contestStore.fetchContests()
+    if (!juryContestStore.error) {
+      navigate('/cabinet/events')
+    }
   }
 
   const priorityStepContent =

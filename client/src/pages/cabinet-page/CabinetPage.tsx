@@ -220,6 +220,9 @@ export const CabinetPage = observer(({ section }: CabinetPageProps) => {
     if (Number.isNaN(juryContestId)) return
     await juryContestStore.submit(juryContestId)
     await contestStore.fetchContests()
+    if (!juryContestStore.error) {
+      closeJuryContestModal()
+    }
   }
 
   const onStartRevote = async () => {

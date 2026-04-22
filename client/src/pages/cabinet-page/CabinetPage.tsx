@@ -495,7 +495,6 @@ export const CabinetPage = observer(({ section }: CabinetPageProps) => {
                       <span>Название конкурса</span>
                       <span>Дата</span>
                       <span>Тип конкурса</span>
-                      <span className={styles.tableHeaderVotes}>Проголосовало</span>
                     </div>
                     {contestStore.isLoading ? <p className={`${styles.helperText} ${styles.eventsHelperText}`}>Загрузка мероприятий...</p> : null}
                     {contestStore.error ? <p className={styles.errorText}>{contestStore.error}</p> : null}
@@ -506,7 +505,6 @@ export const CabinetPage = observer(({ section }: CabinetPageProps) => {
                       <ContestCard
                         contest={contest}
                         juryCabinetCompact
-                        showVotedColumn
                         key={contest.id}
                         onOpen={() => void onJuryContestOpen(contest)}
                       />
@@ -630,7 +628,6 @@ export const CabinetPage = observer(({ section }: CabinetPageProps) => {
                       <span>Название конкурса</span>
                       <span>Дата</span>
                       <span>Тип конкурса</span>
-                      <span className={styles.tableHeaderVotes}>Проголосовало</span>
                     </div>
                     {!contestStore.isLoading && !contestStore.error && filteredRatedContests.length === 0 ? (
                       <p className={`${styles.helperText} ${styles.eventsHelperText}`}>Пока нет оцененных мероприятий</p>
@@ -639,7 +636,6 @@ export const CabinetPage = observer(({ section }: CabinetPageProps) => {
                       <ContestCard
                         contest={contest}
                         juryCabinetCompact
-                        showVotedColumn
                         key={contest.id}
                         onOpen={() => void onJuryContestOpen(contest)}
                       />
@@ -768,7 +764,6 @@ export const CabinetPage = observer(({ section }: CabinetPageProps) => {
                     <span>Название конкурса</span>
                     <span>Дата</span>
                     <span>Тип конкурса</span>
-                    <span className={styles.tableHeaderVotes}>Проголосовало</span>
                   </div>
                   {!contestStore.isLoading && !contestStore.error && filteredCompletedContests.length === 0 ? (
                     <p className={`${styles.helperText} ${styles.eventsHelperText}`}>Пока нет завершенных мероприятий</p>
@@ -777,7 +772,6 @@ export const CabinetPage = observer(({ section }: CabinetPageProps) => {
                     <ContestCard
                       contest={contest}
                       juryCabinetCompact
-                      showVotedColumn
                       key={contest.id}
                       onOpen={() => void onJuryContestOpen(contest)}
                     />

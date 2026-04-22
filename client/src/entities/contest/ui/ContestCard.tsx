@@ -21,8 +21,6 @@ type ContestCardProps = {
   organizerLayout?: boolean
   onDelete?: () => void
   onOpen?: () => void
-  /** Показывать колонку "Проголосовало" вместо колонки действий */
-  showVotedColumn?: boolean
 }
 
 const formatDate = (date: string) =>
@@ -40,7 +38,6 @@ export function ContestCard({
   organizerLayout = false,
   onDelete,
   onOpen,
-  showVotedColumn = false,
 }: ContestCardProps) {
   const coverUrl = resolveMediaUrl(contest.coverImageUrl)
 
@@ -48,7 +45,7 @@ export function ContestCard({
     ? CONTEST_TYPE_LABELS[contest.contestType] || contest.contestType
     : 'Не указан'
 
-  const isClickableRow = Boolean(showVotedColumn && onOpen)
+  const isClickableRow = Boolean(onOpen)
   const votedText = `${contest.submittedJuryCount ?? 0}/${contest.totalJuryCount ?? 0}`
   const submittedJuryCount = contest.submittedJuryCount ?? 0
   const totalJuryCount = contest.totalJuryCount ?? 0
@@ -137,14 +134,6 @@ export function ContestCard({
         <div className={styles.juryCompactMeta}>
           <p className={styles.date}>{formatDate(contest.updatedAt || contest.createdAt)}</p>
           <p className={styles.type}>{contestTypeTitle}</p>
-          <div
-            className={`${styles.juryCompactVotes} ${isAllJurySubmitted ? styles.juryCompactVotesComplete : ''}`}
-            aria-label={`Проголосовало ${votedText}`}
-          >
-            <span className={styles.juryCompactVotesCurrent}>{submittedJuryCount}</span>
-            <span className={styles.juryCompactVotesDivider}>/</span>
-            <span className={styles.juryCompactVotesTotal}>{totalJuryCount}</span>
-          </div>
         </div>
       </article>
     )
@@ -153,10 +142,10 @@ export function ContestCard({
   return (
     <article
       aria-label={isClickableRow || (juryCabinetCompact && onOpen) ? `Перейти к конкурсу «${contest.title}»` : undefined}
-      className={`${styles.card} ${juryCabinetCompact ? styles.juryCabinetCompact : ''} ${showVotedColumn ? styles.cardWithVotes : ''} ${isClickableRow ? styles.cardClickable : ''}`}
-      onClick={isClickableRow || (juryCabinetCompact && onOpen) ? () => onOpen?.() : undefined}
+      className={`${styles.card} ${juryCabinetCompact ? styles.juryCabinetCompact : ''} ${isClickableRow ? styles.cardClickable : ''}`}
+      onClick={isClickableRow ? () => onOpen?.() : undefined}
       onKeyDown={
-        isClickableRow || (juryCabinetCompact && onOpen)
+        isClickableRow
           ? (event) => {
               if (event.key === 'Enter' || event.key === ' ') {
                 event.preventDefault()
@@ -165,8 +154,8 @@ export function ContestCard({
             }
           : undefined
       }
-      role={isClickableRow || (juryCabinetCompact && onOpen) ? 'button' : undefined}
-      tabIndex={isClickableRow || (juryCabinetCompact && onOpen) ? 0 : undefined}
+      role={isClickableRow ? 'button' : undefined}
+      tabIndex={isClickableRow ? 0 : undefined}
     >
       <div className={styles.coverCell}>
         {coverUrl ? (
@@ -180,24 +169,20 @@ export function ContestCard({
       <p className={styles.date}>{formatDate(contest.updatedAt || contest.createdAt)}</p>
       <p className={styles.type}>{contestTypeTitle}</p>
 
-      {showVotedColumn ? (
-        <p className={styles.votedCell}>{votedText}</p>
-      ) : (
-        <div className={styles.actionCell}>
-          {variant === 'results' ? (
-            <button className={styles.resultsButton} type="button" onClick={onOpen}>
-              Результаты
+      <div className={styles.actionCell}>
+        {variant === 'results' ? (
+          <button className={styles.resultsButton} type="button" onClick={onOpen}>
+            Результаты
+          </button>
+        ) : (
+          <div className={styles.pendingAction}>
+            <button className={styles.actionCircle} type="button" onClick={onOpen}>
+              →
             </button>
-          ) : (
-            <div className={styles.pendingAction}>
-              <button className={styles.actionCircle} type="button" onClick={onOpen}>
-                →
-              </button>
-              {withAlertStripe ? <span className={styles.alertStripe} /> : null}
-            </div>
-          )}
-        </div>
-      )}
+            {withAlertStripe ? <span className={styles.alertStripe} /> : null}
+          </div>
+        )}
+      </div>
     </article>
   )
 }

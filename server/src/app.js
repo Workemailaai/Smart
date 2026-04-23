@@ -19,11 +19,29 @@ app.get("/health", (_req, res) => {
 });
 
 app.use("/api", apiRoutes);
-app.use(errorMiddleware);
 
-app.get(/.*/, (_req, res) => {
-  res.sendFile(path.join(process.cwd(), "public", "dist", "index.html"));
+/** SPA fallback только для клиентских маршрутов без расширения файла */
+app.get("/{*splat}", (req, res, next) => {
+  const requestPath = req.path;
+  const isServicePath =
+    requestPath.startsWith("/api") ||
+    requestPath.startsWith("/media") ||
+    requestPath.startsWith("/uploads") ||
+    requestPath.startsWith("/assets");
+  const hasFileExtension = /\.[a-z0-9]+$/i.test(requestPath);
+
+  if (isServicePath || hasFileExtension) {
+    return next();
+  }
+
+  return res.sendFile(path.join(process.cwd(), "public", "dist", "index.html"));
 });
+
+app.use((req, res) => {
+  res.status(404).json({ message: "Маршрут не найден" });
+});
+
+app.use(errorMiddleware);
 
 app.listen(PORT, () => {
   console.log(`Сервер запущен, порт ${PORT}`);

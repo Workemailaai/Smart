@@ -21,6 +21,7 @@ function serverConfig(app) {
   app.use("/uploads", express.static(path.resolve(process.cwd(), "uploads")));
   /** Статика загруженных файлов конструктора (обложки, фото) */
   app.use("/media", express.static(path.resolve(process.cwd(), "public")));
+  app.use(express.static(path.join(process.cwd(), "public", "dist")));
 }
 
 module.exports = serverConfig;

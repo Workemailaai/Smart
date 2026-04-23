@@ -14,7 +14,7 @@ import {
   sortCriteriaRows,
   sortParticipantsRows,
   weightedTotalsForJury,
-} from '@/shared/lib/weightedScores.js'
+} from '@/shared/lib/weightedScores'
 
 class JuryContestStore {
   view: IJuryContestView | null = null

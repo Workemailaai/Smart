@@ -21,6 +21,10 @@ app.get("/health", (_req, res) => {
 app.use("/api", apiRoutes);
 app.use(errorMiddleware);
 
+app.get(/.*/, (_req, res) => {
+  res.sendFile(path.join(process.cwd(), "public", "dist", "index.html"));
+});
+
 app.listen(PORT, () => {
   console.log(`Сервер запущен, порт ${PORT}`);
 });

@@ -5,7 +5,7 @@ import { contestStore } from '@/entities/contest'
 import { userStore } from '@/entities/user'
 import { juryContestStore } from '@/features/jury-contest/model/juryContestStore'
 import { JuryCabinetSidebar } from '@/widgets/jury-cabinet-sidebar/JuryCabinetSidebar'
-import { sortCriteriaRows } from '@/shared/lib/weightedScores.js'
+import { sortCriteriaRows } from '@/shared/lib/weightedScores'
 import styles from './JuryContestPage.module.css'
 
 const MEDIA_BASE_URL = import.meta.env.VITE_MEDIA_BASE_URL || 'http://localhost:3000'

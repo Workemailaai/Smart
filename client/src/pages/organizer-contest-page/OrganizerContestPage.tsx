@@ -3,18 +3,10 @@ import { useEffect, useState } from 'react'
 import { Navigate, useNavigate, useParams } from 'react-router'
 import { userStore } from '@/entities/user'
 import { organizerContestStore } from '@/features/organizer-contest/model/organizerContestStore'
+import { resolveMediaUrl } from '@/shared'
 import { formatRuPhoneMask } from '@/shared/lib/ruPhone'
 import { OrganizerCabinetSidebar } from '@/widgets/organizer-cabinet-sidebar/OrganizerCabinetSidebar'
 import styles from './OrganizerContestPage.module.css'
-
-const MEDIA_BASE_URL = import.meta.env.VITE_MEDIA_BASE_URL || 'http://localhost:3000'
-
-function resolveMediaUrl(path: string | null) {
-  if (!path) return null
-  if (path.startsWith('http://') || path.startsWith('https://')) return path
-  const normalized = path.startsWith('/') ? path : `/${path}`
-  return `${MEDIA_BASE_URL}${normalized}`
-}
 
 function formatDate(value: string) {
   return new Date(value).toLocaleDateString('ru-RU', {

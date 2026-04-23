@@ -4,11 +4,11 @@ import { Navigate, useNavigate, useParams } from 'react-router'
 import { contestStore } from '@/entities/contest'
 import { userStore } from '@/entities/user'
 import { juryContestStore } from '@/features/jury-contest/model/juryContestStore'
+import { resolveMediaUrl } from '@/shared'
 import { JuryCabinetSidebar } from '@/widgets/jury-cabinet-sidebar/JuryCabinetSidebar'
 import { sortCriteriaRows } from '@/shared/lib/weightedScores'
 import styles from './JuryContestPage.module.css'
 
-const MEDIA_BASE_URL = import.meta.env.VITE_MEDIA_BASE_URL || 'http://localhost:3000'
 const COMMENT_LIMIT = 500
 
 function getInitials(name: string) {
@@ -18,13 +18,6 @@ function getInitials(name: string) {
     .slice(0, 2)
     .map((part) => part[0]?.toUpperCase() ?? '')
     .join('')
-}
-
-function resolveMediaUrl(path: string | null) {
-  if (!path) return null
-  if (path.startsWith('http://') || path.startsWith('https://')) return path
-  const normalized = path.startsWith('/') ? path : `/${path}`
-  return `${MEDIA_BASE_URL}${normalized}`
 }
 
 function formatDate(value: string) {

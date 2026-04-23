@@ -5,6 +5,7 @@ import { ContestCard, contestStore, getContestTypes, type IContest } from '@/ent
 import { TemplateCard, templateStore } from '@/entities/template'
 import { userStore } from '@/entities/user'
 import { juryContestStore } from '@/features/jury-contest/model/juryContestStore'
+import { resolveMediaUrl } from '@/shared'
 import { BottomSheet } from '@/shared/ui/bottom-sheet/BottomSheet'
 import { sortCriteriaRows } from '@/shared/lib/weightedScores'
 import { formatRuPhoneMask } from '@/shared/lib/ruPhone'
@@ -18,7 +19,6 @@ type CabinetPageProps = {
   section: CabinetSection
 }
 
-const MEDIA_BASE_URL = import.meta.env.VITE_MEDIA_BASE_URL || 'http://localhost:3000'
 const COMMENT_LIMIT = 500
 
 function getInitials(name: string) {
@@ -28,13 +28,6 @@ function getInitials(name: string) {
     .slice(0, 2)
     .map((part) => part[0]?.toUpperCase() ?? '')
     .join('')
-}
-
-function resolveMediaUrl(path: string | null) {
-  if (!path) return null
-  if (path.startsWith('http://') || path.startsWith('https://')) return path
-  const normalizedPath = path.startsWith('/') ? path : `/${path}`
-  return `${MEDIA_BASE_URL}${normalizedPath}`
 }
 
 function formatDate(value: string) {

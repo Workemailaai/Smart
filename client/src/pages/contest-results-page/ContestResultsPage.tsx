@@ -8,12 +8,12 @@ import {
   type IContestResultsView,
 } from '@/entities/contest'
 import { userStore } from '@/entities/user'
+import { resolveMediaUrl } from '@/shared'
 import styles from './ContestResultsPage.module.css'
 
-const MEDIA_BASE_URL = import.meta.env.VITE_MEDIA_BASE_URL || 'http://localhost:3000'
 const SERVER_RESULTS_FALLBACK_BASE = import.meta.env.VITE_RESULTS_FALLBACK_BASE || '/media/results/default-cover'
 const SERVER_RESULTS_FALLBACK_CANDIDATES = ['.jpg', '.jpeg', '.png', '.webp', '.svg'].map(
-  (ext) => `${MEDIA_BASE_URL}${SERVER_RESULTS_FALLBACK_BASE}${ext}`,
+  (ext) => resolveMediaUrl(`${SERVER_RESULTS_FALLBACK_BASE}${ext}`) || `${SERVER_RESULTS_FALLBACK_BASE}${ext}`,
 )
 
 function formatScore(score: number | null | undefined) {
@@ -40,24 +40,6 @@ function getInitials(fullName: string) {
     .slice(0, 2)
     .map((part) => part[0]?.toUpperCase() ?? '')
     .join('')
-}
-
-function resolveParticipantPhotoUrl(photoUrl: string | null) {
-  if (!photoUrl) return null
-  if (photoUrl.startsWith('http://') || photoUrl.startsWith('https://')) {
-    return photoUrl
-  }
-  const normalized = photoUrl.startsWith('/') ? photoUrl : `/${photoUrl}`
-  return `${MEDIA_BASE_URL}${normalized}`
-}
-
-function resolveContestCoverUrl(coverImageUrl: string | null) {
-  if (!coverImageUrl) return null
-  if (coverImageUrl.startsWith('http://') || coverImageUrl.startsWith('https://')) {
-    return coverImageUrl
-  }
-  const normalized = coverImageUrl.startsWith('/') ? coverImageUrl : `/${coverImageUrl}`
-  return `${MEDIA_BASE_URL}${normalized}`
 }
 
 export const ContestResultsPage = observer(() => {
@@ -111,7 +93,7 @@ export const ContestResultsPage = observer(() => {
     let isCancelled = false
 
     const setBackground = async () => {
-      const coverUrl = resolveContestCoverUrl(view?.contest.coverImageUrl ?? null)
+      const coverUrl = resolveMediaUrl(view?.contest.coverImageUrl ?? null)
       const candidates = coverUrl ? [coverUrl, ...SERVER_RESULTS_FALLBACK_CANDIDATES] : SERVER_RESULTS_FALLBACK_CANDIDATES
       const availableBackground = await resolveFirstAvailableImage(candidates)
       if (!isCancelled && availableBackground) {
@@ -188,7 +170,7 @@ export const ContestResultsPage = observer(() => {
               <div className={styles.mobileJuryPodium}>
                 {orderedTop.map((participant) => {
                   const isWinner = participant.place === 1
-                  const photoUrl = resolveParticipantPhotoUrl(participant.photoUrl)
+                  const photoUrl = resolveMediaUrl(participant.photoUrl)
                   return (
                     <article key={`mobile-top-${participant.participantId}`} className={styles.mobileJuryPodiumCard}>
                       {isWinner ? (
@@ -228,7 +210,7 @@ export const ContestResultsPage = observer(() => {
           <div className={styles.podium}>
             {orderedTop.map((participant) => {
               const isWinner = participant.place === 1
-              const photoUrl = resolveParticipantPhotoUrl(participant.photoUrl)
+              const photoUrl = resolveMediaUrl(participant.photoUrl)
               return (
                 <article key={participant.participantId} className={isWinner ? styles.winnerCard : styles.topCard}>
                   <div className={styles.placeBadge}>#{participant.place}</div>
@@ -257,7 +239,7 @@ export const ContestResultsPage = observer(() => {
               <div className={styles.mobileJuryListHandle} />
               <div className={styles.mobileJuryList}>
                 {view.others.map((participant) => {
-                  const photoUrl = resolveParticipantPhotoUrl(participant.photoUrl)
+                  const photoUrl = resolveMediaUrl(participant.photoUrl)
                   return (
                     <article className={styles.mobileJuryListItem} key={`mobile-row-${participant.participantId}`}>
                       <div className={styles.mobileJuryListMain}>
@@ -291,7 +273,7 @@ export const ContestResultsPage = observer(() => {
 
           <div className={styles.list}>
             {view.others.map((participant) => {
-              const photoUrl = resolveParticipantPhotoUrl(participant.photoUrl)
+              const photoUrl = resolveMediaUrl(participant.photoUrl)
               return (
                 <article className={styles.listItem} key={participant.participantId}>
                   <span className={styles.listPlace}>#{participant.place}</span>

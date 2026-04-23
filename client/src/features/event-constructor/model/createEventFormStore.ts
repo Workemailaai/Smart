@@ -6,7 +6,24 @@ import { normalizePhoneDigits } from '@/shared/lib/ruPhone'
 export { normalizePhoneDigits } from '@/shared/lib/ruPhone'
 
 function newLocalId() {
-  return crypto.randomUUID()
+  const browserCrypto = globalThis.crypto
+
+  if (browserCrypto?.randomUUID) {
+    return browserCrypto.randomUUID()
+  }
+
+  if (browserCrypto?.getRandomValues) {
+    const randomBytes = new Uint8Array(16)
+    browserCrypto.getRandomValues(randomBytes)
+
+    randomBytes[6] = (randomBytes[6] & 0x0f) | 0x40
+    randomBytes[8] = (randomBytes[8] & 0x3f) | 0x80
+
+    const bytesHex = Array.from(randomBytes, (byteValue) => byteValue.toString(16).padStart(2, '0')).join('')
+    return `${bytesHex.slice(0, 8)}-${bytesHex.slice(8, 12)}-${bytesHex.slice(12, 16)}-${bytesHex.slice(16, 20)}-${bytesHex.slice(20)}`
+  }
+
+  return `local-${Date.now()}-${Math.random().toString(16).slice(2)}`
 }
 
 export type DraftCriterion = { localId: string; name: string; minScore: number; maxScore: number }

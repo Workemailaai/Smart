@@ -4,6 +4,7 @@ import { useNavigate, useSearchParams } from 'react-router'
 import { contestStore, createContestFull, getContestTypes } from '@/entities/contest'
 import { createTemplate, getTemplateById, templateStore } from '@/entities/template'
 import type { IContestTypeOption } from '@/entities/contest'
+import { resolveMediaUrl } from '@/shared'
 import { formatRuPhoneMask } from '@/shared/lib/ruPhone'
 import { createEventFormStore, type DraftJury, type DraftParticipant } from '../model/createEventFormStore'
 import { ParticipantProfileModal } from './ParticipantProfileModal'
@@ -28,22 +29,6 @@ const FALLBACK_CONTEST_TYPES: IContestTypeOption[] = [
   { id: 'student_work', label: 'Оценка студенческих работ' },
   { id: 'other', label: 'Другое' },
 ]
-
-const MEDIA_BASE_URL = import.meta.env.VITE_MEDIA_BASE_URL || 'http://localhost:3000'
-
-function resolveMediaUrl(value: string | null) {
-  if (!value) return null
-  if (
-    value.startsWith('http://') ||
-    value.startsWith('https://') ||
-    value.startsWith('blob:') ||
-    value.startsWith('data:')
-  ) {
-    return value
-  }
-  const normalizedPath = value.startsWith('/') ? value : `/${value}`
-  return `${MEDIA_BASE_URL}${normalizedPath}`
-}
 
 const PRIMARY_ORDER = [
   'creative',

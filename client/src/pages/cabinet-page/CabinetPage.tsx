@@ -51,7 +51,7 @@ export const CabinetPage = observer(({ section }: CabinetPageProps) => {
   const [ratedFilterType, setRatedFilterType] = useState('all')
   const [completedFilterType, setCompletedFilterType] = useState('all')
   const [isMobileViewport, setIsMobileViewport] = useState(() =>
-    typeof window !== 'undefined' ? window.matchMedia('(max-width: 430px)').matches : false,
+    typeof window !== 'undefined' ? window.matchMedia('(max-width: 450px)').matches : false,
   )
   const [touchDragFrom, setTouchDragFrom] = useState<number | null>(null)
   const [touchDragOver, setTouchDragOver] = useState<number | null>(null)
@@ -84,7 +84,7 @@ export const CabinetPage = observer(({ section }: CabinetPageProps) => {
   }, [])
 
   useEffect(() => {
-    const mediaQueryList = window.matchMedia('(max-width: 430px)')
+    const mediaQueryList = window.matchMedia('(max-width: 450px)')
     const onChange = (event: MediaQueryListEvent) => {
       setIsMobileViewport(event.matches)
     }

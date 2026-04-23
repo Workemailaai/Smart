@@ -36,7 +36,7 @@ li {
   list-style: none;  
 }
 
-@media (max-width: 430px) {
+@media (max-width: 450px) {
   body {
     padding-top: var(--mobile-statusbar-offset);
     background: #f0f1f5;

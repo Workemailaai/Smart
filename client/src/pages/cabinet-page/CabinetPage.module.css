@@ -775,7 +775,7 @@
   line-height: 1.45;
 }
 
-/* Кабинет жюри: нижняя навигация и экран профиля (≤430px) */
+/* Кабинет жюри: нижняя навигация и экран профиля (≤450px) */
 .juryBottomNav {
   display: none;
 }
@@ -1406,7 +1406,7 @@
   opacity: 0.3;
 }
 
-@media (max-width: 430px) {
+@media (max-width: 450px) {
   .pageJuryCabinet .sidebar {
     display: none;
   }

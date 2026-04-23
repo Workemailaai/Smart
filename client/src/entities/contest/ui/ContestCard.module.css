@@ -311,8 +311,8 @@
   }
 }
 
-/* Кабинет жюри: строка списка как в мобильном макете (≤430px) */
-@media (max-width: 430px) {
+/* Кабинет жюри: строка списка как в мобильном макете (≤450px) */
+@media (max-width: 450px) {
   .card.juryCabinetCompact {
     display: flex;
     flex-direction: column;

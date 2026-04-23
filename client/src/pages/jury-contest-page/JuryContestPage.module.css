@@ -804,7 +804,7 @@
   }
 }
 
-@media (max-width: 430px) {
+@media (max-width: 450px) {
   .page {
     display: block;
     min-height: 100svh;

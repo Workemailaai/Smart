@@ -255,7 +255,7 @@
   font-weight: 500;
 }
 
-@media (max-width: 430px) {
+@media (max-width: 450px) {
   .page {
     margin-top: calc(-1 * var(--mobile-statusbar-offset));
     min-height: calc(100dvh + var(--mobile-statusbar-offset));

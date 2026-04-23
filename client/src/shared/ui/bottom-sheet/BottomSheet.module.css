@@ -16,7 +16,7 @@
 .sheet {
   position: relative;
   width: 100%;
-  max-width: 430px;
+  max-width: 450px;
   max-height: calc(100svh - 120px);
   background: #f0f1f5;
   border-top-left-radius: 32px;

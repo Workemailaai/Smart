@@ -1,5 +1,5 @@
 import { observer } from 'mobx-react-lite'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, type KeyboardEvent } from 'react'
 import { NavLink, Navigate, useNavigate, useSearchParams } from 'react-router'
 import { ContestCard, contestStore, getContestTypes, type IContest } from '@/entities/contest'
 import { TemplateCard, templateStore } from '@/entities/template'
@@ -203,6 +203,25 @@ export const CabinetPage = observer(({ section }: CabinetPageProps) => {
     navigate('/')
   }
 
+  const onTemplateOpen = (templateId: number) => {
+    navigate(`/cabinet/constructor/new?templateId=${templateId}`)
+  }
+
+  const onTemplateCardKeyDown = (event: KeyboardEvent<HTMLDivElement>, templateId: number) => {
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault()
+      onTemplateOpen(templateId)
+    }
+  }
+
+  const onTemplateDelete = async (templateId: number, templateName: string) => {
+    const isDeleteConfirmed = window.confirm(`Удалить шаблон «${templateName}»?`)
+    if (!isDeleteConfirmed) {
+      return
+    }
+    await templateStore.deleteTemplate(templateId)
+  }
+
   const closeJuryContestModal = () => {
     const nextSearchParams = new URLSearchParams(searchParams)
     nextSearchParams.delete('juryContestId')
@@ -365,31 +384,37 @@ export const CabinetPage = observer(({ section }: CabinetPageProps) => {
             <div className={styles.constructorTemplates}>
               <p className={styles.templatesTitle}>Шаблоны</p>
               <div className={styles.templateGrid}>
-              <button
-                className={styles.newTemplate}
-                type="button"
-                onClick={() => navigate('/cabinet/constructor/new')}
-                aria-label="Создать мероприятие без шаблона"
-              >
-                <span className={styles.newTemplateInner}>
-                  <span className={styles.newTemplatePlusH} />
-                  <span className={styles.newTemplatePlusV} />
-                </span>
-              </button>
-              {templateStore.isLoading ? <p className={styles.helperText}>Загрузка шаблонов...</p> : null}
-              {templateStore.error ? <p className={styles.errorText}>{templateStore.error}</p> : null}
-              {!templateStore.isLoading && !templateStore.error
-                ? templates.slice(0, 3).map((template) => (
-                    <button
-                      key={template.id}
-                      className={styles.templateCardBtn}
-                      type="button"
-                      onClick={() => navigate(`/cabinet/constructor/new?templateId=${template.id}`)}
-                    >
-                      <TemplateCard template={template} />
-                    </button>
-                  ))
-                : null}
+                <button
+                  className={styles.newTemplate}
+                  type="button"
+                  onClick={() => navigate('/cabinet/constructor/new')}
+                  aria-label="Создать мероприятие без шаблона"
+                >
+                  <span className={styles.newTemplateInner}>
+                    <span className={styles.newTemplatePlusH} />
+                    <span className={styles.newTemplatePlusV} />
+                  </span>
+                </button>
+                {templateStore.isLoading ? <p className={styles.helperText}>Загрузка шаблонов...</p> : null}
+                {templateStore.error ? <p className={styles.errorText}>{templateStore.error}</p> : null}
+                {!templateStore.isLoading && !templateStore.error
+                  ? templates.map((template) => (
+                      <div
+                        key={template.id}
+                        className={styles.templateCardBtn}
+                        role="button"
+                        tabIndex={0}
+                        onClick={() => onTemplateOpen(template.id)}
+                        onKeyDown={(event) => onTemplateCardKeyDown(event, template.id)}
+                      >
+                        <TemplateCard
+                          template={template}
+                          isDeleting={templateStore.deletingTemplateId === template.id}
+                          onDelete={() => void onTemplateDelete(template.id, template.name)}
+                        />
+                      </div>
+                    ))
+                  : null}
               </div>
             </div>
           </div>

@@ -664,20 +664,24 @@
 
 .templateGrid {
   display: flex;
-  align-items: center;
+  align-items: stretch;
   justify-content: flex-start;
   gap: 16px;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  overflow-y: hidden;
+  width: 100%;
+  padding-bottom: 8px;
+  scrollbar-gutter: stable;
 }
 
 .templateCardBtn {
-  border: none;
   padding: 0;
   margin: 0;
-  background: none;
   cursor: pointer;
   text-align: left;
   border-radius: 28px;
+  flex: 0 0 auto;
 }
 
 .templateCardBtn:focus-visible {
@@ -701,6 +705,7 @@
   justify-content: center;
   gap: 8px;
   cursor: pointer;
+  flex: 0 0 auto;
 }
 
 .newTemplate:focus-visible {
@@ -750,7 +755,7 @@
   }
 
   .templateGrid {
-    justify-content: center;
+    justify-content: flex-start;
   }
 
   .tableHeader {

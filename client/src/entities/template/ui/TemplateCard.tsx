@@ -14,6 +14,8 @@ const TYPE_LABELS: Record<string, string> = {
 
 type TemplateCardProps = {
   template: ITemplate
+  isDeleting?: boolean
+  onDelete?: () => void
 }
 
 const formatDate = (date: string) =>
@@ -23,15 +25,31 @@ const formatDate = (date: string) =>
     year: 'numeric',
   })
 
-export function TemplateCard({ template }: TemplateCardProps) {
+export function TemplateCard({ template, isDeleting = false, onDelete }: TemplateCardProps) {
   const typeLabel = template.contestType ? TYPE_LABELS[template.contestType] || template.contestType : null
   return (
     <article className={styles.card}>
+      {onDelete ? (
+        <button
+          className={styles.deleteButton}
+          type="button"
+          aria-label={`Удалить шаблон ${template.name}`}
+          disabled={isDeleting}
+          onClick={(event) => {
+            event.stopPropagation()
+            onDelete()
+          }}
+        >
+          ×
+        </button>
+      ) : null}
       <div className={styles.coverPlaceholder} />
       <p className={styles.date}>{formatDate(template.updatedAt || template.createdAt)}</p>
       <div className={styles.bottomRow}>
         <div>
-          <p className={styles.name}>{template.name}</p>
+          <p className={styles.name} title={template.name}>
+            {template.name}
+          </p>
           {typeLabel ? <p className={styles.typeLine}>{typeLabel}</p> : null}
         </div>
         <span aria-hidden className={styles.arrow}>

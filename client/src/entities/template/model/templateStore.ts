@@ -1,10 +1,11 @@
 import { makeAutoObservable, runInAction } from 'mobx'
-import { getTemplates } from '../api/templateApi'
+import { deleteTemplateById, getTemplates } from '../api/templateApi'
 import type { ITemplate } from './template.types'
 
 class TemplateStore {
   templates: ITemplate[] = []
   isLoading = false
+  deletingTemplateId: number | null = null
   error: string | null = null
 
   constructor() {
@@ -26,6 +27,25 @@ class TemplateStore {
     } finally {
       runInAction(() => {
         this.isLoading = false
+      })
+    }
+  }
+
+  deleteTemplate = async (templateId: number) => {
+    this.deletingTemplateId = templateId
+    this.error = null
+    try {
+      await deleteTemplateById(templateId)
+      runInAction(() => {
+        this.templates = this.templates.filter((template) => template.id !== templateId)
+      })
+    } catch (error) {
+      runInAction(() => {
+        this.error = (error as Error)?.message || 'Ошибка при удалении шаблона'
+      })
+    } finally {
+      runInAction(() => {
+        this.deletingTemplateId = null
       })
     }
   }

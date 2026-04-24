@@ -24,6 +24,9 @@
   line-height: 24px;
   color: #0a0f15;
   max-width: 170px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .typeLine {
@@ -59,4 +62,32 @@
   line-height: 24px;
   display: grid;
   place-items: center;
+}
+
+.deleteButton {
+  position: absolute;
+  top: 24px;
+  right: 24px;
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 50%;
+  background: rgba(10, 15, 21, 0.08);
+  color: #0a0f15;
+  font-size: 20px;
+  line-height: 1;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  z-index: 2;
+}
+
+.deleteButton:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.deleteButton:focus-visible {
+  outline: 2px solid #12a6b0;
+  outline-offset: 2px;
 }

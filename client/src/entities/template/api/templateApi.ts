@@ -31,3 +31,15 @@ export const createTemplate = async (formData: FormData): Promise<ServerResponse
     throw new Error(msg || 'Ошибка при сохранении шаблона')
   }
 }
+
+export const deleteTemplateById = async (id: number): Promise<ServerResponseType<{ id: number }>> => {
+  try {
+    const response = await axiosInstance.delete(`/templates/${id}`)
+    return response.data
+  } catch (error) {
+    const msg =
+      (error as { response?: { data?: { error?: string } } })?.response?.data?.error ||
+      (error as Error)?.message
+    throw new Error(msg || 'Ошибка при удалении шаблона')
+  }
+}

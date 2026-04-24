@@ -1313,6 +1313,9 @@
   height: 36px;
   display: flex;
   align-items: center;
+  border-radius: 40px;
+  touch-action: none;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .juryScoreSliderTrack {
@@ -1335,6 +1338,12 @@
   width: 100%;
   height: 36px;
   opacity: 0;
+  -webkit-appearance: none;
+  appearance: none;
+  background: transparent;
+  border: 0;
+  outline: none;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .juryScoreSliderValue {

@@ -20,6 +20,7 @@ type CabinetPageProps = {
 }
 
 const COMMENT_LIMIT = 500
+const SCORE_UPDATE_DEBOUNCE_MS = 40
 
 function getInitials(name: string) {
   return name
@@ -57,6 +58,8 @@ export const CabinetPage = observer(({ section }: CabinetPageProps) => {
   const [touchDragOver, setTouchDragOver] = useState<number | null>(null)
   const [isMobilePriorityConfirmOpen, setIsMobilePriorityConfirmOpen] = useState(false)
   const touchPointerIdRef = useRef<number | null>(null)
+  const scoreUpdateTimeoutIdRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const pendingScoreUpdateRef = useRef<{ participantId: number; criterionId: number; value: number } | null>(null)
   const juryContestIdParam = searchParams.get('juryContestId')
   const juryContestId = juryContestIdParam ? Number.parseInt(juryContestIdParam, 10) : Number.NaN
   const isJuryContestModalOpen = !Number.isNaN(juryContestId) && section === 'events' && !isOrganizer
@@ -102,6 +105,14 @@ export const CabinetPage = observer(({ section }: CabinetPageProps) => {
     }
     void juryContestStore.loadContest(juryContestId)
   }, [user, isJuryContestModalOpen, juryContestId])
+
+  useEffect(() => {
+    return () => {
+      if (scoreUpdateTimeoutIdRef.current !== null) {
+        clearTimeout(scoreUpdateTimeoutIdRef.current)
+      }
+    }
+  }, [])
 
   if (!user) {
     return <Navigate replace to="/" />
@@ -221,6 +232,43 @@ export const CabinetPage = observer(({ section }: CabinetPageProps) => {
     if (!juryContestStore.error) {
       closeJuryContestModal()
     }
+  }
+
+  const getScoreByPointerPosition = (params: {
+    clientX: number
+    trackElement: HTMLDivElement
+    min: number
+    max: number
+  }) => {
+    const { clientX, trackElement, min, max } = params
+    const trackRect = trackElement.getBoundingClientRect()
+    if (trackRect.width <= 0) return min
+
+    const rawPercent = (clientX - trackRect.left) / trackRect.width
+    const clampedPercent = Math.min(1, Math.max(0, rawPercent))
+    const rawValue = min + clampedPercent * (max - min)
+    return Math.round(rawValue)
+  }
+
+  const flushDebouncedScoreUpdate = () => {
+    const pendingScoreUpdate = pendingScoreUpdateRef.current
+    if (!pendingScoreUpdate) return
+    juryContestStore.setScore(
+      pendingScoreUpdate.participantId,
+      pendingScoreUpdate.criterionId,
+      pendingScoreUpdate.value,
+    )
+    pendingScoreUpdateRef.current = null
+  }
+
+  const scheduleDebouncedScoreUpdate = (params: { participantId: number; criterionId: number; value: number }) => {
+    pendingScoreUpdateRef.current = params
+    if (scoreUpdateTimeoutIdRef.current !== null) return
+
+    scoreUpdateTimeoutIdRef.current = setTimeout(() => {
+      scoreUpdateTimeoutIdRef.current = null
+      flushDebouncedScoreUpdate()
+    }, SCORE_UPDATE_DEBOUNCE_MS)
   }
 
   const onStartRevote = async () => {
@@ -964,7 +1012,58 @@ export const CabinetPage = observer(({ section }: CabinetPageProps) => {
                               <div className={styles.juryScoreCriterionLabel}>{criterion.name}</div>
                               <div className={styles.juryScoreSliderWrap}>
                                 <span className={styles.juryScoreBoundaryValue}>{min}</span>
-                                <div className={styles.juryScoreSliderTrackWrap}>
+                                <div
+                                  className={styles.juryScoreSliderTrackWrap}
+                                  onPointerDown={(event) => {
+                                    if (isScoreEditingLocked) return
+                                    event.preventDefault()
+                                    const nextValue = getScoreByPointerPosition({
+                                      clientX: event.clientX,
+                                      trackElement: event.currentTarget,
+                                      min,
+                                      max,
+                                    })
+                                    juryContestStore.setScore(participant.id, criterion.id, nextValue)
+                                    event.currentTarget.setPointerCapture(event.pointerId)
+                                  }}
+                                  onPointerMove={(event) => {
+                                    if (isScoreEditingLocked) return
+                                    if (!event.currentTarget.hasPointerCapture(event.pointerId)) return
+                                    event.preventDefault()
+                                    const nextValue = getScoreByPointerPosition({
+                                      clientX: event.clientX,
+                                      trackElement: event.currentTarget,
+                                      min,
+                                      max,
+                                    })
+                                    scheduleDebouncedScoreUpdate({
+                                      participantId: participant.id,
+                                      criterionId: criterion.id,
+                                      value: nextValue,
+                                    })
+                                  }}
+                                  onPointerUp={(event) => {
+                                    if (!event.currentTarget.hasPointerCapture(event.pointerId)) return
+                                    const nextValue = getScoreByPointerPosition({
+                                      clientX: event.clientX,
+                                      trackElement: event.currentTarget,
+                                      min,
+                                      max,
+                                    })
+                                    pendingScoreUpdateRef.current = {
+                                      participantId: participant.id,
+                                      criterionId: criterion.id,
+                                      value: nextValue,
+                                    }
+                                    flushDebouncedScoreUpdate()
+                                    event.currentTarget.releasePointerCapture(event.pointerId)
+                                  }}
+                                  onPointerCancel={(event) => {
+                                    if (!event.currentTarget.hasPointerCapture(event.pointerId)) return
+                                    flushDebouncedScoreUpdate()
+                                    event.currentTarget.releasePointerCapture(event.pointerId)
+                                  }}
+                                >
                                   <div className={styles.juryScoreSliderTrack}>
                                     <div className={styles.juryScoreSliderProgress} style={{ width: `${percent}%` }} />
                                   </div>

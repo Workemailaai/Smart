@@ -496,7 +496,6 @@
   border: 0;
   outline: none;
   -webkit-tap-highlight-color: transparent;
-  tap-highlight-color: transparent;
 }
 
 .sliderTrackWrap:focus-within .sliderValue {

@@ -464,6 +464,8 @@
   height: 48px;
   display: flex;
   align-items: center;
+  border-radius: 40px;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .sliderTrack {
@@ -488,6 +490,17 @@
   margin: 0;
   opacity: 0;
   cursor: pointer;
+  -webkit-appearance: none;
+  appearance: none;
+  background: transparent;
+  border: 0;
+  outline: none;
+  -webkit-tap-highlight-color: transparent;
+  tap-highlight-color: transparent;
+}
+
+.sliderTrackWrap:focus-within .sliderValue {
+  box-shadow: 0 0 0 2px #fff, 0 0 0 4px rgba(0, 169, 157, 0.6);
 }
 
 .sliderValue {

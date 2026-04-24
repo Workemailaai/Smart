@@ -171,6 +171,45 @@ function resolveAverageWeightsWithFallback({ parametersNumber, filterConditions,
   throw new Error("Не удалось подобрать шаг для расчета весов");
 }
 
+/**
+ * Ограничения на веса по позициям в упорядоченном списке приоритетов.
+ * При 6+ показателях: позиции 1–3 и 4–5 — равные веса внутри группы, ступени между группами и далее строго по одному.
+ * Иначе — цепочка строгих неравенств между соседними позициями (прежняя методика).
+ */
+function buildWeightFilterConditionsFromSortedIndices(sortedIndices) {
+  // число показателей в порядке убывания значимости (после сортировки по priority)
+  const orderedCount = sortedIndices.length;
+  // условия для getGradesWithWeights (операторы 1 — «>», 5 — «==»)
+  const conditions = [];
+  if (orderedCount < 2) {
+    return conditions;
+  }
+  // группировка позиций 1–3 и 4–5 только при шести и более показателях
+  const useGroupedTiers = orderedCount >= 6;
+  if (!useGroupedTiers) {
+    for (let rankIndex = 0; rankIndex < orderedCount - 1; rankIndex++) {
+      conditions.push([sortedIndices[rankIndex], 1, sortedIndices[rankIndex + 1]]);
+    }
+    return conditions;
+  }
+  // индексы строк матрицы оценок для позиций 1–3 (одинаковый вес)
+  const topFirst = sortedIndices[0];
+  const topSecond = sortedIndices[1];
+  const topThird = sortedIndices[2];
+  // индексы для позиций 4–5 (одинаковый вес, ниже первой тройки)
+  const midFirst = sortedIndices[3];
+  const midSecond = sortedIndices[4];
+  conditions.push([topFirst, 5, topSecond]);
+  conditions.push([topSecond, 5, topThird]);
+  conditions.push([midFirst, 5, midSecond]);
+  conditions.push([topFirst, 1, midFirst]);
+  conditions.push([midFirst, 1, sortedIndices[5]]);
+  for (let rankIndex = 5; rankIndex < orderedCount - 1; rankIndex++) {
+    conditions.push([sortedIndices[rankIndex], 1, sortedIndices[rankIndex + 1]]);
+  }
+  return conditions;
+}
+
 function evaluateObjects({ grades, priorities, maxScale = 10 }) {
   const parametersNumber = grades.length;
 
@@ -179,11 +218,7 @@ function evaluateObjects({ grades, priorities, maxScale = 10 }) {
     .sort((a, b) => a.p - b.p)
     .map((x) => x.i);
 
-  // Методика: строгие неравенства между весами соседних по приоритету показателей (p₁ > p₂ > …), как в эталонном калькуляторе
-  const filterConditions = [];
-  for (let k = 0; k < sortedIndices.length - 1; k++) {
-    filterConditions.push([sortedIndices[k], 1, sortedIndices[k + 1]]);
-  }
+  const filterConditions = buildWeightFilterConditionsFromSortedIndices(sortedIndices);
 
   const { averageWeights, usedAccuracy } = resolveAverageWeightsWithFallback({
     parametersNumber,
@@ -191,14 +226,35 @@ function evaluateObjects({ grades, priorities, maxScale = 10 }) {
     maxScale
   });
 
+  // сумма усреднённых весов до нормализации (из-за округления наборов на сетке могла отличаться от 1)
+  const averageWeightSum = averageWeights.reduce((partialSum, weight) => partialSum + weight, 0);
+  // веса с суммой 1; пропорции и равенства внутри групп сохраняются
+  const normalizedAverageWeights =
+    averageWeightSum > 0
+      ? averageWeights.map((weight) => weight / averageWeightSum)
+      : averageWeights;
+
   const normalizedGrades = grades.map((row) => {
     const max = Math.max(...row);
     return row.map((v) => v / max);
   });
 
-  const indicators = averageWeights.map((weight, i) => ({
-    weight,
-    scores: normalizedGrades[i].map((g) => Math.round(g * weight * maxScale * 100) / 100)
+  // веса до сотых; остаток суммы до 1 переносится на показатель с минимальным приоритетом (не трогая группы 1–3 и 4–5)
+  const weightsRounded = normalizedAverageWeights.map((weight) => Math.round(weight * 100) / 100);
+  // сумма округлённых весов до корректировки
+  const roundedWeightsSum = weightsRounded.reduce((partialSum, value) => partialSum + value, 0);
+  // доводка до суммы ровно 1.00 при накопленной ошибке округления
+  const weightSumRemainder = Math.round((1 - roundedWeightsSum) * 100) / 100;
+  if (weightsRounded.length > 0 && weightSumRemainder !== 0) {
+    // индекс показателя на последней позиции в упорядоченном списке значимости
+    const lowestPriorityCriterionIndex = sortedIndices[sortedIndices.length - 1];
+    weightsRounded[lowestPriorityCriterionIndex] =
+      Math.round((weightsRounded[lowestPriorityCriterionIndex] + weightSumRemainder) * 100) / 100;
+  }
+
+  const indicators = weightsRounded.map((weightRounded, i) => ({
+    weight: weightRounded,
+    scores: normalizedGrades[i].map((g) => Math.round(g * weightRounded * maxScale * 100) / 100)
   }));
 
   return { indicators, weightsGridStep: usedAccuracy };

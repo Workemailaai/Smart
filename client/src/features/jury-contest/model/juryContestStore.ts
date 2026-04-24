@@ -233,7 +233,7 @@ class JuryContestStore {
 
     const criteriaSorted = orderCriteriaForJury(this.view.criteria, this.view.myCriterionOrder ?? null)
     const participantsSorted = sortParticipantsRows(this.view.participants)
-    const totals = weightedTotalsForJury({
+    const { totals } = weightedTotalsForJury({
       criteriaSorted,
       participantsSorted,
       getRawScore: (criterionId, pId) => {

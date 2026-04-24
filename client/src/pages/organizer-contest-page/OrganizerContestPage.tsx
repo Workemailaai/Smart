@@ -32,6 +32,20 @@ function formatScoreValue(value: number | null | undefined) {
   return n.toFixed(2).replace('.', ',')
 }
 
+/** Вес показателя в методике (доля, сумма ≈ 1) */
+function formatCriterionWeight(value: number | null | undefined) {
+  const n = Number(value)
+  if (!Number.isFinite(n)) return '—'
+  return n.toFixed(2).replace('.', ',')
+}
+
+/** Шаг сетки (accuracy) при подборе весов */
+function formatWeightsGridStep(value: number | null | undefined) {
+  const n = Number(value)
+  if (!Number.isFinite(n)) return '—'
+  return n.toLocaleString('ru-RU', { minimumFractionDigits: 0, maximumFractionDigits: 3 })
+}
+
 function scoreForSort(value: number | null | undefined): number {
   const n = Number(value)
   return Number.isFinite(n) ? n : -Infinity
@@ -192,20 +206,65 @@ export const OrganizerContestPage = observer(() => {
                               </div>
 
                               <div className={styles.criteriaBlock}>
-                                {juryCard.criteria.map((criterion) => (
-                                  <div className={styles.criterionRow} key={criterion.criterionId}>
-                                    <span>{criterion.name}</span>
-                                    <span>
-                                      {criterion.value ?? '—'} / {criterion.maxScore}
-                                    </span>
+                                {view.contest.useCriteriaWeights ? (
+                                  <div className={styles.orgContestCriteriaGrid}>
+                                    <div
+                                      className={`${styles.orgContestCriteriaGrid__row} ${styles['orgContestCriteriaGrid__row--head']}`}
+                                    >
+                                      <span className={styles.orgContestCriteriaGrid__name}>Показатель</span>
+                                      <span className={styles.orgContestCriteriaGrid__score}>Балл</span>
+                                      <span className={styles.orgContestCriteriaGrid__weight}>Вес</span>
+                                    </div>
+                                    {juryCard.criteria.map((criterion) => (
+                                      <div
+                                        className={styles.orgContestCriteriaGrid__row}
+                                        key={criterion.criterionId}
+                                      >
+                                        <span className={styles.orgContestCriteriaGrid__name}>{criterion.name}</span>
+                                        <span className={styles.orgContestCriteriaGrid__score}>
+                                          {criterion.value ?? '—'} / {criterion.maxScore}
+                                        </span>
+                                        <span className={styles.orgContestCriteriaGrid__weight}>
+                                          {formatCriterionWeight(criterion.weight)}
+                                        </span>
+                                      </div>
+                                    ))}
                                   </div>
-                                ))}
+                                ) : (
+                                  juryCard.criteria.map((criterion) => (
+                                    <div className={styles.criterionRow} key={criterion.criterionId}>
+                                      <span>{criterion.name}</span>
+                                      <span>
+                                        {criterion.value ?? '—'} / {criterion.maxScore}
+                                      </span>
+                                    </div>
+                                  ))
+                                )}
                               </div>
 
-                              <div className={styles.totalRow}>
-                                <span>Итого</span>
-                                <strong>{juryCard.total} / 10</strong>
-                              </div>
+                              {view.contest.useCriteriaWeights ? (
+                                <div
+                                  className={`${styles.orgContestCriteriaGrid__row} ${styles['orgContestCriteriaGrid__row--total']}`}
+                                >
+                                  <span className={styles.orgContestCriteriaGrid__name}>Итого</span>
+                                  <strong className={styles.orgContestCriteriaGrid__scoreTotal}>
+                                    {juryCard.total} / 10
+                                  </strong>
+                                  <span
+                                    className={`${styles.orgContestCriteriaGrid__weight} ${styles.orgContestCriteriaGrid__weightStep}`}
+                                    title="Шаг сетки, с которым подобраны веса показателей"
+                                  >
+                                    {Number.isFinite(Number(juryCard.weightsGridStep))
+                                      ? `${formatWeightsGridStep(juryCard.weightsGridStep)}`
+                                      : '—'}
+                                  </span>
+                                </div>
+                              ) : (
+                                <div className={styles.totalRow}>
+                                  <span>Итого</span>
+                                  <strong>{juryCard.total} / 10</strong>
+                                </div>
+                              )}
 
                               {comment ? (
                                 <div className={styles.commentSection}>

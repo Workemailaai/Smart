@@ -74,6 +74,8 @@ export interface IOrganizerJuryCard {
   position: string | null
   photoUrl: string | null
   comment: string
+  /** Шаг сетки перебора весов (accuracy) в методике */
+  weightsGridStep?: number | null
   total: number
   criteria: {
     criterionId: number
@@ -81,6 +83,8 @@ export interface IOrganizerJuryCard {
     minScore?: number
     maxScore: number
     value: number | null
+    /** Доля в методике взвешенного расчёта (сумма по показателям ≈ 1); только при useCriteriaWeights */
+    weight?: number | null
   }[]
 }
 

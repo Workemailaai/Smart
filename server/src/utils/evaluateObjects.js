@@ -161,7 +161,7 @@ function resolveAverageWeightsWithFallback({ parametersNumber, filterConditions,
       averageWeights.length === parametersNumber &&
       averageWeights.every((weight) => Number.isFinite(weight) && weight > 0);
     if (hasValidWeights) {
-      return averageWeights;
+      return { averageWeights, usedAccuracy: accuracy };
     }
   }
 
@@ -185,7 +185,7 @@ function evaluateObjects({ grades, priorities, maxScale = 10 }) {
     filterConditions.push([sortedIndices[k], 1, sortedIndices[k + 1]]);
   }
 
-  const averageWeights = resolveAverageWeightsWithFallback({
+  const { averageWeights, usedAccuracy } = resolveAverageWeightsWithFallback({
     parametersNumber,
     filterConditions,
     maxScale
@@ -201,7 +201,7 @@ function evaluateObjects({ grades, priorities, maxScale = 10 }) {
     scores: normalizedGrades[i].map((g) => Math.round(g * weight * maxScale * 100) / 100)
   }));
 
-  return { indicators };
+  return { indicators, weightsGridStep: usedAccuracy };
 }
 
 module.exports = { evaluateObjects, getGradesWithWeights };

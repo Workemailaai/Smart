@@ -26,6 +26,8 @@ type EvaluateObjectsResult = {
     weight: number
     scores: number[]
   }>
+  /** Шаг сетки (accuracy), с которым подобраны веса */
+  weightsGridStep: number
 }
 
 // Базовый шаг расчета весов по методике
@@ -203,7 +205,7 @@ function resolveAverageWeightsWithFallback({
       averageWeights.length === parametersNumber &&
       averageWeights.every((weight) => Number.isFinite(weight) && weight > 0)
     if (hasValidWeights) {
-      return averageWeights
+      return { averageWeights, usedAccuracy: accuracy }
     }
   }
 
@@ -227,7 +229,7 @@ function evaluateObjects({ grades, priorities, maxScale = 10 }: EvaluateObjectsP
     filterConditions.push([sortedIndices[index], 1, sortedIndices[index + 1]])
   }
 
-  const averageWeights = resolveAverageWeightsWithFallback({
+  const { averageWeights, usedAccuracy } = resolveAverageWeightsWithFallback({
     parametersNumber,
     filterConditions,
     maxScale,
@@ -243,7 +245,7 @@ function evaluateObjects({ grades, priorities, maxScale = 10 }: EvaluateObjectsP
     scores: normalizedGrades[weightIndex].map((grade) => Math.round(grade * weight * maxScale * 100) / 100),
   }))
 
-  return { indicators }
+  return { indicators, weightsGridStep: usedAccuracy }
 }
 
 export { evaluateObjects, getGradesWithWeights }

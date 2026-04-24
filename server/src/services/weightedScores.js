@@ -34,7 +34,9 @@ function sumIndicatorScores(indicators, participantCount) {
 function weightedTotalsForJury({ criteriaSorted, participantsSorted, getRawScore }) {
   const n = criteriaSorted.length;
   const m = participantsSorted.length;
-  if (n === 0 || m === 0) return new Array(m).fill(0);
+  if (n === 0 || m === 0) {
+    return { totals: new Array(m).fill(0), weights: [], weightsGridStep: null };
+  }
 
   const grades = [];
   for (let i = 0; i < n; i++) {
@@ -52,8 +54,10 @@ function weightedTotalsForJury({ criteriaSorted, participantsSorted, getRawScore
   }
 
   const priorities = criteriaSorted.map((_, idx) => idx + 1);
-  const { indicators } = evaluateObjects({ grades, priorities, maxScale: 10 });
-  return sumIndicatorScores(indicators, m);
+  const { indicators, weightsGridStep } = evaluateObjects({ grades, priorities, maxScale: 10 });
+  const totals = sumIndicatorScores(indicators, m);
+  const weights = indicators.map((indicator) => indicator.weight);
+  return { totals, weights, weightsGridStep };
 }
 
 function sortCriteriaRows(criteria) {

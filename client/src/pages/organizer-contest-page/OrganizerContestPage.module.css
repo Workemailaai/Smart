@@ -346,7 +346,7 @@
 }
 
 .juryCard {
-  width: 368px;
+  width: 580px;
   padding: 16px;
   background: #fff;
   border-radius: 16px;
@@ -400,6 +400,69 @@
   display: flex;
   flex-direction: column;
   gap: 12px;
+}
+
+/* Сетка показателей с колонкой веса (методика взвешенного расчёта); только vh */
+.orgContestCriteriaGrid {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.orgContestCriteriaGrid__row {
+  display: grid;
+  grid-template-columns: 1fr minmax(20px, auto) minmax(50px, auto);
+  align-items: flex-start;
+  gap: 13px;
+  color: #0a0f15;
+  font-size: 19px;
+  line-height: 26px;
+}
+
+.orgContestCriteriaGrid__row--head {
+  opacity: 0.55;
+  font-weight: 500;
+  font-size: 17px;
+  line-height: 22px;
+}
+
+.orgContestCriteriaGrid__name {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.orgContestCriteriaGrid__weight {
+  text-align: right;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.orgContestCriteriaGrid__weightStep {
+  white-space: normal;
+  overflow-wrap: anywhere;
+  color: #00a99d;
+  font-size: 14px;
+  line-height: 22px;
+}
+
+.orgContestCriteriaGrid__score {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.orgContestCriteriaGrid__row--total {
+  align-items: center;
+  margin-top: 0.444vh;
+}
+
+.orgContestCriteriaGrid__scoreTotal {
+  margin: 0;
+  color: #00a99d;
+  font-size: 19px;
+  font-weight: 500;
+  line-height: 19px;
+  text-align: right;
+  white-space: nowrap;
 }
 
 .criterionRow {

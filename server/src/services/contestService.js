@@ -249,7 +249,7 @@ class ContestService {
       for (const s of myScores) {
         myScoreMap.set(`${s.participantId}_${s.criterionId}`, Number(s.value));
       }
-      const totals = weightedTotalsForJury({
+      const { totals } = weightedTotalsForJury({
         criteriaSorted,
         participantsSorted,
         getRawScore: (criterionId, participantId) =>
@@ -455,16 +455,26 @@ class ContestService {
     let participants;
     if (useWeights && contest.criteria.length > 0) {
       const perJuryTotals = {};
+      const perJuryWeightsGridStep = {};
+      const perJuryWeightByCriterionId = {};
       for (const jm of contest.juryMembers) {
         const criteriaSortedForJury = orderCriteriaForJury(contest.criteria, jm.criterionOrder);
-        perJuryTotals[jm.id] = weightedTotalsForJury({
+        const { totals, weights, weightsGridStep } = weightedTotalsForJury({
           criteriaSorted: criteriaSortedForJury,
           participantsSorted,
           getRawScore: (cId, pId) => scoreMap.get(`${jm.id}_${pId}_${cId}`)
         });
+        perJuryTotals[jm.id] = totals;
+        perJuryWeightsGridStep[jm.id] = weightsGridStep;
+        const weightByCriterionId = {};
+        for (let wi = 0; wi < criteriaSortedForJury.length; wi++) {
+          weightByCriterionId[criteriaSortedForJury[wi].id] = weights[wi] ?? null;
+        }
+        perJuryWeightByCriterionId[jm.id] = weightByCriterionId;
       }
       participants = participantsSorted.map((participant, idx) => {
         const juryCards = contest.juryMembers.map((juryMember) => {
+          const weightByCriterionId = perJuryWeightByCriterionId[juryMember.id] || {};
           const criteria = contest.criteria.map((criterion) => {
             const value =
               scoreMap.get(`${juryMember.id}_${participant.id}_${criterion.id}`) ?? null;
@@ -473,7 +483,8 @@ class ContestService {
               name: criterion.name,
               minScore: criterion.minScore ?? 0,
               maxScore: criterion.maxScore,
-              value
+              value,
+              weight: weightByCriterionId[criterion.id] ?? null
             };
           });
           const wt = perJuryTotals[juryMember.id][idx] ?? 0;
@@ -486,7 +497,8 @@ class ContestService {
             photoUrl: juryMember.photoUrl,
             comment: commentMap.get(`${juryMember.id}_${participant.id}`) || "",
             criteria,
-            total: wt
+            total: wt,
+            weightsGridStep: perJuryWeightsGridStep[juryMember.id] ?? null
           };
         });
         const vals = contest.juryMembers.map((jm) => perJuryTotals[jm.id][idx] ?? 0);
@@ -613,11 +625,12 @@ class ContestService {
       const perJuryTotals = {};
       for (const jm of contest.juryMembers) {
         const criteriaSortedForJury = orderCriteriaForJury(contest.criteria, jm.criterionOrder);
-        perJuryTotals[jm.id] = weightedTotalsForJury({
+        const { totals } = weightedTotalsForJury({
           criteriaSorted: criteriaSortedForJury,
           participantsSorted,
           getRawScore: (cId, pId) => scoreMap.get(`${jm.id}_${pId}_${cId}`)
         });
+        perJuryTotals[jm.id] = totals;
       }
       ranked = participantsSorted
         .map((participant, idx) => {

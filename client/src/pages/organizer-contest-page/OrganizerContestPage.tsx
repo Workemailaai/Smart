@@ -52,6 +52,7 @@ export const OrganizerContestPage = observer(() => {
     return () => organizerContestStore.reset()
   }, [numericContestId])
 
+  if (!userStore.isAuthCheckCompleted) return <p className={styles.infoText}>Проверка сессии...</p>
   if (!user) return <Navigate replace to="/" />
   if (user.role !== 'organizer') return <Navigate replace to="/cabinet/events" />
 

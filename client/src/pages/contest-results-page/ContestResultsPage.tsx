@@ -108,6 +108,13 @@ export const ContestResultsPage = observer(() => {
     }
   }, [view?.contest.coverImageUrl])
 
+  if (!userStore.isAuthCheckCompleted) {
+    return (
+      <section className={styles.page}>
+        <p className={styles.message}>Проверка сессии...</p>
+      </section>
+    )
+  }
   if (!user) return <Navigate replace to="/" />
   if (user.role !== 'organizer' && user.role !== 'jury') return <Navigate replace to="/cabinet/events" />
 

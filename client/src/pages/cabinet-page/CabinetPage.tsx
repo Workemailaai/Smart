@@ -114,6 +114,16 @@ export const CabinetPage = observer(({ section }: CabinetPageProps) => {
     }
   }, [])
 
+  if (!userStore.isAuthCheckCompleted) {
+    return (
+      <section className={styles.page}>
+        <div className={styles.content}>
+          <p className={styles.helperText}>Проверка сессии...</p>
+        </div>
+      </section>
+    )
+  }
+
   if (!user) {
     return <Navigate replace to="/" />
   }

@@ -5,6 +5,7 @@ import type { IUser, ISignUpData, ISignInData } from '../model/user.types'
 export class UserStore {
     user: IUser | null = null
     isLoading = false
+    isAuthCheckCompleted = false
     error: string | null = null
 
     constructor() {
@@ -53,9 +54,17 @@ export class UserStore {
             const response = await refreshTokens()
             runInAction(() => {
                 this.user = response.data.user
+                this.error = null
             })
         } catch (error) {
-            this.error = (error as Error).message
+            runInAction(() => {
+                this.error = (error as Error).message
+            })
+        } finally {
+            runInAction(() => {
+                this.isLoading = false
+                this.isAuthCheckCompleted = true
+            })
         }
     }
 }

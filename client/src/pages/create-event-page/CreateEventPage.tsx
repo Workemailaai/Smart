@@ -9,6 +9,16 @@ export const CreateEventPage = observer(function CreateEventPage() {
   const navigate = useNavigate()
   const user = userStore.user
 
+  if (!userStore.isAuthCheckCompleted) {
+    return (
+      <section className={styles.page}>
+        <div className={styles.content}>
+          <h2 className={styles.title}>Проверка сессии...</h2>
+        </div>
+      </section>
+    )
+  }
+
   if (!user) {
     return <Navigate replace to="/" />
   }

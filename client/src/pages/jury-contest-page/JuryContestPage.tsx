@@ -47,6 +47,7 @@ export const JuryContestPage = observer(() => {
   const [priorityDragOver, setPriorityDragOver] = useState<number | null>(null)
   const [isPriorityConfirmOpen, setIsPriorityConfirmOpen] = useState(false)
 
+  if (!userStore.isAuthCheckCompleted) return <p className={styles.infoText}>Проверка сессии...</p>
   if (!user) return <Navigate replace to="/" />
   if (user.role !== 'jury') return <Navigate replace to="/cabinet/events" />
 

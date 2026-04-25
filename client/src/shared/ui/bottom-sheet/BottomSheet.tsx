@@ -1,4 +1,4 @@
-import { type PointerEvent as ReactPointerEvent, type ReactNode, useEffect, useMemo, useRef, useState } from 'react'
+import { type PointerEvent as ReactPointerEvent, type ReactNode, type RefObject, useEffect, useMemo, useRef, useState } from 'react'
 import styles from './BottomSheet.module.css'
 
 type BottomSheetProps = {
@@ -7,6 +7,7 @@ type BottomSheetProps = {
   children: ReactNode
   contentClassName?: string
   closeThreshold?: number
+  contentRef?: RefObject<HTMLDivElement | null>
 }
 
 export function BottomSheet({
@@ -15,6 +16,7 @@ export function BottomSheet({
   children,
   contentClassName,
   closeThreshold = 120,
+  contentRef,
 }: BottomSheetProps) {
   const [offsetY, setOffsetY] = useState(0)
   const [isDragging, setIsDragging] = useState(false)
@@ -93,7 +95,9 @@ export function BottomSheet({
         >
           <span aria-hidden className={styles.handle} />
         </button>
-        <div className={`${styles.content} ${contentClassName ?? ''}`}>{children}</div>
+        <div ref={contentRef} className={`${styles.content} ${contentClassName ?? ''}`}>
+          {children}
+        </div>
       </section>
     </div>
   )

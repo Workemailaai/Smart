@@ -62,9 +62,14 @@ export const CabinetPage = observer(({ section }: CabinetPageProps) => {
   const scoreUpdateTimeoutIdRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const pendingScoreUpdateRef = useRef<{ participantId: number; criterionId: number; value: number } | null>(null)
   const templateCarouselReference = useRef<HTMLDivElement | null>(null)
+  const prioritySheetContentReference = useRef<HTMLDivElement | null>(null)
+  const prioritySaveButtonReference = useRef<HTMLButtonElement | null>(null)
+  const hasAutoScrolledPriorityReference = useRef(false)
   const juryContestIdParam = searchParams.get('juryContestId')
   const juryContestId = juryContestIdParam ? Number.parseInt(juryContestIdParam, 10) : Number.NaN
   const isJuryContestModalOpen = !Number.isNaN(juryContestId) && section === 'events' && !isOrganizer
+  const priorityDraftCount = juryContestStore.priorityDraftIds.length
+  const hasJuryContestView = Boolean(juryContestStore.view)
   const [canScrollTemplatesLeft, setCanScrollTemplatesLeft] = useState(false)
   const [canScrollTemplatesRight, setCanScrollTemplatesRight] = useState(false)
 
@@ -141,6 +146,44 @@ export const CabinetPage = observer(({ section }: CabinetPageProps) => {
       window.removeEventListener('resize', updateTemplateCarouselControls)
     }
   }, [isOrganizer, section])
+
+  useEffect(() => {
+    if (!user || !isJuryContestModalOpen || !isMobileViewport) {
+      hasAutoScrolledPriorityReference.current = false
+      return
+    }
+
+    const shouldShowPriorityStep = hasJuryContestView && juryContestStore.shouldShowCriteriaPriorityStep(user.id)
+    if (!shouldShowPriorityStep || priorityDraftCount <= 5) {
+      hasAutoScrolledPriorityReference.current = false
+      return
+    }
+
+    if (hasAutoScrolledPriorityReference.current) {
+      return
+    }
+
+    const contentElement = prioritySheetContentReference.current
+    const saveButtonElement = prioritySaveButtonReference.current
+    if (!contentElement || !saveButtonElement) {
+      return
+    }
+
+    requestAnimationFrame(() => {
+      const nextScrollTop = Math.max(
+        0,
+        saveButtonElement.offsetTop - contentElement.clientHeight + saveButtonElement.offsetHeight + 12,
+      )
+      contentElement.scrollTo({ top: nextScrollTop, behavior: 'auto' })
+      hasAutoScrolledPriorityReference.current = true
+    })
+  }, [
+    user,
+    isJuryContestModalOpen,
+    isMobileViewport,
+    hasJuryContestView,
+    priorityDraftCount,
+  ])
 
   if (!userStore.isAuthCheckCompleted) {
     return (
@@ -948,6 +991,7 @@ export const CabinetPage = observer(({ section }: CabinetPageProps) => {
           isOpen
           onClose={closeJuryContestModal}
           contentClassName={styles.juryPrioritySheetContent}
+          contentRef={prioritySheetContentReference}
         >
           {juryContestStore.isLoading ? <p className={styles.helperText}>Загрузка мероприятия...</p> : null}
           {juryContestStore.error ? <p className={styles.errorText}>{juryContestStore.error}</p> : null}
@@ -1025,6 +1069,7 @@ export const CabinetPage = observer(({ section }: CabinetPageProps) => {
                 })}
               </div>
               <button
+                ref={prioritySaveButtonReference}
                 className={styles.juryPrioritySaveButton}
                 disabled={juryContestStore.isSavingPriorityOrder}
                 type="button"

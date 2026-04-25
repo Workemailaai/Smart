@@ -257,17 +257,16 @@
 
 @media (max-width: 450px) {
   .page {
-    margin-top: calc(-1 * var(--mobile-statusbar-offset));
-    min-height: calc(100dvh + var(--mobile-statusbar-offset));
+    min-height: 100svh;
     display: flex;
-    padding: var(--mobile-statusbar-offset) 0 0;
+    padding: max(16px, env(safe-area-inset-top, 0px)) 0 0;
     position: relative;
     overflow: hidden;
   }
 
   .panel {
     width: 100%;
-    min-height: calc(100dvh + var(--mobile-statusbar-offset));
+    min-height: 100svh;
     border-radius: 0;
     padding: 0;
     background: transparent;

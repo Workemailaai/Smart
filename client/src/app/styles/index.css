@@ -4,10 +4,6 @@
   box-sizing: inherit;
 }
 
-:root {
-  --mobile-statusbar-offset: 62px;
-}
-
 body,
 body *,
 body *::before,
@@ -36,9 +32,3 @@ li {
   list-style: none;  
 }
 
-@media (max-width: 450px) {
-  body {
-    padding-top: var(--mobile-statusbar-offset);
-    background: #f0f1f5;
-  }
-}

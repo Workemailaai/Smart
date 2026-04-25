@@ -58,6 +58,7 @@ export const CabinetPage = observer(({ section }: CabinetPageProps) => {
   const [touchDragFrom, setTouchDragFrom] = useState<number | null>(null)
   const [touchDragOver, setTouchDragOver] = useState<number | null>(null)
   const [isMobilePriorityConfirmOpen, setIsMobilePriorityConfirmOpen] = useState(false)
+  const [isMobileLeaveConfirmOpen, setIsMobileLeaveConfirmOpen] = useState(false)
   const touchPointerIdRef = useRef<number | null>(null)
   const scoreUpdateTimeoutIdRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const pendingScoreUpdateRef = useRef<{ participantId: number; criterionId: number; value: number } | null>(null)
@@ -270,6 +271,8 @@ export const CabinetPage = observer(({ section }: CabinetPageProps) => {
   const isScoringStepVisible = isJuryContestModalOpen && Boolean(juryContestStore.view) && !isPriorityStepVisible
   const isScoreEditingLocked = juryContestStore.isScoreEditingLocked()
   const canStartRevote = juryContestStore.canRevote()
+  const hasUnsavedEvaluationDraft = juryContestStore.hasUnsavedEvaluationDraft()
+  const shouldWarnOnMobileModalClose = isScoringStepVisible && hasUnsavedEvaluationDraft
 
   const onLogout = async () => {
     await userStore.logout()
@@ -316,7 +319,16 @@ export const CabinetPage = observer(({ section }: CabinetPageProps) => {
     setTouchDragFrom(null)
     setTouchDragOver(null)
     setIsMobilePriorityConfirmOpen(false)
+    setIsMobileLeaveConfirmOpen(false)
     juryContestStore.reset()
+  }
+
+  const onRequestCloseJuryContestModal = () => {
+    if (shouldWarnOnMobileModalClose) {
+      setIsMobileLeaveConfirmOpen(true)
+      return
+    }
+    closeJuryContestModal()
   }
 
   const openJuryContestModal = (contestId: number) => {
@@ -398,6 +410,19 @@ export const CabinetPage = observer(({ section }: CabinetPageProps) => {
     closeJuryContestModal()
     navigate(`/cabinet/events/${juryContestId}/results`)
   }
+
+  useEffect(() => {
+    const onBeforeUnload = (event: BeforeUnloadEvent) => {
+      if (!isJuryContestModalOpen || !shouldWarnOnMobileModalClose) return
+      event.preventDefault()
+      event.returnValue = ''
+    }
+
+    window.addEventListener('beforeunload', onBeforeUnload)
+    return () => {
+      window.removeEventListener('beforeunload', onBeforeUnload)
+    }
+  }, [isJuryContestModalOpen, shouldWarnOnMobileModalClose])
 
   return (
     <section
@@ -989,7 +1014,7 @@ export const CabinetPage = observer(({ section }: CabinetPageProps) => {
       {isJuryContestModalOpen && isMobileViewport ? (
         <BottomSheet
           isOpen
-          onClose={closeJuryContestModal}
+          onClose={onRequestCloseJuryContestModal}
           contentClassName={styles.juryPrioritySheetContent}
           contentRef={prioritySheetContentReference}
         >
@@ -1295,6 +1320,36 @@ export const CabinetPage = observer(({ section }: CabinetPageProps) => {
                   </button>
                 </>
               )}
+
+              {isMobileLeaveConfirmOpen ? (
+                <div className={styles.juryPriorityConfirmOverlay} onClick={() => setIsMobileLeaveConfirmOpen(false)}>
+                  <div className={styles.juryPriorityConfirmModal} onClick={(event) => event.stopPropagation()}>
+                    <div className={styles.juryPriorityConfirmBody}>
+                      <div className={styles.juryPriorityConfirmTextGroup}>
+                        <div className={styles.juryPriorityConfirmTitle}>Вы уверены, что хотите завершить оценку мероприятия?</div>
+                      </div>
+                      <div className={styles.juryPriorityConfirmActions}>
+                        <button
+                          type="button"
+                          className={styles.juryPriorityConfirmSaveButton}
+                          disabled={juryContestStore.isSubmitting}
+                          onClick={closeJuryContestModal}
+                        >
+                          Завершить
+                        </button>
+                        <button
+                          type="button"
+                          className={styles.juryPriorityConfirmStayButton}
+                          disabled={juryContestStore.isSubmitting}
+                          onClick={() => setIsMobileLeaveConfirmOpen(false)}
+                        >
+                          Остаться
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ) : null}
             </div>
           ) : null}
         </BottomSheet>

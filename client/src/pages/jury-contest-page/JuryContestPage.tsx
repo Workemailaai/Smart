@@ -46,6 +46,7 @@ export const JuryContestPage = observer(() => {
   const [priorityDragFrom, setPriorityDragFrom] = useState<number | null>(null)
   const [priorityDragOver, setPriorityDragOver] = useState<number | null>(null)
   const [isPriorityConfirmOpen, setIsPriorityConfirmOpen] = useState(false)
+  const [isLeaveConfirmOpen, setIsLeaveConfirmOpen] = useState(false)
 
   if (!userStore.isAuthCheckCompleted) return <p className={styles.infoText}>Проверка сессии...</p>
   if (!user) return <Navigate replace to="/" />
@@ -59,6 +60,21 @@ export const JuryContestPage = observer(() => {
   )
   const isScoreEditingLocked = juryContestStore.isScoreEditingLocked()
   const canStartRevote = juryContestStore.canRevote()
+  const hasUnsavedEvaluationDraft = juryContestStore.hasUnsavedEvaluationDraft()
+  const shouldWarnOnExit = !showCriteriaPriorityStep && hasUnsavedEvaluationDraft
+
+  useEffect(() => {
+    const onBeforeUnload = (event: BeforeUnloadEvent) => {
+      if (!shouldWarnOnExit) return
+      event.preventDefault()
+      event.returnValue = ''
+    }
+
+    window.addEventListener('beforeunload', onBeforeUnload)
+    return () => {
+      window.removeEventListener('beforeunload', onBeforeUnload)
+    }
+  }, [shouldWarnOnExit])
 
   const onLogout = async () => {
     await userStore.logout()
@@ -86,6 +102,14 @@ export const JuryContestPage = observer(() => {
     if (!juryContestStore.error) {
       setIsPriorityConfirmOpen(false)
     }
+  }
+
+  const onRequestLeaveToEvents = () => {
+    if (shouldWarnOnExit) {
+      setIsLeaveConfirmOpen(true)
+      return
+    }
+    navigate('/cabinet/events')
   }
 
   const priorityStepContent =
@@ -157,7 +181,7 @@ export const JuryContestPage = observer(() => {
             aria-label="Назад к списку мероприятий"
             className={styles.priorityBackCircle}
             type="button"
-            onClick={() => navigate('/cabinet/events')}
+            onClick={onRequestLeaveToEvents}
           >
             ←
           </button>
@@ -330,7 +354,7 @@ export const JuryContestPage = observer(() => {
               </div>
 
               <div className={styles.actions}>
-                <button className={styles.backButton} type="button" onClick={() => navigate('/cabinet/events')}>
+                <button className={styles.backButton} type="button" onClick={onRequestLeaveToEvents}>
                   ←
                 </button>
                 <div className={styles.actionsRight}>
@@ -368,6 +392,36 @@ export const JuryContestPage = observer(() => {
                   )}
                 </div>
               </div>
+
+              {isLeaveConfirmOpen ? (
+                <div className={styles.priorityConfirmOverlay} onClick={() => setIsLeaveConfirmOpen(false)}>
+                  <div className={styles.priorityConfirmModal} onClick={(event) => event.stopPropagation()}>
+                    <div className={styles.priorityConfirmBody}>
+                      <div className={styles.priorityConfirmTextGroup}>
+                        <div className={styles.priorityConfirmTitle}>Вы уверены, что хотите завершить оценку мероприятия?</div>
+                      </div>
+                      <div className={styles.priorityConfirmActions}>
+                        <button
+                          type="button"
+                          className={styles.priorityConfirmAcceptButton}
+                          disabled={juryContestStore.isSubmitting}
+                          onClick={() => navigate('/cabinet/events')}
+                        >
+                          Завершить
+                        </button>
+                        <button
+                          type="button"
+                          className={styles.priorityConfirmStayButton}
+                          disabled={juryContestStore.isSubmitting}
+                          onClick={() => setIsLeaveConfirmOpen(false)}
+                        >
+                          Остаться
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ) : null}
             </>
           ) : null}
         </div>

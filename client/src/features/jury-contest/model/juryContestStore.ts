@@ -185,6 +185,44 @@ class JuryContestStore {
     return this.draftComments.get(participantId) ?? ''
   }
 
+  hasUnsavedEvaluationDraft() {
+    if (!this.view) return false
+    if (this.view.contest.status === 'completed') return false
+    if (this.view.mySubmitted && !this.isRevoteMode) return false
+
+    const serverScores = new Map<string, number>()
+    this.view.myScores.forEach((scoreItem) => {
+      serverScores.set(this.getKey(scoreItem.participantId, scoreItem.criterionId), scoreItem.value)
+    })
+
+    if (this.draftScores.size !== serverScores.size) {
+      return true
+    }
+
+    for (const [scoreKey, scoreValue] of this.draftScores.entries()) {
+      if (serverScores.get(scoreKey) !== scoreValue) {
+        return true
+      }
+    }
+
+    const serverComments = new Map<number, string>()
+    this.view.myComments.forEach((commentItem) => {
+      serverComments.set(commentItem.participantId, commentItem.comment || '')
+    })
+
+    if (this.draftComments.size !== serverComments.size) {
+      return true
+    }
+
+    for (const [participantId, commentValue] of this.draftComments.entries()) {
+      if ((serverComments.get(participantId) ?? '') !== commentValue) {
+        return true
+      }
+    }
+
+    return false
+  }
+
   canRevote() {
     if (!this.view) return false
     return this.view.mySubmitted && this.view.contest.status !== 'completed' && !this.isRevoteMode

@@ -21,6 +21,7 @@ type CabinetPageProps = {
 
 const COMMENT_LIMIT = 500
 const SCORE_UPDATE_DEBOUNCE_MS = 40
+const TEMPLATE_CAROUSEL_SCROLL_STEP = 292
 
 function getInitials(name: string) {
   return name
@@ -60,9 +61,12 @@ export const CabinetPage = observer(({ section }: CabinetPageProps) => {
   const touchPointerIdRef = useRef<number | null>(null)
   const scoreUpdateTimeoutIdRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const pendingScoreUpdateRef = useRef<{ participantId: number; criterionId: number; value: number } | null>(null)
+  const templateCarouselReference = useRef<HTMLDivElement | null>(null)
   const juryContestIdParam = searchParams.get('juryContestId')
   const juryContestId = juryContestIdParam ? Number.parseInt(juryContestIdParam, 10) : Number.NaN
   const isJuryContestModalOpen = !Number.isNaN(juryContestId) && section === 'events' && !isOrganizer
+  const [canScrollTemplatesLeft, setCanScrollTemplatesLeft] = useState(false)
+  const [canScrollTemplatesRight, setCanScrollTemplatesRight] = useState(false)
 
   useEffect(() => {
     void contestStore.fetchContests()
@@ -113,6 +117,30 @@ export const CabinetPage = observer(({ section }: CabinetPageProps) => {
       }
     }
   }, [])
+
+  useEffect(() => {
+    const carouselElement = templateCarouselReference.current
+    if (!carouselElement || !isOrganizer || section !== 'constructor') {
+      setCanScrollTemplatesLeft(false)
+      setCanScrollTemplatesRight(false)
+      return
+    }
+
+    const updateTemplateCarouselControls = () => {
+      const maxScrollLeft = carouselElement.scrollWidth - carouselElement.clientWidth
+      setCanScrollTemplatesLeft(carouselElement.scrollLeft > 2)
+      setCanScrollTemplatesRight(maxScrollLeft - carouselElement.scrollLeft > 2)
+    }
+
+    updateTemplateCarouselControls()
+    carouselElement.addEventListener('scroll', updateTemplateCarouselControls, { passive: true })
+    window.addEventListener('resize', updateTemplateCarouselControls)
+
+    return () => {
+      carouselElement.removeEventListener('scroll', updateTemplateCarouselControls)
+      window.removeEventListener('resize', updateTemplateCarouselControls)
+    }
+  }, [isOrganizer, section])
 
   if (!userStore.isAuthCheckCompleted) {
     return (
@@ -165,6 +193,8 @@ export const CabinetPage = observer(({ section }: CabinetPageProps) => {
     ratedContests.length === 0 &&
     completedContests.length === 0
   const templates = templateStore.templates
+  const isTemplatesLoading = templateStore.isLoading
+  const templatesError = templateStore.error
   const titleByType = new Map<string, string>()
   contestTypeOptions.forEach((option) => {
     titleByType.set(option.id, option.label)
@@ -220,6 +250,20 @@ export const CabinetPage = observer(({ section }: CabinetPageProps) => {
       return
     }
     await templateStore.deleteTemplate(templateId)
+  }
+
+  const scrollTemplatesLeft = () => {
+    templateCarouselReference.current?.scrollBy({
+      left: -TEMPLATE_CAROUSEL_SCROLL_STEP,
+      behavior: 'smooth',
+    })
+  }
+
+  const scrollTemplatesRight = () => {
+    templateCarouselReference.current?.scrollBy({
+      left: TEMPLATE_CAROUSEL_SCROLL_STEP,
+      behavior: 'smooth',
+    })
   }
 
   const closeJuryContestModal = () => {
@@ -382,8 +426,30 @@ export const CabinetPage = observer(({ section }: CabinetPageProps) => {
               <h3 className={styles.constructorTitle}>Создать мероприятие</h3>
             </div>
             <div className={styles.constructorTemplates}>
-              <p className={styles.templatesTitle}>Шаблоны</p>
-              <div className={styles.templateGrid}>
+              <div className={styles.templatesHeader}>
+                <p className={styles.templatesTitle}>Шаблоны</p>
+                <div className={styles.templateCarouselActions}>
+                  <button
+                    type="button"
+                    className={styles.templateCarouselButton}
+                    onClick={scrollTemplatesLeft}
+                    disabled={!canScrollTemplatesLeft}
+                    aria-label="Прокрутить шаблоны влево"
+                  >
+                    ←
+                  </button>
+                  <button
+                    type="button"
+                    className={styles.templateCarouselButton}
+                    onClick={scrollTemplatesRight}
+                    disabled={!canScrollTemplatesRight}
+                    aria-label="Прокрутить шаблоны вправо"
+                  >
+                    →
+                  </button>
+                </div>
+              </div>
+              <div className={styles.templateCarouselRow}>
                 <button
                   className={styles.newTemplate}
                   type="button"
@@ -395,26 +461,30 @@ export const CabinetPage = observer(({ section }: CabinetPageProps) => {
                     <span className={styles.newTemplatePlusV} />
                   </span>
                 </button>
-                {templateStore.isLoading ? <p className={styles.helperText}>Загрузка шаблонов...</p> : null}
-                {templateStore.error ? <p className={styles.errorText}>{templateStore.error}</p> : null}
-                {!templateStore.isLoading && !templateStore.error
-                  ? templates.map((template) => (
-                      <div
-                        key={template.id}
-                        className={styles.templateCardBtn}
-                        role="button"
-                        tabIndex={0}
-                        onClick={() => onTemplateOpen(template.id)}
-                        onKeyDown={(event) => onTemplateCardKeyDown(event, template.id)}
-                      >
-                        <TemplateCard
-                          template={template}
-                          isDeleting={templateStore.deletingTemplateId === template.id}
-                          onDelete={() => void onTemplateDelete(template.id, template.name)}
-                        />
-                      </div>
-                    ))
-                  : null}
+                <div className={styles.templateGridWrap}>
+                  <div className={styles.templateGrid} ref={templateCarouselReference}>
+                    {isTemplatesLoading ? <p className={styles.helperText}>Загрузка шаблонов...</p> : null}
+                    {templatesError ? <p className={styles.errorText}>{templatesError}</p> : null}
+                    {!isTemplatesLoading && !templatesError
+                      ? templates.map((template) => (
+                          <div
+                            key={template.id}
+                            className={styles.templateCardBtn}
+                            role="button"
+                            tabIndex={0}
+                            onClick={() => onTemplateOpen(template.id)}
+                            onKeyDown={(event) => onTemplateCardKeyDown(event, template.id)}
+                          >
+                            <TemplateCard
+                              template={template}
+                              isDeleting={templateStore.deletingTemplateId === template.id}
+                              onDelete={() => void onTemplateDelete(template.id, template.name)}
+                            />
+                          </div>
+                        ))
+                      : null}
+                  </div>
+                </div>
               </div>
             </div>
           </div>

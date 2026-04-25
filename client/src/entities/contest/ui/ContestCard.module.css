@@ -13,7 +13,7 @@
 }
 
 .cardWithOrganizerActions {
-  grid-template-columns: 96px 380px 160px 260px 160px minmax(0, 1fr);
+  grid-template-columns: 96px minmax(220px, 1fr) 184px 276px 160px minmax(0, 1fr);
 }
 
 .cardClickable {
@@ -267,7 +267,7 @@
   }
 
   .cardWithOrganizerActions {
-    grid-template-columns: 84px 300px 150px 220px 130px minmax(0, 1fr);
+    grid-template-columns: 84px minmax(200px, 1fr) 150px 220px 130px minmax(0, 1fr);
   }
 
   .coverImage,

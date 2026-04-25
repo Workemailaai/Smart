@@ -574,7 +574,7 @@ export const CabinetPage = observer(({ section }: CabinetPageProps) => {
                     </div>
                   </div>
                   <div className={styles.eventsBody}>
-                    <div className={`${styles.tableHeader} ${styles.tableHeaderWithAction}`}>
+                    <div className={styles.tableHeader}>
                       <span className={styles.tableHeaderCover}>Обложка</span>
                       <span>Название конкурса</span>
                       <span>Дата</span>
@@ -775,7 +775,7 @@ export const CabinetPage = observer(({ section }: CabinetPageProps) => {
                     </div>
                   </div>
                   <div className={styles.eventsBody}>
-                    <div className={styles.tableHeader}>
+                    <div className={`${styles.tableHeader} ${styles.tableHeaderWithAction}`}>
                       <span className={styles.tableHeaderCover}>Обложка</span>
                       <span>Название конкурса</span>
                       <span>Дата</span>

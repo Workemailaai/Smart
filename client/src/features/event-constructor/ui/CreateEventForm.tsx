@@ -94,6 +94,8 @@ export const CreateEventForm = observer(function CreateEventForm() {
   )
   /** Черновик названия для следующей строки показателя (добавление только после ввода + галка) */
   const [newCriterionDraftName, setNewCriterionDraftName] = useState('')
+  const [isUnsavedCriterionConfirmOpen, setIsUnsavedCriterionConfirmOpen] = useState(false)
+  const [pendingUnsafeAction, setPendingUnsafeAction] = useState<'create' | 'saveTemplate' | null>(null)
   /** DnD: индекс перетаскиваемой строки и подсветка цели */
   const [criterionDragFrom, setCriterionDragFrom] = useState<number | null>(null)
   const [criterionDragOver, setCriterionDragOver] = useState<number | null>(null)
@@ -281,6 +283,38 @@ export const CreateEventForm = observer(function CreateEventForm() {
     } finally {
       store.isSavingTemplate = false
     }
+  }
+
+  const hasUnsavedCriterionDraft = Boolean(newCriterionDraftName.trim())
+
+  const runWithUnsavedCriterionGuard = (action: 'create' | 'saveTemplate') => {
+    if (hasUnsavedCriterionDraft) {
+      setPendingUnsafeAction(action)
+      setIsUnsavedCriterionConfirmOpen(true)
+      return
+    }
+
+    if (action === 'create') {
+      void handleCreate()
+      return
+    }
+
+    void handleSaveTemplate()
+  }
+
+  const onConfirmUnsafeAction = () => {
+    if (pendingUnsafeAction === 'create') {
+      void handleCreate()
+    } else if (pendingUnsafeAction === 'saveTemplate') {
+      void handleSaveTemplate()
+    }
+    setIsUnsavedCriterionConfirmOpen(false)
+    setPendingUnsafeAction(null)
+  }
+
+  const onStayInConstructor = () => {
+    setIsUnsavedCriterionConfirmOpen(false)
+    setPendingUnsafeAction(null)
   }
 
   return (
@@ -681,7 +715,7 @@ export const CreateEventForm = observer(function CreateEventForm() {
         <button
           className={styles.btnSecondary}
           disabled={store.isSavingTemplate}
-          onClick={() => void handleSaveTemplate()}
+          onClick={() => runWithUnsavedCriterionGuard('saveTemplate')}
           type="button"
         >
           Сохранить как шаблон
@@ -689,12 +723,40 @@ export const CreateEventForm = observer(function CreateEventForm() {
         <button
           className={styles.btnPrimary}
           disabled={store.isSubmitting}
-          onClick={() => void handleCreate()}
+          onClick={() => runWithUnsavedCriterionGuard('create')}
           type="button"
         >
           {store.isSubmitting ? 'Создание…' : 'Создать'}
         </button>
       </div>
+
+      {isUnsavedCriterionConfirmOpen ? (
+        <div className={styles.unsavedCriterionConfirmOverlay} onClick={onStayInConstructor}>
+          <div className={styles.unsavedCriterionConfirmModal} onClick={(event) => event.stopPropagation()}>
+            <div className={styles.unsavedCriterionConfirmBody}>
+              <div className={styles.unsavedCriterionConfirmTextGroup}>
+                <div className={styles.unsavedCriterionConfirmTitle}>Вы не сохранили показатель/критерий</div>
+              </div>
+              <div className={styles.unsavedCriterionConfirmActions}>
+                <button
+                  type="button"
+                  className={styles.unsavedCriterionConfirmProceedButton}
+                  onClick={onConfirmUnsafeAction}
+                >
+                  {pendingUnsafeAction === 'saveTemplate' ? 'Всё равно сохранить шаблон' : 'Всё равно создать мероприятие'}
+                </button>
+                <button
+                  type="button"
+                  className={styles.unsavedCriterionConfirmStayButton}
+                  onClick={onStayInConstructor}
+                >
+                  Остаться
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : null}
 
       {participantModalOpen ? (
         <ParticipantProfileModal

@@ -911,3 +911,83 @@
   font-size: 16px;
   margin-top: 8px;
 }
+
+.unsavedCriterionConfirmOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 2300;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: rgba(10, 15, 21, 0.45);
+  backdrop-filter: blur(8px);
+}
+
+.unsavedCriterionConfirmModal {
+  width: min(568px, calc(100vw - 32px));
+  padding: 24px;
+  background: #fff;
+  border-radius: 28px;
+}
+
+.unsavedCriterionConfirmBody {
+  width: 100%;
+  min-height: 220px;
+  border-radius: 24px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 24px;
+}
+
+.unsavedCriterionConfirmTextGroup {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.unsavedCriterionConfirmTitle {
+  text-align: center;
+  color: #0a0f15;
+  font-size: 26px;
+  font-family: 'Golos Text', 'Geist', 'Segoe UI', sans-serif;
+  font-weight: 500;
+  line-height: 30px;
+}
+
+.unsavedCriterionConfirmActions {
+  width: min(420px, 100%);
+  display: inline-flex;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.unsavedCriterionConfirmProceedButton,
+.unsavedCriterionConfirmStayButton {
+  flex: 1 1 0;
+  min-height: 48px;
+  border: none;
+  border-radius: 40px;
+  padding: 12px 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 20px;
+  text-align: center;
+}
+
+.unsavedCriterionConfirmProceedButton {
+  background: #e0e5eb;
+  color: #0a0f15;
+}
+
+.unsavedCriterionConfirmStayButton {
+  background: #ff383c;
+  color: #fff;
+}

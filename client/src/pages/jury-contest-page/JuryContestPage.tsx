@@ -48,12 +48,7 @@ export const JuryContestPage = observer(() => {
   const [isPriorityConfirmOpen, setIsPriorityConfirmOpen] = useState(false)
   const [isLeaveConfirmOpen, setIsLeaveConfirmOpen] = useState(false)
 
-  if (!userStore.isAuthCheckCompleted) return <p className={styles.infoText}>Проверка сессии...</p>
-  if (!user) return <Navigate replace to="/" />
-  if (user.role !== 'jury') return <Navigate replace to="/cabinet/events" />
-
   const view = juryContestStore.view
-  const userName = user.fullName || 'Пользователь'
   const isCompletedContest = view?.contest.status === 'completed'
   const showCriteriaPriorityStep = Boolean(
     view && user && !isCompletedContest && juryContestStore.shouldShowCriteriaPriorityStep(user.id),
@@ -61,7 +56,7 @@ export const JuryContestPage = observer(() => {
   const isScoreEditingLocked = juryContestStore.isScoreEditingLocked()
   const canStartRevote = juryContestStore.canRevote()
   const hasUnsavedEvaluationDraft = juryContestStore.hasUnsavedEvaluationDraft()
-  const shouldWarnOnExit = !showCriteriaPriorityStep && hasUnsavedEvaluationDraft
+  const shouldWarnOnExit = Boolean(user && !showCriteriaPriorityStep && hasUnsavedEvaluationDraft)
 
   useEffect(() => {
     const onBeforeUnload = (event: BeforeUnloadEvent) => {
@@ -75,6 +70,12 @@ export const JuryContestPage = observer(() => {
       window.removeEventListener('beforeunload', onBeforeUnload)
     }
   }, [shouldWarnOnExit])
+
+  if (!userStore.isAuthCheckCompleted) return <p className={styles.infoText}>Проверка сессии...</p>
+  if (!user) return <Navigate replace to="/" />
+  if (user.role !== 'jury') return <Navigate replace to="/cabinet/events" />
+
+  const userName = user.fullName || 'Пользователь'
 
   const onLogout = async () => {
     await userStore.logout()

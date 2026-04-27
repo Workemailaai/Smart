@@ -186,6 +186,29 @@ export const CabinetPage = observer(({ section }: CabinetPageProps) => {
     priorityDraftCount,
   ])
 
+  const isPriorityStepVisible =
+    isJuryContestModalOpen &&
+    Boolean(user && juryContestStore.view && juryContestStore.shouldShowCriteriaPriorityStep(user.id))
+  const isCompletedContest = juryContestStore.view?.contest.status === 'completed'
+  const isScoringStepVisible = isJuryContestModalOpen && Boolean(juryContestStore.view) && !isPriorityStepVisible
+  const isScoreEditingLocked = juryContestStore.isScoreEditingLocked()
+  const canStartRevote = juryContestStore.canRevote()
+  const hasUnsavedEvaluationDraft = juryContestStore.hasUnsavedEvaluationDraft()
+  const shouldWarnOnMobileModalClose = isScoringStepVisible && hasUnsavedEvaluationDraft
+
+  useEffect(() => {
+    const onBeforeUnload = (event: BeforeUnloadEvent) => {
+      if (!isJuryContestModalOpen || !shouldWarnOnMobileModalClose) return
+      event.preventDefault()
+      event.returnValue = ''
+    }
+
+    window.addEventListener('beforeunload', onBeforeUnload)
+    return () => {
+      window.removeEventListener('beforeunload', onBeforeUnload)
+    }
+  }, [isJuryContestModalOpen, shouldWarnOnMobileModalClose])
+
   if (!userStore.isAuthCheckCompleted) {
     return (
       <section className={styles.page}>
@@ -264,15 +287,6 @@ export const CabinetPage = observer(({ section }: CabinetPageProps) => {
   const filteredPendingContests = filterContestsByType(pendingContests, pendingFilterType)
   const filteredRatedContests = filterContestsByType(ratedContests, ratedFilterType)
   const filteredCompletedContests = filterContestsByType(completedContests, completedFilterType)
-  const isPriorityStepVisible =
-    isJuryContestModalOpen &&
-    Boolean(user && juryContestStore.view && juryContestStore.shouldShowCriteriaPriorityStep(user.id))
-  const isCompletedContest = juryContestStore.view?.contest.status === 'completed'
-  const isScoringStepVisible = isJuryContestModalOpen && Boolean(juryContestStore.view) && !isPriorityStepVisible
-  const isScoreEditingLocked = juryContestStore.isScoreEditingLocked()
-  const canStartRevote = juryContestStore.canRevote()
-  const hasUnsavedEvaluationDraft = juryContestStore.hasUnsavedEvaluationDraft()
-  const shouldWarnOnMobileModalClose = isScoringStepVisible && hasUnsavedEvaluationDraft
 
   const onLogout = async () => {
     await userStore.logout()
@@ -410,19 +424,6 @@ export const CabinetPage = observer(({ section }: CabinetPageProps) => {
     closeJuryContestModal()
     navigate(`/cabinet/events/${juryContestId}/results`)
   }
-
-  useEffect(() => {
-    const onBeforeUnload = (event: BeforeUnloadEvent) => {
-      if (!isJuryContestModalOpen || !shouldWarnOnMobileModalClose) return
-      event.preventDefault()
-      event.returnValue = ''
-    }
-
-    window.addEventListener('beforeunload', onBeforeUnload)
-    return () => {
-      window.removeEventListener('beforeunload', onBeforeUnload)
-    }
-  }, [isJuryContestModalOpen, shouldWarnOnMobileModalClose])
 
   return (
     <section

@@ -217,8 +217,9 @@ function resolveAverageWeightsWithFallback({
 
 /**
  * Ограничения на веса по позициям в упорядоченном списке приоритетов.
- * При 6+ показателях: позиции 1–3 и 4–5 — равные веса внутри группы, ступени между группами и далее строго по одному.
- * Иначе — цепочка строгих неравенств между соседними позициями (прежняя методика).
+ * При 6+ показателях: позиции 1–3 — равные (максимальные), позиция 4 — отдельная,
+ * позиции 5–6 — равные (ниже 4), далее строго по одному.
+ * При 5 и менее показателях — цепочка строгих неравенств между соседними позициями.
  */
 function buildWeightFilterConditionsFromSortedIndices(sortedIndices: number[]): FilterCondition[] {
   // число показателей в порядке убывания значимости (после сортировки по priority)
@@ -228,7 +229,7 @@ function buildWeightFilterConditionsFromSortedIndices(sortedIndices: number[]): 
   if (orderedCount < 2) {
     return conditions
   }
-  // группировка позиций 1–3 и 4–5 только при шести и более показателях
+  // группировка позиций применяется только при шести и более показателях
   const useGroupedTiers = orderedCount >= 6
   if (!useGroupedTiers) {
     for (let rankIndex = 0; rankIndex < orderedCount - 1; rankIndex++) {
@@ -236,18 +237,20 @@ function buildWeightFilterConditionsFromSortedIndices(sortedIndices: number[]): 
     }
     return conditions
   }
-  // индексы строк матрицы оценок для позиций 1–3 (одинаковый вес)
+  // индексы строк матрицы оценок для позиций 1–3 (одинаковый вес, максимальный приоритет)
   const topFirst = sortedIndices[0]
   const topSecond = sortedIndices[1]
   const topThird = sortedIndices[2]
-  // индексы для позиций 4–5 (одинаковый вес, ниже первой тройки)
-  const midFirst = sortedIndices[3]
-  const midSecond = sortedIndices[4]
+  // позиция 4 — отдельный вес ниже первой тройки
+  const fourthRank = sortedIndices[3]
+  // индексы для позиций 5–6 (одинаковый вес, ниже позиции 4)
+  const fifthRank = sortedIndices[4]
+  const sixthRank = sortedIndices[5]
   conditions.push([topFirst, 5, topSecond])
   conditions.push([topSecond, 5, topThird])
-  conditions.push([midFirst, 5, midSecond])
-  conditions.push([topFirst, 1, midFirst])
-  conditions.push([midFirst, 1, sortedIndices[5]])
+  conditions.push([fifthRank, 5, sixthRank])
+  conditions.push([topFirst, 1, fourthRank])
+  conditions.push([fourthRank, 1, fifthRank])
   for (let rankIndex = 5; rankIndex < orderedCount - 1; rankIndex++) {
     conditions.push([sortedIndices[rankIndex], 1, sortedIndices[rankIndex + 1]])
   }

@@ -1411,11 +1411,11 @@
 .juryScoreSliderTrackWrap {
   position: relative;
   flex: 1;
-  height: 36px;
+  height: 30px;
   display: flex;
   align-items: center;
   border-radius: 40px;
-  touch-action: none;
+  touch-action: pan-y;
   -webkit-tap-highlight-color: transparent;
 }
 
@@ -1437,7 +1437,7 @@
   position: absolute;
   inset: 0;
   width: 100%;
-  height: 36px;
+  height: 30px;
   opacity: 0;
   -webkit-appearance: none;
   appearance: none;

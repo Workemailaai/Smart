@@ -22,6 +22,7 @@ type CabinetPageProps = {
 const COMMENT_LIMIT = 500
 const SCORE_UPDATE_DEBOUNCE_MS = 40
 const TEMPLATE_CAROUSEL_SCROLL_STEP = 292
+const HORIZONTAL_SCORE_SWIPE_THRESHOLD_PX = 10
 
 function getInitials(name: string) {
   return name
@@ -62,6 +63,19 @@ export const CabinetPage = observer(({ section }: CabinetPageProps) => {
   const touchPointerIdRef = useRef<number | null>(null)
   const scoreUpdateTimeoutIdRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const pendingScoreUpdateRef = useRef<{ participantId: number; criterionId: number; value: number } | null>(null)
+  const scoreSliderPointerStateRef = useRef<{
+    pointerId: number | null
+    startX: number
+    startY: number
+    isHorizontalSwipeLocked: boolean
+    isVerticalScrollLocked: boolean
+  }>({
+    pointerId: null,
+    startX: 0,
+    startY: 0,
+    isHorizontalSwipeLocked: false,
+    isVerticalScrollLocked: false,
+  })
   const templateCarouselReference = useRef<HTMLDivElement | null>(null)
   const prioritySheetContentReference = useRef<HTMLDivElement | null>(null)
   const prioritySaveButtonReference = useRef<HTMLButtonElement | null>(null)
@@ -1192,18 +1206,41 @@ export const CabinetPage = observer(({ section }: CabinetPageProps) => {
                                   className={styles.juryScoreSliderTrackWrap}
                                   onPointerDown={(event) => {
                                     if (isScoreEditingLocked) return
-                                    event.preventDefault()
-                                    const nextValue = getScoreByPointerPosition({
-                                      clientX: event.clientX,
-                                      trackElement: event.currentTarget,
-                                      min,
-                                      max,
-                                    })
-                                    juryContestStore.setScore(participant.id, criterion.id, nextValue)
-                                    event.currentTarget.setPointerCapture(event.pointerId)
+                                    scoreSliderPointerStateRef.current = {
+                                      pointerId: event.pointerId,
+                                      startX: event.clientX,
+                                      startY: event.clientY,
+                                      isHorizontalSwipeLocked: false,
+                                      isVerticalScrollLocked: false,
+                                    }
                                   }}
                                   onPointerMove={(event) => {
                                     if (isScoreEditingLocked) return
+                                    const scoreSliderPointerState = scoreSliderPointerStateRef.current
+                                    if (scoreSliderPointerState.pointerId !== event.pointerId) return
+                                    if (!scoreSliderPointerState.isHorizontalSwipeLocked && !scoreSliderPointerState.isVerticalScrollLocked) {
+                                      const deltaX = event.clientX - scoreSliderPointerState.startX
+                                      const deltaY = event.clientY - scoreSliderPointerState.startY
+                                      const absoluteDeltaX = Math.abs(deltaX)
+                                      const absoluteDeltaY = Math.abs(deltaY)
+                                      if (absoluteDeltaY > absoluteDeltaX && absoluteDeltaY >= HORIZONTAL_SCORE_SWIPE_THRESHOLD_PX) {
+                                        scoreSliderPointerStateRef.current = {
+                                          ...scoreSliderPointerState,
+                                          isVerticalScrollLocked: true,
+                                        }
+                                        return
+                                      }
+                                      if (absoluteDeltaX >= HORIZONTAL_SCORE_SWIPE_THRESHOLD_PX) {
+                                        scoreSliderPointerStateRef.current = {
+                                          ...scoreSliderPointerState,
+                                          isHorizontalSwipeLocked: true,
+                                        }
+                                        event.currentTarget.setPointerCapture(event.pointerId)
+                                      } else {
+                                        return
+                                      }
+                                    }
+                                    if (scoreSliderPointerStateRef.current.isVerticalScrollLocked) return
                                     if (!event.currentTarget.hasPointerCapture(event.pointerId)) return
                                     event.preventDefault()
                                     const nextValue = getScoreByPointerPosition({
@@ -1219,25 +1256,51 @@ export const CabinetPage = observer(({ section }: CabinetPageProps) => {
                                     })
                                   }}
                                   onPointerUp={(event) => {
-                                    if (!event.currentTarget.hasPointerCapture(event.pointerId)) return
-                                    const nextValue = getScoreByPointerPosition({
-                                      clientX: event.clientX,
-                                      trackElement: event.currentTarget,
-                                      min,
-                                      max,
-                                    })
-                                    pendingScoreUpdateRef.current = {
-                                      participantId: participant.id,
-                                      criterionId: criterion.id,
-                                      value: nextValue,
+                                    const scoreSliderPointerState = scoreSliderPointerStateRef.current
+                                    if (scoreSliderPointerState.pointerId !== event.pointerId) return
+                                    if (
+                                      scoreSliderPointerState.isHorizontalSwipeLocked &&
+                                      event.currentTarget.hasPointerCapture(event.pointerId)
+                                    ) {
+                                      const nextValue = getScoreByPointerPosition({
+                                        clientX: event.clientX,
+                                        trackElement: event.currentTarget,
+                                        min,
+                                        max,
+                                      })
+                                      pendingScoreUpdateRef.current = {
+                                        participantId: participant.id,
+                                        criterionId: criterion.id,
+                                        value: nextValue,
+                                      }
+                                      flushDebouncedScoreUpdate()
+                                      event.currentTarget.releasePointerCapture(event.pointerId)
                                     }
-                                    flushDebouncedScoreUpdate()
-                                    event.currentTarget.releasePointerCapture(event.pointerId)
+                                    scoreSliderPointerStateRef.current = {
+                                      pointerId: null,
+                                      startX: 0,
+                                      startY: 0,
+                                      isHorizontalSwipeLocked: false,
+                                      isVerticalScrollLocked: false,
+                                    }
                                   }}
                                   onPointerCancel={(event) => {
-                                    if (!event.currentTarget.hasPointerCapture(event.pointerId)) return
-                                    flushDebouncedScoreUpdate()
-                                    event.currentTarget.releasePointerCapture(event.pointerId)
+                                    const scoreSliderPointerState = scoreSliderPointerStateRef.current
+                                    if (scoreSliderPointerState.pointerId !== event.pointerId) return
+                                    if (
+                                      scoreSliderPointerState.isHorizontalSwipeLocked &&
+                                      event.currentTarget.hasPointerCapture(event.pointerId)
+                                    ) {
+                                      flushDebouncedScoreUpdate()
+                                      event.currentTarget.releasePointerCapture(event.pointerId)
+                                    }
+                                    scoreSliderPointerStateRef.current = {
+                                      pointerId: null,
+                                      startX: 0,
+                                      startY: 0,
+                                      isHorizontalSwipeLocked: false,
+                                      isVerticalScrollLocked: false,
+                                    }
                                   }}
                                 >
                                   <div className={styles.juryScoreSliderTrack}>

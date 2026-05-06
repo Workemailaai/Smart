@@ -1,0 +1,196 @@
+.sidebar {
+  width: 240px;
+  background: #0a0f15;
+  color: #fff;
+  padding: 0 24px 24px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.sidebarHeader {
+  height: 80px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+  display: flex;
+  align-items: center;
+  margin: 0 -24px 24px;
+  padding: 0 24px;
+}
+
+.brand {
+  font-size: 28px;
+  line-height: 28px;
+  font-weight: 600;
+}
+
+.profileCard {
+  background: #222631;
+  border-radius: 28px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.avatarWrap {
+  width: 120px;
+  height: 120px;
+  border: 3px solid #00a99d;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+}
+
+.avatar {
+  width: 112px;
+  height: 112px;
+  border-radius: 50%;
+  background: linear-gradient(145deg, #10acb5, #3184ff);
+  display: grid;
+  place-items: center;
+  font-size: 32px;
+  font-weight: 700;
+}
+
+.name {
+  text-align: center;
+  font-size: 24px;
+  font-weight: 500;
+  line-height: 24px;
+}
+
+.phone {
+  opacity: 0.8;
+  color: #fff;
+  font-size: 18px;
+  line-height: 24px;
+}
+
+.roleBadge {
+  width: 120px;
+  height: 36px;
+  font-size: 16px;
+  color: rgba(255, 255, 255, 0.8);
+  background: rgba(0, 169, 157, 0.3);
+  border-radius: 48px;
+  display: grid;
+  place-items: center;
+  line-height: 16px;
+}
+
+.menu {
+  width: 192px;
+  background: #222631;
+  border-radius: 28px;
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.menuItem,
+.activeItem {
+  width: 176px;
+  height: 48px;
+  padding: 12px;
+  text-decoration: none;
+  border-radius: 20px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 18px;
+  font-weight: 500;
+  line-height: 18px;
+}
+
+.menuItem {
+  color: #fff;
+  opacity: 0.5;
+}
+
+.menuItem:hover {
+  background: rgba(255, 255, 255, 0.08);
+  opacity: 0.7;
+}
+
+.activeItem {
+  background: #fff;
+  color: #0a0f15;
+  opacity: 1;
+}
+
+.menuItemDisabled {
+  cursor: default;
+  pointer-events: none;
+  opacity: 0.35;
+}
+
+.menuLabel {
+  flex: 1 1 0;
+}
+
+.navIcon {
+  width: 24px;
+  height: 24px;
+  flex: 0 0 24px;
+  position: relative;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: 24px 24px;
+  flex-shrink: 0;
+}
+
+.activeItem .navIcon {
+  filter: brightness(0);
+}
+
+.navIconEvents {
+  background-image: url('../../../public/nav/calendar.svg');
+}
+
+.navIconSettings {
+  background-image: url('../../../public/nav/setting.svg');
+}
+
+.navIconInfo {
+  background-image: url('../../../public/nav/more-circle.svg');
+}
+
+.sidebarFooter {
+  width: 192px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.logoutButton {
+  width: 100%;
+  height: 48px;
+  border-radius: 20px;
+  background: #222631;
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 18px;
+  font-weight: 500;
+  padding: 12px;
+  line-height: 18px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.logoutIcon {
+  width: 24px;
+  height: 24px;
+  flex: 0 0 24px;
+  background: url('/exit/logout.svg') center / 24px 24px no-repeat;
+}
+
+.versionText {
+  opacity: 0.5;
+  color: #fff;
+  font-size: 16px;
+  line-height: 16px;
+  white-space: pre-line;
+}

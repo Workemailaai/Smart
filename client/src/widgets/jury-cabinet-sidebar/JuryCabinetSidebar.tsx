@@ -1,6 +1,6 @@
 import { NavLink } from 'react-router'
-import styles from '@/pages/cabinet-page/CabinetPage.module.css'
 import { formatRuPhoneMask } from '@/shared/lib/ruPhone'
+import styles from './JuryCabinetSidebar.module.css'
 
 function getInitials(name: string) {
   return name
@@ -19,7 +19,7 @@ type JuryCabinetSidebarProps = {
 
 export function JuryCabinetSidebar({ fullName, phone, onLogout }: JuryCabinetSidebarProps) {
   return (
-    <aside className={styles.sidebar}>
+    <aside className={styles.sidebar} data-cabinet-sidebar>
       <div>
         <div className={styles.sidebarHeader}>
           <h1 className={styles.brand}>СмартОценка</h1>

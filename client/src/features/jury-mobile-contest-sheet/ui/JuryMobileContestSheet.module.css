@@ -1,0 +1,465 @@
+.helperText {
+  color: #566074;
+  font-size: 16px;
+  padding: 12px;
+}
+
+.errorText {
+  color: #b03a44;
+  font-size: 16px;
+  padding: 12px;
+}
+
+.juryPrioritySheetContent {
+  padding: 0 16px 16px;
+}
+
+.juryPriorityLayout {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.juryPriorityContestCard {
+  padding: 16px 0 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.juryPriorityContestDate {
+  margin: 0;
+  text-align: center;
+  color: #0a0f15;
+  opacity: 0.5;
+  font-size: 12px;
+  line-height: 12px;
+}
+
+.juryPriorityContestTitle {
+  margin: 0;
+  text-align: center;
+  color: #0a0f15;
+  font-size: 24px;
+  font-weight: 500;
+  line-height: 24px;
+}
+
+.juryPriorityContestSubtitle {
+  margin: 0;
+  text-align: center;
+  color: #0a0f15;
+  opacity: 0.5;
+  font-size: 12px;
+  line-height: 12px;
+}
+
+.juryPriorityPanel {
+  padding: 8px;
+  border-radius: 20px;
+  background: #e0e5eb;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.juryPriorityPanelHeader {
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.juryPriorityPanelTitle {
+  margin: 0;
+  color: #0a0f15;
+  font-size: 18px;
+  font-weight: 500;
+  line-height: 20px;
+}
+
+.juryPriorityPanelHint {
+  margin: 0;
+  color: #0a0f15;
+  opacity: 0.8;
+  font-size: 12px;
+  line-height: 12px;
+}
+
+.juryPriorityRow {
+  touch-action: none;
+}
+
+.juryPriorityRowDragging {
+  opacity: 0.75;
+}
+
+.juryPriorityRowDragOver .juryPriorityNamePlate {
+  outline: 2px dashed rgba(0, 169, 157, 0.7);
+  outline-offset: 2px;
+}
+
+.juryPriorityNamePlate {
+  min-height: 48px;
+  padding: 8px 12px;
+  border-radius: 12px;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.juryPriorityNameText {
+  color: #0a0f15;
+  font-size: 16px;
+  line-height: 20px;
+}
+
+.juryPriorityDragHandle {
+  padding-left: 12px;
+  color: rgb(60 60 67 / 30%);
+  font-size: 18px;
+  line-height: 1;
+  letter-spacing: 1px;
+  user-select: none;
+}
+
+.juryPrioritySaveButton {
+  width: 100%;
+  min-height: 48px;
+  border: none;
+  border-radius: 40px;
+  background: #0a0f15;
+  color: #fff;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 20px;
+}
+
+.juryPrioritySaveButton:disabled {
+  opacity: 0.3;
+}
+
+.juryPriorityConfirmOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 2200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(10, 15, 21, 0.45);
+  padding: 16px;
+}
+
+.juryPriorityConfirmModal {
+  width: 300px;
+  max-width: calc(100vw - 32px);
+  padding: 16px;
+  background: #fff;
+  border-radius: 20px;
+}
+
+.juryPriorityConfirmBody {
+  width: 100%;
+  border-radius: 24px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 16px;
+}
+
+.juryPriorityConfirmTextGroup {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.juryPriorityConfirmTitle {
+  text-align: center;
+  color: #0a0f15;
+  font-size: 18px;
+  font-weight: 500;
+  line-height: 20px;
+}
+
+.juryPriorityConfirmSubtitle {
+  text-align: center;
+  color: #0a0f15;
+  opacity: 0.8;
+  font-size: 12px;
+  line-height: 14px;
+}
+
+.juryPriorityConfirmActions {
+  width: 100%;
+  display: inline-flex;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 4px;
+}
+
+.juryPriorityConfirmSaveButton,
+.juryPriorityConfirmStayButton {
+  flex: 1 1 0;
+  height: 48px;
+  border: none;
+  border-radius: 40px;
+  padding: 12px 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 20px;
+}
+
+.juryPriorityConfirmSaveButton {
+  background: #e0e5eb;
+  color: #0a0f15;
+}
+
+.juryPriorityConfirmStayButton {
+  background: #ff383c;
+  color: #fff;
+}
+
+.juryPriorityConfirmSaveButton:disabled,
+.juryPriorityConfirmStayButton:disabled {
+  opacity: 0.6;
+}
+
+.juryScoreLayout {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.juryScoreParticipantList {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.juryScoreParticipantSection {
+  background: #e0e5eb;
+  border-radius: 20px;
+  padding: 8px;
+}
+
+.juryScoreParticipantSummary {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.juryScoreParticipantSummary::-webkit-details-marker {
+  display: none;
+}
+
+.juryScoreParticipantMain {
+  padding: 8px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.juryScoreParticipantPhoto {
+  width: 48px;
+  height: 48px;
+  border-radius: 999px;
+  object-fit: cover;
+  background: #d0d7e2;
+  display: grid;
+  place-items: center;
+  color: #0a0f15;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.juryScoreParticipantMeta {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.juryScoreParticipantName {
+  color: #0a0f15;
+  font-size: 18px;
+  font-weight: 500;
+  line-height: 20px;
+}
+
+.juryScoreParticipantCountry {
+  opacity: 0.5;
+  color: #0a0f15;
+  font-size: 12px;
+  line-height: 12px;
+}
+
+.juryScoreAverageBadge {
+  align-self: stretch;
+  background: #fff;
+  border-radius: 57px;
+  padding: 8px 12px;
+  color: #00a99d;
+  font-size: 18px;
+  font-weight: 500;
+  line-height: 20px;
+  display: inline-flex;
+  justify-content: center;
+}
+
+.juryScoreCriteriaWrap {
+  margin-top: 8px;
+  border-radius: 12px;
+  background: #fff;
+  overflow: hidden;
+}
+
+.juryScoreCriterionRow {
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  border-bottom: 1px solid #f0f1f5;
+}
+
+.juryScoreCriterionRow:last-child {
+  border-bottom: none;
+}
+
+.juryScoreCriterionLabel {
+  color: #0a0f15;
+  font-size: 16px;
+  line-height: 20px;
+}
+
+.juryScoreSliderWrap {
+  height: 48px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.juryScoreBoundaryValue {
+  width: 24px;
+  opacity: 0.5;
+  color: #0a0f15;
+  text-align: center;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 20px;
+}
+
+.juryScoreSliderTrackWrap {
+  position: relative;
+  flex: 1;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  border-radius: 40px;
+  touch-action: pan-y;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.juryScoreSliderTrack {
+  width: 100%;
+  height: 6px;
+  border-radius: 40px;
+  background: #f0f1f5;
+  overflow: hidden;
+}
+
+.juryScoreSliderProgress {
+  height: 100%;
+  border-radius: 40px;
+  background: #00a99d;
+}
+
+.juryScoreSliderInput {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 30px;
+  opacity: 0;
+  -webkit-appearance: none;
+  appearance: none;
+  background: transparent;
+  border: 0;
+  outline: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.juryScoreSliderValue {
+  position: absolute;
+  top: 0;
+  width: 36px;
+  height: 36px;
+  border-radius: 40px;
+  background: #00a99d;
+  color: #fff;
+  font-size: 12px;
+  line-height: 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.juryScoreCommentCard {
+  margin-top: 8px;
+  padding: 12px;
+  border-radius: 12px;
+  background: #fff;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 12px;
+}
+
+.juryScoreCommentLabel {
+  width: 100%;
+  color: #0a0f15;
+  opacity: 0.8;
+  font-size: 16px;
+  line-height: 20px;
+}
+
+.juryScoreCommentInput {
+  width: 100%;
+  min-height: 108px;
+  border: none;
+  border-radius: 12px;
+  background: #fff;
+  color: #0a0f15;
+  font-size: 16px;
+  line-height: 20px;
+  resize: none;
+  outline: none;
+}
+
+.juryScoreCommentInput::placeholder {
+  opacity: 0.5;
+}
+
+.juryScoreCommentCounter {
+  padding: 8px 12px;
+  border-radius: 48px;
+  background: #f0f1f5;
+  color: #0a0f15;
+  font-size: 12px;
+  line-height: 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+
+.juryScoreCommentDivider {
+  opacity: 0.3;
+}

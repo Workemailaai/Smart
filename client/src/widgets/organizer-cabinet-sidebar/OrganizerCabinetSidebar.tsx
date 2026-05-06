@@ -1,6 +1,6 @@
 import { NavLink } from 'react-router'
-import styles from '@/pages/cabinet-page/CabinetPage.module.css'
 import { formatRuPhoneMask } from '@/shared/lib/ruPhone'
+import styles from './OrganizerCabinetSidebar.module.css'
 
 function getInitials(name: string) {
   return name
@@ -20,7 +20,7 @@ type OrganizerCabinetSidebarProps = {
 /** Единый сайдбар организатора (иконки, активное состояние) — как в кабинете */
 export function OrganizerCabinetSidebar({ fullName, phone, onLogout }: OrganizerCabinetSidebarProps) {
   return (
-    <aside className={styles.sidebar}>
+    <aside className={styles.sidebar} data-cabinet-sidebar>
       <div>
         <div className={styles.sidebarHeader}>
           <h1 className={styles.brand}>СмартОценка</h1>

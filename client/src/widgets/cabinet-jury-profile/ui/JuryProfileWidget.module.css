@@ -1,0 +1,113 @@
+/* Профиль жюри в кабинете (перенесено из CabinetPage) */
+
+.panel {
+  width: 100%;
+  max-width: 343px;
+  margin: 0 auto;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 32px;
+  padding: 16px 0 24px;
+}
+
+.row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.sideButton {
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: none;
+  border-radius: 30px;
+  background: #e0e5eb;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.sideButtonIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 0;
+}
+
+.sideButtonIcon img {
+  filter: brightness(0);
+}
+
+.center {
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.avatarRing {
+  width: 120px;
+  height: 120px;
+  border-radius: 999px;
+  outline: 3px solid #00a99d;
+  outline-offset: 0;
+  display: grid;
+  place-items: center;
+}
+
+.avatar {
+  width: 112px;
+  height: 112px;
+  border-radius: 50%;
+  background: linear-gradient(145deg, #10acb5, #3184ff);
+  display: grid;
+  place-items: center;
+  font-size: 32px;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.textBlock {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  width: 100%;
+}
+
+.name {
+  margin: 0;
+  text-align: center;
+  color: #0a0f15;
+  font-size: 18px;
+  font-weight: 500;
+  line-height: 20px;
+}
+
+.phone {
+  margin: 0;
+  text-align: center;
+  color: #0a0f15;
+  opacity: 0.8;
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 20px;
+}
+
+.badge {
+  padding: 8px 12px;
+  border-radius: 48px;
+  background: #00a99d;
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 12px;
+}

@@ -1,15 +1,13 @@
 import { Navigate, createBrowserRouter } from 'react-router'
+import { AuthPanel } from '@/features/auth'
 import { Layout } from './Layout'
 import {
   CabinetPage,
   ContestResultsPage,
   CreateEventPage,
   JuryContestPage,
-  JurySignInPage,
   MainPage,
   OrganizerContestPage,
-  OrganizerSignInPage,
-  OrganizerSignUpPage
 } from '@/pages'
 
 export const routerConfig = createBrowserRouter([
@@ -23,15 +21,15 @@ export const routerConfig = createBrowserRouter([
       },
       {
         path: 'auth/organizer/sign-up',
-        element: <OrganizerSignUpPage />
+        element: <AuthPanel mode="signUpOrg" />
       },
       {
         path: 'auth/organizer/sign-in',
-        element: <OrganizerSignInPage />
+        element: <AuthPanel mode="signInOrg" />
       },
       {
         path: 'auth/jury/sign-in',
-        element: <JurySignInPage />
+        element: <AuthPanel mode="signInJury" />
       },
       {
         path: 'cabinet',

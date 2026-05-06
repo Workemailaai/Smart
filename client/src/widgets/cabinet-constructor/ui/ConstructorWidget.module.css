@@ -1,0 +1,263 @@
+/* Блок конструктора кабинета (перенесено из CabinetPage для локальной ответственности) */
+
+.helperText {
+  color: #566074;
+  font-size: 16px;
+  padding: 12px;
+}
+
+.errorText {
+  color: #b03a44;
+  font-size: 16px;
+  padding: 12px;
+}
+
+/* Как у .eventsLayout: только боковые 24px, без сужения по max-width */
+.block {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  padding: 24px;
+  padding-bottom: 32px;
+  display: flex;
+  flex-direction: column;
+  min-height: calc(100vh - 80px);
+}
+
+/* Блок «Создать мероприятие»: по макету 1152×432, скругление 24, колонка по центру, gap 12 */
+.hero {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 332px;
+  border-radius: 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 24px;
+}
+
+.heroCreateButton {
+  width: 36px;
+  height: 36px;
+  position: relative;
+  background: transparent;
+  border: none;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+}
+
+.heroCreateButton:focus-visible {
+  outline: 2px solid #12a6b0;
+  outline-offset: 4px;
+}
+
+.heroCreateInner {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: #00a99d;
+  position: relative;
+  display: grid;
+  place-items: center;
+}
+
+.heroCreatePlusH,
+.heroCreatePlusV {
+  position: absolute;
+  background: #fff;
+  border-radius: 2px;
+}
+
+.heroCreatePlusH {
+  width: 14px;
+  height: 2px;
+}
+
+.heroCreatePlusV {
+  width: 2px;
+  height: 14px;
+}
+
+.title {
+  max-width: 568px;
+  text-align: center;
+  color: #0a0f15;
+  font-size: 36px;
+  line-height: 39.6px;
+  font-weight: 500;
+  margin: 0;
+}
+
+.templates {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 16px;
+  width: 100%;
+  min-width: 0;
+  margin-top: 24px;
+}
+
+.templatesHeader {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.templatesTitle {
+  font-size: 24px;
+  line-height: 24px;
+  font-weight: 500;
+  margin: 0;
+  color: #0a0f15;
+}
+
+.templateGridWrap {
+  width: 100%;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.carouselRow {
+  width: 100%;
+  min-width: 0;
+  display: flex;
+  align-items: stretch;
+  gap: 16px;
+}
+
+.templateGrid {
+  display: flex;
+  align-items: stretch;
+  justify-content: flex-start;
+  gap: 16px;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  overflow-y: hidden;
+  width: 100%;
+  min-width: 0;
+  padding-bottom: 8px;
+  scrollbar-gutter: stable;
+  scroll-snap-type: x mandatory;
+  overscroll-behavior-x: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+.templateGrid::-webkit-scrollbar {
+  display: none;
+}
+
+.templateCardBtn {
+  padding: 0;
+  margin: 0;
+  cursor: pointer;
+  text-align: left;
+  border-radius: 28px;
+  flex: 0 0 auto;
+  scroll-snap-align: start;
+}
+
+.templateCardBtn:focus-visible {
+  outline: 2px solid #12a6b0;
+  outline-offset: 2px;
+}
+
+/* Карточка «новый шаблон»: пунктир 2px (как изначально в конструкторе) */
+.newTemplate {
+  box-sizing: border-box;
+  width: 276px;
+  height: 276px;
+  padding: 28px;
+  border: 2px dashed #bfc7d4;
+  border-radius: 28px;
+  overflow: hidden;
+  background: transparent;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+  flex: 0 0 auto;
+}
+
+.newTemplate:focus-visible {
+  outline: 2px solid #12a6b0;
+  outline-offset: 2px;
+}
+
+.newTemplateInner {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: #bfc7d4;
+  position: relative;
+  display: grid;
+  place-items: center;
+}
+
+.newTemplatePlusH,
+.newTemplatePlusV {
+  position: absolute;
+  background: #fff;
+  border-radius: 2px;
+}
+
+.newTemplatePlusH {
+  width: 14px;
+  height: 2px;
+}
+
+.newTemplatePlusV {
+  width: 2px;
+  height: 14px;
+}
+
+@media (max-width: 1400px) {
+  .title {
+    font-size: 30px;
+    line-height: 1.1;
+  }
+
+  .hero {
+    min-height: 360px;
+  }
+
+  .templateGrid {
+    justify-content: flex-start;
+  }
+}
+
+@media (max-width: 1200px) {
+  .templatesHeader {
+    align-items: flex-start;
+  }
+
+  .carouselRow {
+    flex-direction: column;
+  }
+
+  .newTemplate {
+    width: min(276px, 100%);
+    height: 220px;
+    padding: 20px;
+  }
+}
+
+@media (max-width: 900px) {
+  .templateGrid {
+    gap: 12px;
+    padding-bottom: 4px;
+  }
+
+  .newTemplate {
+    height: 180px;
+    border-radius: 20px;
+  }
+}

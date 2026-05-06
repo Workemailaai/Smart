@@ -3,17 +3,24 @@ import type { OrganizerEventsWidgetProps } from '../model/types'
 
 export function OrganizerEventsWidget(props: OrganizerEventsWidgetProps) {
   const { title, count, tone, emptyText, isLoading, errorText, hasItems, filterSlot, cardsSlot } = props
-  const toneClassName = tone === 'blue' ? localStyles.toneBlue : tone === 'orange' ? localStyles.toneOrange : localStyles.toneGreen
+  const toneDotClassName =
+    tone === 'blue' ? localStyles.toneDotBlue : tone === 'orange' ? localStyles.toneDotOrange : localStyles.toneDotGreen
+  const toneCountClassName =
+    tone === 'blue'
+      ? localStyles.toneCountBlue
+      : tone === 'orange'
+        ? localStyles.toneCountOrange
+        : localStyles.toneCountGreen
 
   return (
     <div className={localStyles.root}>
       <div className={localStyles.sectionHeader}>
         <div className={localStyles.sectionTitleWrap}>
-          <span className={`${localStyles.sectionDot} ${toneClassName}`}>
+          <span className={`${localStyles.sectionDot} ${toneDotClassName}`}>
             <span />
           </span>
           <h3 className={localStyles.sectionTitle}>{title}</h3>
-          <span className={`${localStyles.sectionCount} ${toneClassName}`}>({count})</span>
+          <span className={`${localStyles.sectionCount} ${toneCountClassName}`}>({count})</span>
         </div>
         {filterSlot}
       </div>

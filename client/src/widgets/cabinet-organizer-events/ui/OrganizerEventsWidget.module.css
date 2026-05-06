@@ -49,31 +49,40 @@
   line-height: 24px;
 }
 
-.toneBlue {
-  color: #1587d9;
+.toneDotBlue {
   background: rgba(21, 135, 217, 0.2);
 }
 
-.toneBlue span {
+.toneDotBlue span {
   background: #1587d9;
 }
 
-.toneOrange {
-  color: #ed841a;
+.toneDotOrange {
   background: rgba(237, 132, 26, 0.2);
 }
 
-.toneOrange span {
+.toneDotOrange span {
   background: #ed841a;
 }
 
-.toneGreen {
-  color: #00a99d;
+.toneDotGreen {
   background: rgba(0, 169, 157, 0.2);
 }
 
-.toneGreen span {
+.toneDotGreen span {
   background: #00a99d;
+}
+
+.toneCountBlue {
+  color: #1587d9;
+}
+
+.toneCountOrange {
+  color: #ed841a;
+}
+
+.toneCountGreen {
+  color: #00a99d;
 }
 
 .eventsBody {

@@ -1,2 +1,2 @@
 export { CabinetEventsSection } from './ui/CabinetEventsSection'
-export type { CabinetEventsSectionClassNames, CabinetEventsSectionProps } from './model/types'
+export type { CabinetEventsSectionProps } from './model/types'

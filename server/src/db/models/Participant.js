@@ -11,6 +11,10 @@ module.exports = (sequelize, DataTypes) => {
         foreignKey: "participantId",
         as: "juryComments"
       });
+      Participant.hasMany(models.JuryParticipantFavorite, {
+        foreignKey: "participantId",
+        as: "juryFavorites"
+      });
     }
   }
 

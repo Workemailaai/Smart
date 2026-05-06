@@ -286,6 +286,32 @@ export const JuryContestPage = observer(() => {
                             </span>
                             <span className={styles.participantCountry}>{participant.country || 'Страна не указана'}</span>
                           </div>
+                          <button
+                            className={styles.favoriteButton}
+                            type="button"
+                            disabled={isScoreEditingLocked}
+                            aria-pressed={juryContestStore.isParticipantFavorite(participant.id)}
+                            aria-label={
+                              juryContestStore.isParticipantFavorite(participant.id)
+                                ? 'Убрать участника из избранного'
+                                : 'Добавить участника в избранное'
+                            }
+                            onClick={(event) => {
+                              event.preventDefault()
+                              event.stopPropagation()
+                              juryContestStore.toggleParticipantFavorite(participant.id)
+                            }}
+                          >
+                            <img
+                              src={
+                                juryContestStore.isParticipantFavorite(participant.id)
+                                  ? '/red-heart-4_128x128.svg'
+                                  : '/heart-alt-2_128x128.svg'
+                              }
+                              alt=""
+                              aria-hidden
+                            />
+                          </button>
                         </div>
                         <strong className={styles.averageBadge}>{juryContestStore.getParticipantAverage(participant.id)} / 10</strong>
                       </summary>
@@ -300,7 +326,34 @@ export const JuryContestPage = observer(() => {
                           const percent = range > 0 ? ((clamped - min) / range) * 100 : 0
                           return (
                             <label className={styles.criterionRow} key={criterion.id}>
-                              <div className={styles.criterionLabel}>{criterion.name}</div>
+                              <div className={styles.criterionHead}>
+                                <div className={styles.criterionLabel}>{criterion.name}</div>
+                                <button
+                                  className={styles.favoriteButton}
+                                  type="button"
+                                  disabled={isScoreEditingLocked}
+                                  aria-pressed={juryContestStore.isCriterionFavorite(participant.id, criterion.id)}
+                                  aria-label={
+                                    juryContestStore.isCriterionFavorite(participant.id, criterion.id)
+                                      ? 'Убрать показатель из избранного'
+                                      : 'Добавить показатель в избранное'
+                                  }
+                                  onClick={(event) => {
+                                    event.preventDefault()
+                                    juryContestStore.toggleCriterionFavorite(participant.id, criterion.id)
+                                  }}
+                                >
+                                  <img
+                                    src={
+                                      juryContestStore.isCriterionFavorite(participant.id, criterion.id)
+                                        ? '/red-heart-4_128x128.svg'
+                                        : '/heart-alt-2_128x128.svg'
+                                    }
+                                    alt=""
+                                    aria-hidden
+                                  />
+                                </button>
+                              </div>
                               <div className={styles.sliderWrap}>
                                 <span className={styles.boundaryValue}>{min}</span>
                                 <div className={styles.sliderTrackWrap}>

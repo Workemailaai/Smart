@@ -1,10 +1,11 @@
+import { observer } from 'mobx-react-lite'
 import { resolveMediaUrl } from '@/shared'
 import { sortCriteriaRows } from '@/shared/lib/weightedScores'
 import { BottomSheet } from '@/shared/ui/bottom-sheet/BottomSheet'
 import type { JuryMobileContestSheetProps } from '../model/types'
 import styles from './JuryMobileContestSheet.module.css'
 
-export function JuryMobileContestSheet(props: JuryMobileContestSheetProps) {
+export const JuryMobileContestSheet = observer(function JuryMobileContestSheet(props: JuryMobileContestSheetProps) {
   const {
     juryContestStore,
     commentLimit,
@@ -175,6 +176,32 @@ export function JuryMobileContestSheet(props: JuryMobileContestSheetProps) {
                         </span>
                         <span className={styles.juryScoreParticipantCountry}>{participant.country || 'Страна не указана'}</span>
                       </div>
+                      <button
+                        className={styles.favoriteButton}
+                        type="button"
+                        disabled={isScoreEditingLocked}
+                        aria-pressed={juryContestStore.isParticipantFavorite(participant.id)}
+                        aria-label={
+                          juryContestStore.isParticipantFavorite(participant.id)
+                            ? 'Убрать участника из избранного'
+                            : 'Добавить участника в избранное'
+                        }
+                        onClick={(event) => {
+                          event.preventDefault()
+                          event.stopPropagation()
+                          juryContestStore.toggleParticipantFavorite(participant.id)
+                        }}
+                      >
+                        <img
+                          src={
+                            juryContestStore.isParticipantFavorite(participant.id)
+                              ? '/red-heart-4_128x128.svg'
+                              : '/heart-alt-2_128x128.svg'
+                          }
+                          alt=""
+                          aria-hidden
+                        />
+                      </button>
                     </div>
                     <strong className={styles.juryScoreAverageBadge}>{juryContestStore.getParticipantAverage(participant.id)} / 10</strong>
                   </summary>
@@ -189,7 +216,34 @@ export function JuryMobileContestSheet(props: JuryMobileContestSheetProps) {
                       const percent = range > 0 ? ((clamped - min) / range) * 100 : 0
                       return (
                         <label className={styles.juryScoreCriterionRow} key={criterion.id}>
-                          <div className={styles.juryScoreCriterionLabel}>{criterion.name}</div>
+                          <div className={styles.juryScoreCriterionHead}>
+                            <div className={styles.juryScoreCriterionLabel}>{criterion.name}</div>
+                            <button
+                              className={styles.favoriteButton}
+                              type="button"
+                              disabled={isScoreEditingLocked}
+                              aria-pressed={juryContestStore.isCriterionFavorite(participant.id, criterion.id)}
+                              aria-label={
+                                juryContestStore.isCriterionFavorite(participant.id, criterion.id)
+                                  ? 'Убрать показатель из избранного'
+                                  : 'Добавить показатель в избранное'
+                              }
+                              onClick={(event) => {
+                                event.preventDefault()
+                                juryContestStore.toggleCriterionFavorite(participant.id, criterion.id)
+                              }}
+                            >
+                              <img
+                                src={
+                                  juryContestStore.isCriterionFavorite(participant.id, criterion.id)
+                                    ? '/red-heart-4_128x128.svg'
+                                    : '/heart-alt-2_128x128.svg'
+                                }
+                                alt=""
+                                aria-hidden
+                              />
+                            </button>
+                          </div>
                           <div className={styles.juryScoreSliderWrap}>
                             <span className={styles.juryScoreBoundaryValue}>{min}</span>
                             <div
@@ -393,4 +447,4 @@ export function JuryMobileContestSheet(props: JuryMobileContestSheetProps) {
       ) : null}
     </BottomSheet>
   )
-}
+})

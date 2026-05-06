@@ -32,6 +32,7 @@ class ScoreController {
         contestId: req.body.contestId,
         scores: req.body.scores,
         comments: req.body.comments,
+        participantFavorites: req.body.participantFavorites,
         userId: req.user.id
       });
       return res.status(200).json(formatResponse(200, "Scores saved", scores));

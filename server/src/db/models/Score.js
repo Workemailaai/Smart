@@ -38,6 +38,11 @@ module.exports = (sequelize, DataTypes) => {
       value: {
         type: DataTypes.FLOAT,
         allowNull: false
+      },
+      isFavorite: {
+        type: DataTypes.BOOLEAN,
+        allowNull: false,
+        defaultValue: false
       }
     },
     {

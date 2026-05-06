@@ -331,6 +331,29 @@
   gap: 4px;
 }
 
+.favoriteButton {
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  margin-left: 4px;
+  border: none;
+  background: transparent;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.favoriteButton img {
+  width: 24px;
+  height: 24px;
+  display: block;
+}
+
+.favoriteButton:disabled {
+  opacity: 0.5;
+}
+
 .participantName {
   color: #0a0f15;
   font-size: 24px;
@@ -439,6 +462,13 @@
   color: #0a0f15;
   font-size: 18px;
   line-height: 24px;
+}
+
+.criterionHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
 }
 
 .sliderWrap {

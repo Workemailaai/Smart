@@ -264,6 +264,23 @@
   min-width: 0;
 }
 
+.participantLikes {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: #0a0f15;
+  font-size: 24px;
+  font-weight: 500;
+  line-height: 24px;
+}
+
+.participantLikes img {
+  width: 24px;
+  height: 24px;
+  display: block;
+}
+
 .participantName {
   color: #0a0f15;
   font-size: 24px;
@@ -411,7 +428,7 @@
 
 .orgContestCriteriaGrid__row {
   display: grid;
-  grid-template-columns: 1fr minmax(20px, auto) minmax(50px, auto);
+  grid-template-columns: 1fr minmax(20px, auto) minmax(50px, auto) 20px;
   align-items: flex-start;
   gap: 13px;
   color: #0a0f15;
@@ -450,6 +467,20 @@
   white-space: nowrap;
 }
 
+.orgContestCriteriaGrid__favorite {
+  width: 20px;
+  min-height: 20px;
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.orgContestCriteriaGrid__favorite img {
+  width: 20px;
+  height: 20px;
+  display: block;
+}
+
 .orgContestCriteriaGrid__row--total {
   align-items: center;
   margin-top: 0.444vh;
@@ -481,9 +512,24 @@
   overflow-wrap: anywhere;
 }
 
-.criterionRow span:last-child {
+.criterionRow span:nth-child(2) {
   flex-shrink: 0;
   white-space: nowrap;
+}
+
+.criterionLike {
+  width: 20px;
+  min-height: 20px;
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.criterionLike img {
+  width: 20px;
+  height: 20px;
+  display: block;
 }
 
 .totalRow {

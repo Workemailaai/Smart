@@ -20,6 +20,8 @@ class JuryContestStore {
   view: IJuryContestView | null = null
   draftScores = new Map<string, number>()
   draftComments = new Map<number, string>()
+  draftParticipantFavorites = new Set<number>()
+  draftCriterionFavorites = new Set<string>()
   isLoading = false
   isSubmitting = false
   isRevokingSubmission = false
@@ -38,6 +40,8 @@ class JuryContestStore {
     this.view = null
     this.draftScores.clear()
     this.draftComments.clear()
+    this.draftParticipantFavorites.clear()
+    this.draftCriterionFavorites.clear()
     this.error = null
     this.priorityDraftIds = []
     this.isRevokingSubmission = false
@@ -50,6 +54,8 @@ class JuryContestStore {
     const shouldPreserveDraft = Boolean(options?.preserveDraft)
     const previousDraftScores = shouldPreserveDraft ? new Map(this.draftScores) : null
     const previousDraftComments = shouldPreserveDraft ? new Map(this.draftComments) : null
+    const previousDraftParticipantFavorites = shouldPreserveDraft ? new Set(this.draftParticipantFavorites) : null
+    const previousDraftCriterionFavorites = shouldPreserveDraft ? new Set(this.draftCriterionFavorites) : null
     try {
       const response = await getJuryContestView(contestId)
       runInAction(() => {
@@ -64,11 +70,19 @@ class JuryContestStore {
         })
         this.draftScores.clear()
         this.draftComments.clear()
+        this.draftParticipantFavorites.clear()
+        this.draftCriterionFavorites.clear()
         serverDraftScores.forEach((value, key) => {
           this.draftScores.set(key, value)
         })
         serverDraftComments.forEach((value, key) => {
           this.draftComments.set(key, value)
+        })
+        response.data.myParticipantFavorites.forEach((participantId) => {
+          this.draftParticipantFavorites.add(participantId)
+        })
+        response.data.myCriterionFavorites.forEach((favoriteItem) => {
+          this.draftCriterionFavorites.add(this.getKey(favoriteItem.participantId, favoriteItem.criterionId))
         })
         if (shouldPreserveDraft && previousDraftScores) {
           previousDraftScores.forEach((value, key) => {
@@ -78,6 +92,16 @@ class JuryContestStore {
         if (shouldPreserveDraft && previousDraftComments) {
           previousDraftComments.forEach((value, key) => {
             this.draftComments.set(key, value)
+          })
+        }
+        if (shouldPreserveDraft && previousDraftParticipantFavorites) {
+          previousDraftParticipantFavorites.forEach((participantId) => {
+            this.draftParticipantFavorites.add(participantId)
+          })
+        }
+        if (shouldPreserveDraft && previousDraftCriterionFavorites) {
+          previousDraftCriterionFavorites.forEach((favoriteKey) => {
+            this.draftCriterionFavorites.add(favoriteKey)
           })
         }
         if (response.data.mySubmitted) {
@@ -181,6 +205,31 @@ class JuryContestStore {
     this.draftComments.set(participantId, comment.slice(0, 500))
   }
 
+  toggleParticipantFavorite(participantId: number) {
+    if (this.draftParticipantFavorites.has(participantId)) {
+      this.draftParticipantFavorites.delete(participantId)
+      return
+    }
+    this.draftParticipantFavorites.add(participantId)
+  }
+
+  isParticipantFavorite(participantId: number) {
+    return this.draftParticipantFavorites.has(participantId)
+  }
+
+  toggleCriterionFavorite(participantId: number, criterionId: number) {
+    const key = this.getKey(participantId, criterionId)
+    if (this.draftCriterionFavorites.has(key)) {
+      this.draftCriterionFavorites.delete(key)
+      return
+    }
+    this.draftCriterionFavorites.add(key)
+  }
+
+  isCriterionFavorite(participantId: number, criterionId: number) {
+    return this.draftCriterionFavorites.has(this.getKey(participantId, criterionId))
+  }
+
   getComment(participantId: number) {
     return this.draftComments.get(participantId) ?? ''
   }
@@ -216,6 +265,28 @@ class JuryContestStore {
 
     for (const [participantId, commentValue] of this.draftComments.entries()) {
       if ((serverComments.get(participantId) ?? '') !== commentValue) {
+        return true
+      }
+    }
+
+    const serverParticipantFavorites = new Set(this.view.myParticipantFavorites)
+    if (this.draftParticipantFavorites.size !== serverParticipantFavorites.size) {
+      return true
+    }
+    for (const participantId of this.draftParticipantFavorites.values()) {
+      if (!serverParticipantFavorites.has(participantId)) {
+        return true
+      }
+    }
+
+    const serverCriterionFavorites = new Set(
+      this.view.myCriterionFavorites.map((favoriteItem) => this.getKey(favoriteItem.participantId, favoriteItem.criterionId)),
+    )
+    if (this.draftCriterionFavorites.size !== serverCriterionFavorites.size) {
+      return true
+    }
+    for (const criterionFavoriteKey of this.draftCriterionFavorites.values()) {
+      if (!serverCriterionFavorites.has(criterionFavoriteKey)) {
         return true
       }
     }
@@ -291,8 +362,13 @@ class JuryContestStore {
         participantId: participant.id,
         criterionId: criterion.id,
         value: this.getScore(participant.id, criterion.id, criterion.minScore ?? 0),
+        isFavorite: this.isCriterionFavorite(participant.id, criterion.id),
       })),
     )
+  }
+
+  buildParticipantFavoritesPayload() {
+    return [...this.draftParticipantFavorites]
   }
 
   buildCommentsPayload(): IParticipantCommentItem[] {
@@ -307,7 +383,7 @@ class JuryContestStore {
     this.isSubmitting = true
     this.error = null
     try {
-      await putScoresBatch(contestId, this.buildPayload(), this.buildCommentsPayload())
+      await putScoresBatch(contestId, this.buildPayload(), this.buildCommentsPayload(), this.buildParticipantFavoritesPayload())
       await submitJuryContest(contestId)
       runInAction(() => {
         this.isRevoteMode = false

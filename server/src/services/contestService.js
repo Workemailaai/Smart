@@ -7,6 +7,7 @@ const {
   Participant,
   Score,
   JuryParticipantComment,
+  JuryParticipantFavorite,
   User
 } = require("../db/models");
 const ApiError = require("../utils/ApiError");
@@ -87,6 +88,7 @@ class ContestService {
         juryMembers: contest.juryMembers
       });
       await JuryParticipantComment.destroy({ where: { contestId }, transaction: t });
+      await JuryParticipantFavorite.destroy({ where: { contestId }, transaction: t });
       await Score.destroy({ where: { contestId }, transaction: t });
       await Jury.destroy({ where: { contestId }, transaction: t });
       await Participant.destroy({ where: { contestId }, transaction: t });
@@ -232,11 +234,15 @@ class ContestService {
 
     const myScores = await Score.findAll({
       where: { contestId, juryId: myAssignment.id },
-      attributes: ["participantId", "criterionId", "value"]
+      attributes: ["participantId", "criterionId", "value", "isFavorite"]
     });
     const myComments = await JuryParticipantComment.findAll({
       where: { contestId, juryId: myAssignment.id },
       attributes: ["participantId", "comment"]
+    });
+    const myParticipantFavorites = await JuryParticipantFavorite.findAll({
+      where: { contestId, juryId: myAssignment.id },
+      attributes: ["participantId"]
     });
     const criteriaCount = contest.criteria.length;
     const useWeights = Boolean(contest.useCriteriaWeights);
@@ -283,6 +289,12 @@ class ContestService {
     const criteriaForResponse = orderCriteriaForJury(contest.criteria, myAssignment.criterionOrder);
     const criteriaPlain = criteriaForResponse.map((c) => c.get({ plain: true }));
     const myCriterionOrder = criteriaForResponse.map((c) => c.id);
+    const myCriterionFavorites = myScores
+      .filter((scoreItem) => Boolean(scoreItem.isFavorite))
+      .map((scoreItem) => ({
+        participantId: scoreItem.participantId,
+        criterionId: scoreItem.criterionId
+      }));
 
     return {
       contest: contest.get({ plain: true }),
@@ -291,6 +303,8 @@ class ContestService {
       participants: contest.participants,
       myScores,
       myComments,
+      myParticipantFavorites: myParticipantFavorites.map((favoriteItem) => favoriteItem.participantId),
+      myCriterionFavorites,
       averageByParticipant,
       mySubmitted
     };
@@ -440,13 +454,28 @@ class ContestService {
       where: { contestId },
       attributes: ["juryId", "participantId", "comment"]
     });
+    const participantFavorites = await JuryParticipantFavorite.findAll({
+      where: { contestId },
+      attributes: ["juryId", "participantId"]
+    });
     const scoreMap = new Map();
     for (const row of scores) {
-      scoreMap.set(`${row.juryId}_${row.participantId}_${row.criterionId}`, Number(row.value));
+      scoreMap.set(`${row.juryId}_${row.participantId}_${row.criterionId}`, {
+        value: Number(row.value),
+        isFavorite: Boolean(row.isFavorite)
+      });
     }
     const commentMap = new Map();
     for (const row of comments) {
       commentMap.set(`${row.juryId}_${row.participantId}`, String(row.comment || ""));
+    }
+    const participantFavoriteCountByParticipantId = new Map();
+    for (const favoriteItem of participantFavorites) {
+      const participantId = Number(favoriteItem.participantId);
+      participantFavoriteCountByParticipantId.set(
+        participantId,
+        Number(participantFavoriteCountByParticipantId.get(participantId) || 0) + 1
+      );
     }
 
     const participantsSorted = sortParticipantsRows(contest.participants);
@@ -462,7 +491,7 @@ class ContestService {
         const { totals, weights, weightsGridStep } = weightedTotalsForJury({
           criteriaSorted: criteriaSortedForJury,
           participantsSorted,
-          getRawScore: (cId, pId) => scoreMap.get(`${jm.id}_${pId}_${cId}`)
+          getRawScore: (cId, pId) => scoreMap.get(`${jm.id}_${pId}_${cId}`)?.value
         });
         perJuryTotals[jm.id] = totals;
         perJuryWeightsGridStep[jm.id] = weightsGridStep;
@@ -476,14 +505,15 @@ class ContestService {
         const juryCards = contest.juryMembers.map((juryMember) => {
           const weightByCriterionId = perJuryWeightByCriterionId[juryMember.id] || {};
           const criteria = contest.criteria.map((criterion) => {
-            const value =
-              scoreMap.get(`${juryMember.id}_${participant.id}_${criterion.id}`) ?? null;
+            const scoreRow = scoreMap.get(`${juryMember.id}_${participant.id}_${criterion.id}`);
+            const value = scoreRow?.value ?? null;
             return {
               criterionId: criterion.id,
               name: criterion.name,
               minScore: criterion.minScore ?? 0,
               maxScore: criterion.maxScore,
               value,
+              isFavorite: Boolean(scoreRow?.isFavorite),
               weight: weightByCriterionId[criterion.id] ?? null
             };
           });
@@ -514,7 +544,8 @@ class ContestService {
           photoUrl: participant.photoUrl,
           juryCards,
           overallTotal,
-          overallAverage
+          overallAverage,
+          likesCount: Number(participantFavoriteCountByParticipantId.get(participant.id) || 0)
         };
       });
     } else {
@@ -525,8 +556,8 @@ class ContestService {
           let juryTotal = 0;
           let juryCount = 0;
           const criteriaRows = contest.criteria.map((criterion) => {
-            const value =
-              scoreMap.get(`${juryMember.id}_${participant.id}_${criterion.id}`) ?? null;
+            const scoreRow = scoreMap.get(`${juryMember.id}_${participant.id}_${criterion.id}`);
+            const value = scoreRow?.value ?? null;
             if (typeof value === "number") {
               juryTotal += value;
               juryCount += 1;
@@ -538,7 +569,8 @@ class ContestService {
               name: criterion.name,
               minScore: criterion.minScore ?? 0,
               maxScore: criterion.maxScore,
-              value
+              value,
+              isFavorite: Boolean(scoreRow?.isFavorite)
             };
           });
           return {
@@ -562,7 +594,8 @@ class ContestService {
           photoUrl: participant.photoUrl,
           juryCards,
           overallTotal: participantCount > 0 ? Number(participantSum.toFixed(2)) : 0,
-          overallAverage: participantCount > 0 ? Number((participantSum / participantCount).toFixed(2)) : 0
+          overallAverage: participantCount > 0 ? Number((participantSum / participantCount).toFixed(2)) : 0,
+          likesCount: Number(participantFavoriteCountByParticipantId.get(participant.id) || 0)
         };
       });
     }

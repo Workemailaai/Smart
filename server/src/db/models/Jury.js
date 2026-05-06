@@ -9,6 +9,7 @@ module.exports = (sequelize, DataTypes) => {
       Jury.belongsTo(models.User, { foreignKey: "userId", as: "user" });
       Jury.hasMany(models.Score, { foreignKey: "juryId", as: "scores" });
       Jury.hasMany(models.JuryParticipantComment, { foreignKey: "juryId", as: "participantComments" });
+      Jury.hasMany(models.JuryParticipantFavorite, { foreignKey: "juryId", as: "participantFavorites" });
     }
   }
 

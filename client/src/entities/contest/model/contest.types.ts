@@ -47,6 +47,7 @@ export interface IScoreItem {
   participantId: number
   criterionId: number
   value: number
+  isFavorite?: boolean
 }
 
 export interface IParticipantCommentItem {
@@ -62,6 +63,8 @@ export interface IJuryContestView {
   participants: IParticipant[]
   myScores: IScoreItem[]
   myComments: IParticipantCommentItem[]
+  myParticipantFavorites: number[]
+  myCriterionFavorites: { participantId: number; criterionId: number }[]
   averageByParticipant: { participantId: number; average: number }[]
   mySubmitted: boolean
 }
@@ -83,6 +86,7 @@ export interface IOrganizerJuryCard {
     minScore?: number
     maxScore: number
     value: number | null
+    isFavorite?: boolean
     /** Доля в методике взвешенного расчёта (сумма по показателям ≈ 1); только при useCriteriaWeights */
     weight?: number | null
   }[]
@@ -92,6 +96,7 @@ export interface IOrganizerParticipantView extends IParticipant {
   juryCards: IOrganizerJuryCard[]
   overallTotal: number
   overallAverage: number
+  likesCount: number
 }
 
 export interface IOrganizerContestView {

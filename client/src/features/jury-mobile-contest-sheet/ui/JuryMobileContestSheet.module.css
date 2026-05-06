@@ -287,6 +287,29 @@
   gap: 4px;
 }
 
+.favoriteButton {
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  margin-left: 4px;
+  border: none;
+  background: transparent;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.favoriteButton img {
+  width: 20px;
+  height: 20px;
+  display: block;
+}
+
+.favoriteButton:disabled {
+  opacity: 0.5;
+}
+
 .juryScoreParticipantName {
   color: #0a0f15;
   font-size: 18px;
@@ -337,6 +360,13 @@
   color: #0a0f15;
   font-size: 16px;
   line-height: 20px;
+}
+
+.juryScoreCriterionHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
 }
 
 .juryScoreSliderWrap {

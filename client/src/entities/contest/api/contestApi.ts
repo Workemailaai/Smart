@@ -70,8 +70,9 @@ export const putScoresBatch = async (
   contestId: number,
   scores: IScoreItem[],
   comments: IParticipantCommentItem[],
+  participantFavorites: number[],
 ): Promise<ServerResponseType<IScoreItem[]>> => {
-  const response = await axiosInstance.put('/scores/batch', { contestId, scores, comments })
+  const response = await axiosInstance.put('/scores/batch', { contestId, scores, comments, participantFavorites })
   return response.data
 }
 

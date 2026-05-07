@@ -215,7 +215,7 @@ export const JuryMobileContestSheet = observer(function JuryMobileContestSheet(p
                       const clamped = Math.min(max, Math.max(min, value))
                       const percent = range > 0 ? ((clamped - min) / range) * 100 : 0
                       return (
-                        <label className={styles.juryScoreCriterionRow} key={criterion.id}>
+                        <div className={styles.juryScoreCriterionRow} key={criterion.id}>
                           <div className={styles.juryScoreCriterionHead}>
                             <div className={styles.juryScoreCriterionLabel}>{criterion.name}</div>
                             <button
@@ -230,6 +230,7 @@ export const JuryMobileContestSheet = observer(function JuryMobileContestSheet(p
                               }
                               onClick={(event) => {
                                 event.preventDefault()
+                                event.stopPropagation()
                                 juryContestStore.toggleCriterionFavorite(participant.id, criterion.id)
                               }}
                             >
@@ -360,7 +361,7 @@ export const JuryMobileContestSheet = observer(function JuryMobileContestSheet(p
                             </div>
                             <span className={styles.juryScoreBoundaryValue}>{max}</span>
                           </div>
-                        </label>
+                        </div>
                       )
                     })}
                   </div>

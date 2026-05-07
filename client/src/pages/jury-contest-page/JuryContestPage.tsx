@@ -325,7 +325,7 @@ export const JuryContestPage = observer(() => {
                           const clamped = Math.min(max, Math.max(min, value))
                           const percent = range > 0 ? ((clamped - min) / range) * 100 : 0
                           return (
-                            <label className={styles.criterionRow} key={criterion.id}>
+                            <div className={styles.criterionRow} key={criterion.id}>
                               <div className={styles.criterionHead}>
                                 <div className={styles.criterionLabel}>{criterion.name}</div>
                                 <button
@@ -340,6 +340,7 @@ export const JuryContestPage = observer(() => {
                                   }
                                   onClick={(event) => {
                                     event.preventDefault()
+                                    event.stopPropagation()
                                     juryContestStore.toggleCriterionFavorite(participant.id, criterion.id)
                                   }}
                                 >
@@ -378,7 +379,7 @@ export const JuryContestPage = observer(() => {
                                 </div>
                                 <span className={styles.boundaryValue}>{max}</span>
                               </div>
-                            </label>
+                            </div>
                           )
                         })}
                       </div>

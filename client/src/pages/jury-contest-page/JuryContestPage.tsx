@@ -453,7 +453,8 @@ export const JuryContestPage = observer(() => {
                   <div className={styles.priorityConfirmModal} onClick={(event) => event.stopPropagation()}>
                     <div className={styles.priorityConfirmBody}>
                       <div className={styles.priorityConfirmTextGroup}>
-                        <div className={styles.priorityConfirmTitle}>Вы уверены, что хотите завершить оценку мероприятия?</div>
+                        <div className={styles.priorityConfirmTitle}>Вы уверены, что хотите покинуть страницу оценок?</div>
+                        <div className={styles.priorityConfirmSubtitle}>Изменения оценок не будут сохранены</div>
                       </div>
                       <div className={styles.priorityConfirmActions}>
                         <button
@@ -462,7 +463,7 @@ export const JuryContestPage = observer(() => {
                           disabled={juryContestStore.isSubmitting}
                           onClick={() => navigate('/cabinet/events')}
                         >
-                          Завершить
+                          Покинуть
                         </button>
                         <button
                           type="button"

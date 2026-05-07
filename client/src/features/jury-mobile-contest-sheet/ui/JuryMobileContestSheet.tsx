@@ -420,7 +420,8 @@ export const JuryMobileContestSheet = observer(function JuryMobileContestSheet(p
               <div className={styles.juryPriorityConfirmModal} onClick={(event) => event.stopPropagation()}>
                 <div className={styles.juryPriorityConfirmBody}>
                   <div className={styles.juryPriorityConfirmTextGroup}>
-                    <div className={styles.juryPriorityConfirmTitle}>Вы уверены, что хотите завершить оценку мероприятия?</div>
+                    <div className={styles.juryPriorityConfirmTitle}>Вы уверены, что хотите покинуть страницу оценок?</div>
+                    <div className={styles.juryPriorityConfirmSubtitle}>Изменения оценок не будут сохранены</div>
                   </div>
                   <div className={styles.juryPriorityConfirmActions}>
                     <button
@@ -429,7 +430,7 @@ export const JuryMobileContestSheet = observer(function JuryMobileContestSheet(p
                       disabled={juryContestStore.isSubmitting}
                       onClick={onCloseSheetWithConfirm}
                     >
-                      Завершить
+                      Покинуть
                     </button>
                     <button
                       type="button"

@@ -192,7 +192,7 @@
 }
 
 .organizerDeleteButtonComplete:hover {
-  background-image: url('/delete-contest-button.svg');
+  background-image: url('/delete-contest-button-red.svg');
 }
 
 .organizerVotedCell {

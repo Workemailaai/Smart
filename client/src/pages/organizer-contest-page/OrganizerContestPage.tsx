@@ -57,6 +57,7 @@ export const OrganizerContestPage = observer(() => {
   const { contestId } = useParams()
   const numericContestId = Number(contestId)
   const [expandedComments, setExpandedComments] = useState<Record<string, boolean>>({})
+  const [isCompleteContestModalOpen, setIsCompleteContestModalOpen] = useState(false)
 
   useEffect(() => {
     if (Number.isFinite(numericContestId)) {
@@ -94,6 +95,12 @@ export const OrganizerContestPage = observer(() => {
     if (!organizerContestStore.error) {
       navigate(`/cabinet/events/${numericContestId}/results`, { replace: true })
     }
+  }
+
+  /** Подтверждение завершения конкурса из модального окна */
+  const confirmCompleteContest = async () => {
+    setIsCompleteContestModalOpen(false)
+    await handleCompleteContest()
   }
 
   return (
@@ -329,7 +336,7 @@ export const OrganizerContestPage = observer(() => {
                     type="button"
                     className={styles.primaryButton}
                     disabled={!view.canComplete || organizerContestStore.isCompleting}
-                    onClick={() => void handleCompleteContest()}
+                    onClick={() => setIsCompleteContestModalOpen(true)}
                   >
                     {organizerContestStore.isCompleting ? 'Завершение...' : 'Завершить конкурс'}
                   </button>
@@ -344,6 +351,33 @@ export const OrganizerContestPage = observer(() => {
           ) : null}
         </div>
       </div>
+      {isCompleteContestModalOpen ? (
+        <div className={styles.modalOverlay} role="presentation">
+          <div className={styles.modalCard} role="dialog" aria-modal="true" aria-labelledby="complete-contest-dialog-title">
+            <p className={styles.modalText} id="complete-contest-dialog-title">
+              Вы уверены, что хотите завершить оценку мероприятия?
+            </p>
+            <div className={styles.modalActions}>
+              <button
+                type="button"
+                className={styles.modalPrimaryButton}
+                onClick={() => void confirmCompleteContest()}
+                disabled={organizerContestStore.isCompleting}
+              >
+                Завершить
+              </button>
+              <button
+                type="button"
+                className={styles.modalSecondaryButton}
+                onClick={() => setIsCompleteContestModalOpen(false)}
+                disabled={organizerContestStore.isCompleting}
+              >
+                Остаться
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </section>
   )
 })

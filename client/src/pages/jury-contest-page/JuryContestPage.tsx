@@ -270,6 +270,9 @@ export const JuryContestPage = observer(() => {
               <div className={styles.participantList}>
                 {view.participants.map((participant) => {
                   const photoUrl = resolveMediaUrl(participant.photoUrl)
+                  const isCommentSaving = juryContestStore.isCommentSaving(participant.id)
+                  const isAnyCommentSaving = juryContestStore.isAnyCommentSaving()
+                  const commentSaveErrorText = juryContestStore.getCommentSaveError(participant.id)
                   return (
                     <details className={styles.participantSection} key={participant.id}>
                       <summary className={styles.participantSummary}>
@@ -397,11 +400,22 @@ export const JuryContestPage = observer(() => {
                           placeholder="Оставьте обратную связь по выступлению"
                           onChange={(event) => juryContestStore.setComment(participant.id, event.target.value)}
                         />
-                        <div className={styles.commentCounter}>
-                          {juryContestStore.getComment(participant.id).length}
-                          <span className={styles.commentDivider}>/</span>
-                          {COMMENT_LIMIT}
+                        <div className={styles.commentFooter}>
+                          <div className={styles.commentCounter}>
+                            {juryContestStore.getComment(participant.id).length}
+                            <span className={styles.commentDivider}>/</span>
+                            {COMMENT_LIMIT}
+                          </div>
+                          <button
+                            className={styles.commentSaveButton}
+                            type="button"
+                            disabled={isScoreEditingLocked || juryContestStore.isSubmitting || isAnyCommentSaving}
+                            onClick={() => void juryContestStore.saveCommentDraft(numericContestId, participant.id)}
+                          >
+                            {isCommentSaving ? 'Сохранение...' : 'Сохранить'}
+                          </button>
                         </div>
+                        {commentSaveErrorText ? <p className={styles.commentSaveError}>{commentSaveErrorText}</p> : null}
                       </div>
                     </details>
                   )

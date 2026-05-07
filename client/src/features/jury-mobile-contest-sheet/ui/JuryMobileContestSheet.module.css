@@ -490,6 +490,46 @@
   gap: 4px;
 }
 
+.juryScoreCommentFooter {
+  width: 100%;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 8px;
+}
+
+.juryScoreCommentSaveButton {
+  height: 36px;
+  padding: 12px 16px;
+  border: none;
+  border-radius: 40px;
+  background: #0a0f15;
+  color: #fff;
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 16px;
+  font-family: 'Geist', 'Segoe UI', sans-serif;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.juryScoreCommentSaveButton:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.juryScoreCommentSaveError {
+  width: 100%;
+  margin: 0;
+  text-align: right;
+  color: #b73a45;
+  font-size: 12px;
+  line-height: 16px;
+}
+
 .juryScoreCommentDivider {
   opacity: 0.3;
 }

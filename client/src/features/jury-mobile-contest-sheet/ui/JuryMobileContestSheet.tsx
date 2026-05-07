@@ -160,6 +160,10 @@ export const JuryMobileContestSheet = observer(function JuryMobileContestSheet(p
           <div className={styles.juryScoreParticipantList}>
             {juryContestStore.view.participants.map((participant) => {
               const photoUrl = resolveMediaUrl(participant.photoUrl)
+              const isCommentSaving = juryContestStore.isCommentSaving(participant.id)
+              const isAnyCommentSaving = juryContestStore.isAnyCommentSaving()
+              const commentSaveErrorText = juryContestStore.getCommentSaveError(participant.id)
+              const contestId = juryContestStore.view?.contest.id ?? 0
               return (
                 <details className={styles.juryScoreParticipantSection} key={participant.id}>
                   <summary className={styles.juryScoreParticipantSummary}>
@@ -379,11 +383,22 @@ export const JuryMobileContestSheet = observer(function JuryMobileContestSheet(p
                       placeholder="Оставьте обратную связь по выступлению"
                       onChange={(event) => juryContestStore.setComment(participant.id, event.target.value)}
                     />
-                    <div className={styles.juryScoreCommentCounter}>
-                      {juryContestStore.getComment(participant.id).length}
-                      <span className={styles.juryScoreCommentDivider}>/</span>
-                      {commentLimit}
+                    <div className={styles.juryScoreCommentFooter}>
+                      <div className={styles.juryScoreCommentCounter}>
+                        {juryContestStore.getComment(participant.id).length}
+                        <span className={styles.juryScoreCommentDivider}>/</span>
+                        {commentLimit}
+                      </div>
+                      <button
+                        className={styles.juryScoreCommentSaveButton}
+                        type="button"
+                        disabled={isScoreEditingLocked || juryContestStore.isSubmitting || isAnyCommentSaving}
+                        onClick={() => void juryContestStore.saveCommentDraft(contestId, participant.id)}
+                      >
+                        {isCommentSaving ? 'Сохранение...' : 'Сохранить'}
+                      </button>
                     </div>
+                    {commentSaveErrorText ? <p className={styles.juryScoreCommentSaveError}>{commentSaveErrorText}</p> : null}
                   </div>
                 </details>
               )

@@ -28,6 +28,8 @@ class JuryContestStore {
   isRevoteMode = false
   /** Сохранение порядка показателей на экране приоритетов */
   isSavingPriorityOrder = false
+  savingCommentParticipantIds = new Set<number>()
+  commentSaveErrors = new Map<number, string>()
   error: string | null = null
   /** Порядок id критериев на шаге «Приоритет показателей» (drag-and-drop) */
   priorityDraftIds: number[] = []
@@ -46,6 +48,8 @@ class JuryContestStore {
     this.priorityDraftIds = []
     this.isRevokingSubmission = false
     this.isRevoteMode = false
+    this.savingCommentParticipantIds.clear()
+    this.commentSaveErrors.clear()
   }
 
   async loadContest(contestId: number, options?: { preserveDraft?: boolean }) {
@@ -107,6 +111,8 @@ class JuryContestStore {
         if (response.data.mySubmitted) {
           this.isRevoteMode = false
         }
+        this.savingCommentParticipantIds.clear()
+        this.commentSaveErrors.clear()
         this.syncPriorityDraftFromView()
       })
     } catch (error) {
@@ -203,6 +209,19 @@ class JuryContestStore {
 
   setComment(participantId: number, comment: string) {
     this.draftComments.set(participantId, comment.slice(0, 500))
+    this.commentSaveErrors.delete(participantId)
+  }
+
+  isCommentSaving(participantId: number) {
+    return this.savingCommentParticipantIds.has(participantId)
+  }
+
+  isAnyCommentSaving() {
+    return this.savingCommentParticipantIds.size > 0
+  }
+
+  getCommentSaveError(participantId: number) {
+    return this.commentSaveErrors.get(participantId) ?? ''
   }
 
   toggleParticipantFavorite(participantId: number) {
@@ -377,6 +396,53 @@ class JuryContestStore {
       participantId: participant.id,
       comment: this.getComment(participant.id),
     }))
+  }
+
+  syncServerDraftFromCurrentState() {
+    if (!this.view) return
+    const scorePayload = this.buildPayload()
+    const commentPayload = this.buildCommentsPayload()
+    const participantFavoritesPayload = this.buildParticipantFavoritesPayload()
+
+    this.view.myScores = scorePayload.map((scoreItem) => ({
+      participantId: scoreItem.participantId,
+      criterionId: scoreItem.criterionId,
+      value: scoreItem.value,
+      isFavorite: scoreItem.isFavorite,
+    }))
+    this.view.myComments = commentPayload.map((commentItem) => ({
+      participantId: commentItem.participantId,
+      comment: commentItem.comment,
+    }))
+    this.view.myParticipantFavorites = [...participantFavoritesPayload]
+    this.view.myCriterionFavorites = scorePayload
+      .filter((scoreItem) => Boolean(scoreItem.isFavorite))
+      .map((scoreItem) => ({
+        participantId: scoreItem.participantId,
+        criterionId: scoreItem.criterionId,
+      }))
+  }
+
+  async saveCommentDraft(contestId: number, participantId: number) {
+    if (!this.view) return
+    if (this.isScoreEditingLocked()) return
+    if (this.savingCommentParticipantIds.has(participantId)) return
+    this.commentSaveErrors.delete(participantId)
+    this.savingCommentParticipantIds.add(participantId)
+    try {
+      await putScoresBatch(contestId, this.buildPayload(), this.buildCommentsPayload(), this.buildParticipantFavoritesPayload())
+      runInAction(() => {
+        this.syncServerDraftFromCurrentState()
+      })
+    } catch (error) {
+      runInAction(() => {
+        this.commentSaveErrors.set(participantId, (error as Error)?.message || 'Не удалось сохранить комментарий')
+      })
+    } finally {
+      runInAction(() => {
+        this.savingCommentParticipantIds.delete(participantId)
+      })
+    }
   }
 
   async submit(contestId: number) {

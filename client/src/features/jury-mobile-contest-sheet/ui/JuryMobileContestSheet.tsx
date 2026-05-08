@@ -199,8 +199,8 @@ export const JuryMobileContestSheet = observer(function JuryMobileContestSheet(p
                         <img
                           src={
                             juryContestStore.isParticipantFavorite(participant.id)
-                              ? '/red-heart-4_128x128.svg'
-                              : '/heart-alt-2_128x128.svg'
+                              ? '/heart-big-active.svg'
+                              : '/heart-big-no-active.svg'
                           }
                           alt=""
                           aria-hidden
@@ -220,8 +220,7 @@ export const JuryMobileContestSheet = observer(function JuryMobileContestSheet(p
                       const percent = range > 0 ? ((clamped - min) / range) * 100 : 0
                       return (
                         <div className={styles.juryScoreCriterionRow} key={criterion.id}>
-                          <div className={styles.juryScoreCriterionHead}>
-                            <div className={styles.juryScoreCriterionLabel}>{criterion.name}</div>
+                          <div className={styles.juryScoreCriterionHead}>                            
                             <button
                               className={styles.favoriteButton}
                               type="button"
@@ -241,13 +240,14 @@ export const JuryMobileContestSheet = observer(function JuryMobileContestSheet(p
                               <img
                                 src={
                                   juryContestStore.isCriterionFavorite(participant.id, criterion.id)
-                                    ? '/red-heart-4_128x128.svg'
-                                    : '/heart-alt-2_128x128.svg'
+                                    ? '/heart-small-active.svg'
+                                    : '/heart-small-no-active.svg'
                                 }
                                 alt=""
                                 aria-hidden
                               />
                             </button>
+                            <div className={styles.juryScoreCriterionLabel}>{criterion.name}</div>
                           </div>
                           <div className={styles.juryScoreSliderWrap}>
                             <span className={styles.juryScoreBoundaryValue}>{min}</span>

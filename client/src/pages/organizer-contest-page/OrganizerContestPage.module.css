@@ -428,7 +428,7 @@
 
 .orgContestCriteriaGrid__row {
   display: grid;
-  grid-template-columns: 1fr minmax(20px, auto) minmax(50px, auto) 20px;
+  grid-template-columns: 20px 1fr minmax(50px, auto) 50px;
   align-items: flex-start;
   gap: 13px;
   color: #0a0f15;
@@ -481,7 +481,7 @@
   display: block;
 }
 
-.orgContestCriteriaGrid__row--total {
+.orgContestCriteriaGrid__row--total {  
   align-items: center;
   margin-top: 0.444vh;
 }

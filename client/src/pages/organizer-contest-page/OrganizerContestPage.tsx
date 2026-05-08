@@ -179,7 +179,7 @@ export const OrganizerContestPage = observer(() => {
                           </div>
                           {participant.likesCount > 0 ? (
                             <div className={styles.participantLikes} aria-label={`Лайков: ${participant.likesCount}`}>
-                              <img src="/red-heart-4_128x128.svg" alt="" aria-hidden />
+                              <img src="/heart-big-active.svg" alt="" aria-hidden />
                               <span>{participant.likesCount}</span>
                             </div>
                           ) : null}
@@ -224,16 +224,19 @@ export const OrganizerContestPage = observer(() => {
                                     <div
                                       className={`${styles.orgContestCriteriaGrid__row} ${styles['orgContestCriteriaGrid__row--head']}`}
                                     >
+                                      <span className={styles.orgContestCriteriaGrid__favorite} />
                                       <span className={styles.orgContestCriteriaGrid__name}>Показатель</span>
                                       <span className={styles.orgContestCriteriaGrid__score}>Балл</span>
-                                      <span className={styles.orgContestCriteriaGrid__weight}>Вес</span>
-                                      <span className={styles.orgContestCriteriaGrid__favorite} />
+                                      <span className={styles.orgContestCriteriaGrid__weight}>Вес</span>                                      
                                     </div>
                                     {juryCard.criteria.map((criterion) => (
                                       <div
                                         className={styles.orgContestCriteriaGrid__row}
                                         key={criterion.criterionId}
                                       >
+                                        <span className={styles.orgContestCriteriaGrid__favorite}>
+                                          {criterion.isFavorite ? <img src="/heart-small-active.svg" alt="" aria-hidden /> : <img src="/heart-small-no-active.svg" alt="" aria-hidden />}
+                                        </span>
                                         <span className={styles.orgContestCriteriaGrid__name}>{criterion.name}</span>
                                         <span className={styles.orgContestCriteriaGrid__score}>
                                           {criterion.value ?? '—'} / {criterion.maxScore}
@@ -241,21 +244,18 @@ export const OrganizerContestPage = observer(() => {
                                         <span className={styles.orgContestCriteriaGrid__weight}>
                                           {formatCriterionWeight(criterion.weight)}
                                         </span>
-                                        <span className={styles.orgContestCriteriaGrid__favorite}>
-                                          {criterion.isFavorite ? <img src="/red-heart-4_128x128.svg" alt="" aria-hidden /> : null}
-                                        </span>
                                       </div>
                                     ))}
                                   </div>
                                 ) : (
                                   juryCard.criteria.map((criterion) => (
                                     <div className={styles.criterionRow} key={criterion.criterionId}>
+                                      <span className={styles.criterionLike}>
+                                        {criterion.isFavorite ? <img src="/heart-small-active.svg" alt="" aria-hidden /> : <img src="/heart-small-no-active.svg" alt="" aria-hidden />}
+                                      </span>
                                       <span>{criterion.name}</span>
                                       <span>
                                         {criterion.value ?? '—'} / {criterion.maxScore}
-                                      </span>
-                                      <span className={styles.criterionLike}>
-                                        {criterion.isFavorite ? <img src="/red-heart-4_128x128.svg" alt="" aria-hidden /> : null}
                                       </span>
                                     </div>
                                   ))
@@ -266,6 +266,7 @@ export const OrganizerContestPage = observer(() => {
                                 <div
                                   className={`${styles.orgContestCriteriaGrid__row} ${styles['orgContestCriteriaGrid__row--total']}`}
                                 >
+                                  <span className={styles.orgContestCriteriaGrid__favorite} />
                                   <span className={styles.orgContestCriteriaGrid__name}>Итого</span>
                                   <strong className={styles.orgContestCriteriaGrid__scoreTotal}>
                                     {juryCard.total} / 10
@@ -277,8 +278,7 @@ export const OrganizerContestPage = observer(() => {
                                     {Number.isFinite(Number(juryCard.weightsGridStep))
                                       ? `${formatWeightsGridStep(juryCard.weightsGridStep)}`
                                       : '—'}
-                                  </span>
-                                  <span className={styles.orgContestCriteriaGrid__favorite} />
+                                  </span>                                  
                                 </div>
                               ) : (
                                 <div className={styles.totalRow}>

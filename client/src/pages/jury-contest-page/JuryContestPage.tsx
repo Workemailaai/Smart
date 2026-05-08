@@ -308,8 +308,8 @@ export const JuryContestPage = observer(() => {
                             <img
                               src={
                                 juryContestStore.isParticipantFavorite(participant.id)
-                                  ? '/red-heart-4_128x128.svg'
-                                  : '/heart-alt-2_128x128.svg'
+                                  ? '/heart-big-active.svg'
+                                  : '/heart-big-no-active.svg'
                               }
                               alt=""
                               aria-hidden
@@ -329,8 +329,7 @@ export const JuryContestPage = observer(() => {
                           const percent = range > 0 ? ((clamped - min) / range) * 100 : 0
                           return (
                             <div className={styles.criterionRow} key={criterion.id}>
-                              <div className={styles.criterionHead}>
-                                <div className={styles.criterionLabel}>{criterion.name}</div>
+                              <div className={styles.criterionHead}>                                
                                 <button
                                   className={styles.favoriteButton}
                                   type="button"
@@ -350,13 +349,14 @@ export const JuryContestPage = observer(() => {
                                   <img
                                     src={
                                       juryContestStore.isCriterionFavorite(participant.id, criterion.id)
-                                        ? '/red-heart-4_128x128.svg'
-                                        : '/heart-alt-2_128x128.svg'
+                                        ? '/heart-small-active.svg'
+                                        : '/heart-small-no-active.svg'
                                     }
                                     alt=""
                                     aria-hidden
                                   />
                                 </button>
+                                <div className={styles.criterionLabel}>{criterion.name}</div>
                               </div>
                               <div className={styles.sliderWrap}>
                                 <span className={styles.boundaryValue}>{min}</span>

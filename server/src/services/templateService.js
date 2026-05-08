@@ -4,6 +4,31 @@ const { CONTEST_TYPES } = require("../constants/contestTypes");
 const MediaFileService = require("./mediaFileService");
 
 class TemplateService {
+  static buildDefaultCriteriaInequalities(criteriaCount) {
+    if (!Number.isInteger(criteriaCount) || criteriaCount <= 1) return [];
+    return Array.from({ length: criteriaCount - 1 }, () => "gt");
+  }
+
+  static normalizeCriteriaInequalities(rawOperators, criteriaCount) {
+    const expectedLength = Math.max(0, criteriaCount - 1);
+    if (rawOperators == null) {
+      return TemplateService.buildDefaultCriteriaInequalities(criteriaCount);
+    }
+    if (!Array.isArray(rawOperators)) {
+      throw new ApiError(400, "Цепочка неравенств должна быть массивом");
+    }
+    if (rawOperators.length !== expectedLength) {
+      throw new ApiError(400, "Длина цепочки неравенств должна быть равна количеству критериев минус один");
+    }
+    const normalizedOperators = rawOperators.map((operator) => String(operator));
+    for (const operator of normalizedOperators) {
+      if (operator !== "gt" && operator !== "eq" && operator !== "gte") {
+        throw new ApiError(400, "Допустимые операторы неравенств: gt, eq, gte");
+      }
+    }
+    return normalizedOperators;
+  }
+
   /**
    * Нормализует каркас шаблона: тип конкурса + критерии с верхней границей (нижняя всегда 1).
    * Поддерживает старый формат criteria как массив строк.
@@ -58,6 +83,10 @@ class TemplateService {
       throw new ApiError(400, "Некорректный тип конкурса в шаблоне");
     }
     const criteria = TemplateService.normalizeSkeletonCriteria(source.criteria ?? fallbackCriteria);
+    const criteriaInequalities = TemplateService.normalizeCriteriaInequalities(
+      source.criteriaInequalities,
+      criteria.length
+    );
     const title = source.title != null ? String(source.title).trim() : "";
     const participantsRaw = Array.isArray(source.participants) ? source.participants : [];
     const juryRaw = Array.isArray(source.jury) ? source.jury : [];
@@ -125,6 +154,7 @@ class TemplateService {
       useCriteriaWeights: Boolean(source.useCriteriaWeights),
       juryPreferencesEnabled: Boolean(source.juryPreferencesEnabled),
       criteria,
+      criteriaInequalities,
       participants,
       jury
     };

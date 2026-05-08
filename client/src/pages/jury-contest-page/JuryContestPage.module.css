@@ -773,6 +773,33 @@
   line-height: 24px;
 }
 
+.priorityInequalityRow {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 8px 4px 12px;
+}
+
+.priorityInequalityText {
+  color: #0a0f15;
+  opacity: 0.7;
+  font-size: 14px;
+  line-height: 16px;
+}
+
+.priorityInequalitySelect {
+  width: 72px;
+  height: 36px;
+  border: none;
+  border-radius: 12px;
+  background: #fff;
+  color: #0a0f15;
+  font-size: 16px;
+  text-align: center;
+  padding: 0 8px;
+}
+
 .priorityActions {
   align-self: stretch;
   margin-top: 24px;
@@ -1003,6 +1030,16 @@
   .priorityNameText {
     font-size: 16px;
     line-height: 20px;
+  }
+
+  .priorityInequalityRow {
+    padding: 4px 0 10px;
+    justify-content: space-between;
+  }
+
+  .priorityInequalityText {
+    font-size: 12px;
+    line-height: 14px;
   }
 
   .priorityActions {

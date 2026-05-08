@@ -5,6 +5,12 @@ import { BottomSheet } from '@/shared/ui/bottom-sheet/BottomSheet'
 import type { JuryMobileContestSheetProps } from '../model/types'
 import styles from './JuryMobileContestSheet.module.css'
 
+const INEQUALITY_OPTIONS: Array<{ value: 'gt' | 'eq' | 'gte'; label: string }> = [
+  { value: 'gt', label: '>' },
+  { value: 'eq', label: '=' },
+  { value: 'gte', label: '>=' },
+]
+
 export const JuryMobileContestSheet = observer(function JuryMobileContestSheet(props: JuryMobileContestSheetProps) {
   const {
     juryContestStore,
@@ -80,29 +86,52 @@ export const JuryMobileContestSheet = observer(function JuryMobileContestSheet(p
               const isDragging = touchDragFrom === index
               const isOver = touchDragOver === index && touchDragFrom !== null && touchDragFrom !== index
               return (
-                <div
-                  className={`${styles.juryPriorityRow} ${isDragging ? styles.juryPriorityRowDragging : ''} ${
-                    isOver ? styles.juryPriorityRowDragOver : ''
-                  }`}
-                  data-priority-row-index={index}
-                  key={criterionId}
-                  onPointerDown={(event) => {
-                    onPriorityDragStart(index, event.pointerId, event.currentTarget)
-                  }}
-                  onPointerMove={onPriorityDragMove}
-                  onPointerUp={(event) => {
-                    onPriorityDragEnd(event.pointerId)
-                  }}
-                  onPointerCancel={(event) => {
-                    onPriorityDragCancel(event.pointerId)
-                  }}
-                >
-                  <div className={styles.juryPriorityNamePlate}>
-                    <span className={styles.juryPriorityNameText}>{criterion.name}</span>
-                    <span aria-hidden className={styles.juryPriorityDragHandle}>
-                      ⋮⋮
-                    </span>
+                <div key={criterionId}>
+                  <div
+                    className={`${styles.juryPriorityRow} ${isDragging ? styles.juryPriorityRowDragging : ''} ${
+                      isOver ? styles.juryPriorityRowDragOver : ''
+                    }`}
+                    data-priority-row-index={index}
+                    onPointerDown={(event) => {
+                      onPriorityDragStart(index, event.pointerId, event.currentTarget)
+                    }}
+                    onPointerMove={onPriorityDragMove}
+                    onPointerUp={(event) => {
+                      onPriorityDragEnd(event.pointerId)
+                    }}
+                    onPointerCancel={(event) => {
+                      onPriorityDragCancel(event.pointerId)
+                    }}
+                  >
+                    <div className={styles.juryPriorityNamePlate}>
+                      <span className={styles.juryPriorityNameText}>{criterion.name}</span>
+                      <span aria-hidden className={styles.juryPriorityDragHandle}>
+                        ⋮⋮
+                      </span>
+                    </div>
                   </div>
+                  {index < juryContestStore.priorityDraftIds.length - 1 ? (
+                    <div className={styles.juryPriorityInequalityRow}>
+                      <span className={styles.juryPriorityInequalityText}>
+                        {index + 1} и {index + 2}
+                      </span>
+                      <select
+                        aria-label={`Оператор между приоритетами ${index + 1} и ${index + 2}`}
+                        className={styles.juryPriorityInequalitySelect}
+                        onChange={(event) => {
+                          const nextValue = event.target.value as 'gt' | 'eq' | 'gte'
+                          juryContestStore.setPriorityInequality(index, nextValue)
+                        }}
+                        value={juryContestStore.priorityDraftInequalities[index] ?? 'gt'}
+                      >
+                        {INEQUALITY_OPTIONS.map((option) => (
+                          <option key={option.value} value={option.value}>
+                            {option.label}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  ) : null}
                 </div>
               )
             })}

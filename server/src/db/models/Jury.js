@@ -44,6 +44,11 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.JSON,
         allowNull: true
       },
+      /** Цепочка неравенств между соседними позициями критериев для этого жюри */
+      criteriaInequalities: {
+        type: DataTypes.JSON,
+        allowNull: true
+      },
       /** Флаг отправки оценок жюри по мероприятию */
       isSubmitted: {
         type: DataTypes.BOOLEAN,

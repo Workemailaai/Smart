@@ -48,6 +48,36 @@ class ContestService {
     return Number.isFinite(normalized) ? normalized : fallback;
   }
 
+  static getAllowedInequalityOperators() {
+    return ["gt", "eq", "gte"];
+  }
+
+  static buildDefaultCriteriaInequalities(criteriaCount) {
+    if (!Number.isInteger(criteriaCount) || criteriaCount <= 1) return [];
+    return Array.from({ length: criteriaCount - 1 }, () => "gt");
+  }
+
+  static normalizeCriteriaInequalities(rawOperators, criteriaCount) {
+    const expectedLength = Math.max(0, criteriaCount - 1);
+    if (rawOperators == null) {
+      return ContestService.buildDefaultCriteriaInequalities(criteriaCount);
+    }
+    if (!Array.isArray(rawOperators)) {
+      throw new ApiError(422, "Цепочка неравенств должна быть массивом");
+    }
+    if (rawOperators.length !== expectedLength) {
+      throw new ApiError(422, "Длина цепочки неравенств должна быть равна количеству критериев минус один");
+    }
+    const allowedOperators = ContestService.getAllowedInequalityOperators();
+    const normalizedOperators = rawOperators.map((operator) => String(operator));
+    for (const operator of normalizedOperators) {
+      if (!allowedOperators.includes(operator)) {
+        throw new ApiError(422, "Допустимые операторы: gt, eq, gte");
+      }
+    }
+    return normalizedOperators;
+  }
+
   static countSubmittedJury({ juryMembers, expectedScoreCount }) {
     if (expectedScoreCount === 0 || juryMembers.length === 0) {
       return 0;
@@ -156,6 +186,7 @@ class ContestService {
       organizerId,
       contestType: contestType || "creative",
       coverImageUrl: coverImageUrl || null,
+      defaultCriteriaInequalities: [],
       status: ContestService.contestStatuses.inProgress
     });
     return contest;
@@ -251,6 +282,10 @@ class ContestService {
       }
       const { totals } = weightedTotalsForJury({
         criteriaSorted,
+        criteriaInequalities: ContestService.normalizeCriteriaInequalities(
+          myAssignment.criteriaInequalities ?? contest.defaultCriteriaInequalities,
+          criteriaSorted.length
+        ),
         participantsSorted,
         getRawScore: (criterionId, participantId) =>
           myScoreMap.get(`${participantId}_${criterionId}`)
@@ -283,6 +318,14 @@ class ContestService {
     const criteriaForResponse = orderCriteriaForJury(contest.criteria, myAssignment.criterionOrder);
     const criteriaPlain = criteriaForResponse.map((c) => c.get({ plain: true }));
     const myCriterionOrder = criteriaForResponse.map((c) => c.id);
+    const defaultCriteriaInequalities = ContestService.normalizeCriteriaInequalities(
+      contest.defaultCriteriaInequalities,
+      criteriaPlain.length
+    );
+    const myCriteriaInequalities =
+      myAssignment.criteriaInequalities == null
+        ? null
+        : ContestService.normalizeCriteriaInequalities(myAssignment.criteriaInequalities, criteriaPlain.length);
     const myCriterionFavorites = myScores
       .filter((scoreItem) => Boolean(scoreItem.isFavorite))
       .map((scoreItem) => ({
@@ -301,6 +344,8 @@ class ContestService {
       contest: contest.get({ plain: true }),
       criteria: criteriaPlain,
       myCriterionOrder,
+      defaultCriteriaInequalities,
+      myCriteriaInequalities,
       participants: contest.participants,
       myScores,
       myComments,
@@ -318,7 +363,7 @@ class ContestService {
    * Жюри сохраняет индивидуальный порядок показателей (поле jury.criterionOrder).
    * @param {number[]} orderedCriterionIds — полный список id критериев конкурса в новом порядке
    */
-  static async reorderCriteriaByJury({ contestId, userId, orderedCriterionIds }) {
+  static async reorderCriteriaByJury({ contestId, userId, orderedCriterionIds, criteriaInequalities }) {
     const contest = await ContestService.getContestWithDependencies(contestId);
     const myAssignment = contest.juryMembers.find((item) => item.userId === userId);
     if (!myAssignment) {
@@ -337,6 +382,7 @@ class ContestService {
     if (!Array.isArray(orderedCriterionIds) || orderedCriterionIds.length !== rows.length) {
       throw new ApiError(422, "Передайте полный список id критериев");
     }
+    const normalizedCriteriaInequalities = ContestService.normalizeCriteriaInequalities(criteriaInequalities, rows.length);
     const idSet = new Set(rows.map((c) => c.id));
     const seen = new Set();
     for (const raw of orderedCriterionIds) {
@@ -351,7 +397,10 @@ class ContestService {
     }
 
     await Jury.update(
-      { criterionOrder: orderedCriterionIds.map((x) => Number(x)) },
+      {
+        criterionOrder: orderedCriterionIds.map((x) => Number(x)),
+        criteriaInequalities: normalizedCriteriaInequalities
+      },
       { where: { id: myAssignment.id, contestId } }
     );
 
@@ -360,7 +409,8 @@ class ContestService {
     const criteriaOrdered = orderCriteriaForJury(fresh.criteria, me?.criterionOrder);
     return {
       criteria: criteriaOrdered.map((c) => c.get({ plain: true })),
-      myCriterionOrder: criteriaOrdered.map((c) => c.id)
+      myCriterionOrder: criteriaOrdered.map((c) => c.id),
+      myCriteriaInequalities: normalizedCriteriaInequalities
     };
   }
 
@@ -491,6 +541,10 @@ class ContestService {
         const criteriaSortedForJury = orderCriteriaForJury(contest.criteria, jm.criterionOrder);
         const { totals, weights, weightsGridStep } = weightedTotalsForJury({
           criteriaSorted: criteriaSortedForJury,
+          criteriaInequalities: ContestService.normalizeCriteriaInequalities(
+            jm.criteriaInequalities ?? contest.defaultCriteriaInequalities,
+            criteriaSortedForJury.length
+          ),
           participantsSorted,
           getRawScore: (cId, pId) => scoreMap.get(`${jm.id}_${pId}_${cId}`)?.value
         });
@@ -661,6 +715,10 @@ class ContestService {
         const criteriaSortedForJury = orderCriteriaForJury(contest.criteria, jm.criterionOrder);
         const { totals } = weightedTotalsForJury({
           criteriaSorted: criteriaSortedForJury,
+          criteriaInequalities: ContestService.normalizeCriteriaInequalities(
+            jm.criteriaInequalities ?? contest.defaultCriteriaInequalities,
+            criteriaSortedForJury.length
+          ),
           participantsSorted,
           getRawScore: (cId, pId) => scoreMap.get(`${jm.id}_${pId}_${cId}`)
         });
@@ -777,6 +835,7 @@ class ContestService {
       description,
       contestType,
       criteria,
+      criteriaInequalities,
       participants,
       jury,
       coverImageUrl,
@@ -810,6 +869,10 @@ class ContestService {
         throw new ApiError(422, "Верхняя граница должна быть больше нижней");
       }
     }
+    const normalizedCriteriaInequalities = ContestService.normalizeCriteriaInequalities(
+      criteriaInequalities,
+      criteria.length
+    );
     if (!Array.isArray(participants)) {
       throw new ApiError(422, "Список участников должен быть массивом");
     }
@@ -877,6 +940,7 @@ class ContestService {
           : null,
       contestType: String(contestType),
       criteria,
+      criteriaInequalities: normalizedCriteriaInequalities,
       participants,
       jury,
       coverImageUrl: normalizedCoverImageUrl,
@@ -897,6 +961,7 @@ class ContestService {
       description,
       contestType,
       criteria,
+      criteriaInequalities,
       participants,
       jury,
       coverImageUrl: coverImageUrlFromPayload,
@@ -919,6 +984,7 @@ class ContestService {
           organizerId,
           contestType,
           coverImageUrl,
+          defaultCriteriaInequalities: criteriaInequalities,
           useCriteriaWeights,
           juryPreferencesEnabled
         },

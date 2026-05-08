@@ -27,6 +27,7 @@ export interface ITemplateSnapshot {
   useCriteriaWeights: boolean
   juryPreferencesEnabled: boolean
   criteria: ITemplateCriterion[]
+  criteriaInequalities: Array<'gt' | 'eq' | 'gte'>
   participants: ITemplateParticipant[]
   jury: ITemplateJuryMember[]
 }

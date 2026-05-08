@@ -28,10 +28,11 @@ function sumIndicatorScores(indicators, participantCount) {
  * Итоговые взвешенные баллы по участникам для одного члена жюри.
  * @param {object} p
  * @param {Array<{ id: number, minScore?: number, maxScore: number }>} p.criteriaSorted — по sortOrder
+ * @param {Array<"gt"|"eq"|"gte">} p.criteriaInequalities — цепочка операторов между соседними позициями
  * @param {Array<{ id: number }>} p.participantsSorted — по id
  * @param {(criterionId: number, participantId: number) => number | null | undefined} p.getRawScore
  */
-function weightedTotalsForJury({ criteriaSorted, participantsSorted, getRawScore }) {
+function weightedTotalsForJury({ criteriaSorted, criteriaInequalities, participantsSorted, getRawScore }) {
   const n = criteriaSorted.length;
   const m = participantsSorted.length;
   if (n === 0 || m === 0) {
@@ -54,7 +55,12 @@ function weightedTotalsForJury({ criteriaSorted, participantsSorted, getRawScore
   }
 
   const priorities = criteriaSorted.map((_, idx) => idx + 1);
-  const { indicators, weightsGridStep } = evaluateObjects({ grades, priorities, maxScale: 10 });
+  const { indicators, weightsGridStep } = evaluateObjects({
+    grades,
+    priorities,
+    maxScale: 10,
+    criteriaInequalities
+  });
   const totals = sumIndicatorScores(indicators, m);
   const weights = indicators.map((indicator) => indicator.weight);
   return { totals, weights, weightsGridStep };

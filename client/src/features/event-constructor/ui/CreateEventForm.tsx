@@ -39,6 +39,12 @@ const PRIMARY_ORDER = [
   'other',
 ] as const
 
+const CRITERIA_INEQUALITY_OPTIONS: Array<{ value: 'gt' | 'eq' | 'gte'; label: string }> = [
+  { value: 'gt', label: '>' },
+  { value: 'eq', label: '=' },
+  { value: 'gte', label: '>=' },
+]
+
 /** Общие границы оценки для всех показателей (согласованы с валидацией на сервере) */
 function syncAllCriteriaBounds(
   store: typeof createEventFormStore,
@@ -538,6 +544,30 @@ export const CreateEventForm = observer(function CreateEventForm() {
               </div>
             </div>
           ))}
+          {store.criteria.length >= 2
+            ? store.criteriaInequalities.map((operator, operatorIndex) => (
+                <div className={styles.criteriaPanelInequalityRow} key={`criterion-inequality-${operatorIndex}`}>
+                  <span className={styles.criteriaPanelInequalityLabel}>
+                    Связь между {operatorIndex + 1} и {operatorIndex + 2}
+                  </span>
+                  <select
+                    aria-label={`Неравенство между показателями ${operatorIndex + 1} и ${operatorIndex + 2}`}
+                    className={styles.criteriaPanelInequalitySelect}
+                    onChange={(event) => {
+                      const nextOperator = event.target.value as 'gt' | 'eq' | 'gte'
+                      store.setCriteriaInequality(operatorIndex, nextOperator)
+                    }}
+                    value={operator}
+                  >
+                    {CRITERIA_INEQUALITY_OPTIONS.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              ))
+            : null}
           {/* Строка добавления: имя вводится в поле, зелёная галка — только при непустом названии */}
           <div className={styles.criteriaPanelAddCriterionRow}>
             <div className={styles.criteriaPanelOrderBadge}>

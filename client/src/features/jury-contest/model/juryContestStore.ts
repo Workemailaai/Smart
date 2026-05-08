@@ -32,6 +32,8 @@ class JuryContestStore {
   error: string | null = null
   /** Порядок id критериев на шаге «Приоритет показателей» (drag-and-drop) */
   priorityDraftIds: number[] = []
+  /** Цепочка неравенств между соседними позициями на шаге приоритетов */
+  priorityDraftInequalities: Array<'gt' | 'eq' | 'gte'> = []
 
   constructor() {
     makeAutoObservable(this)
@@ -44,6 +46,7 @@ class JuryContestStore {
     this.draftCriterionFavorites.clear()
     this.error = null
     this.priorityDraftIds = []
+    this.priorityDraftInequalities = []
     this.isRevokingSubmission = false
     this.isRevoteMode = false
     this.savingCommentParticipantIds.clear()
@@ -136,17 +139,29 @@ class JuryContestStore {
   syncPriorityDraftFromView() {
     if (!this.view) {
       this.priorityDraftIds = []
+      this.priorityDraftInequalities = []
       return
     }
-    const { criteria, myCriterionOrder } = this.view
+    const { criteria, myCriterionOrder, myCriteriaInequalities, defaultCriteriaInequalities } = this.view
     if (
       myCriterionOrder &&
       myCriterionOrder.length === criteria.length
     ) {
       this.priorityDraftIds = [...myCriterionOrder]
+    } else {
+      this.priorityDraftIds = sortCriteriaRows(criteria).map((c) => c.id)
+    }
+    const expectedLength = Math.max(this.priorityDraftIds.length - 1, 0)
+    const sourceInequalities = myCriteriaInequalities ?? defaultCriteriaInequalities
+    if (
+      Array.isArray(sourceInequalities) &&
+      sourceInequalities.length === expectedLength &&
+      sourceInequalities.every((operator) => operator === 'gt' || operator === 'eq' || operator === 'gte')
+    ) {
+      this.priorityDraftInequalities = [...sourceInequalities]
       return
     }
-    this.priorityDraftIds = sortCriteriaRows(criteria).map((c) => c.id)
+    this.priorityDraftInequalities = Array.from({ length: expectedLength }, () => 'gt')
   }
 
   movePriorityCriterion(fromIndex: number, toIndex: number) {
@@ -160,11 +175,16 @@ class JuryContestStore {
     this.priorityDraftIds = next
   }
 
+  setPriorityInequality(atIndex: number, operator: 'gt' | 'eq' | 'gte') {
+    if (atIndex < 0 || atIndex >= this.priorityDraftInequalities.length) return
+    this.priorityDraftInequalities[atIndex] = operator
+  }
+
   async confirmPriorityOrder(contestId: number, userId: number) {
     this.isSavingPriorityOrder = true
     this.error = null
     try {
-      await putJuryCriteriaOrder(contestId, this.priorityDraftIds)
+      await putJuryCriteriaOrder(contestId, this.priorityDraftIds, this.priorityDraftInequalities)
       if (typeof localStorage !== 'undefined') {
         localStorage.setItem(this.priorityStorageKey(userId, contestId), '1')
       }
@@ -337,9 +357,11 @@ class JuryContestStore {
     }
 
     const criteriaSorted = orderCriteriaForJury(this.view.criteria, this.view.myCriterionOrder ?? null)
+    const criteriaInequalities = this.view.myCriteriaInequalities ?? this.view.defaultCriteriaInequalities
     const participantsSorted = sortParticipantsRows(this.view.participants)
     const { totals } = weightedTotalsForJury({
       criteriaSorted,
+      criteriaInequalities,
       participantsSorted,
       getRawScore: (criterionId, pId) => {
         const lo = this.view!.criteria.find((c) => c.id === criterionId)?.minScore ?? 0

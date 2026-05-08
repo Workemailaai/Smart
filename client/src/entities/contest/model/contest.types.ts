@@ -60,6 +60,10 @@ export interface IJuryContestView {
   criteria: ICriterion[]
   /** Индивидуальный порядок id критериев для текущего жюри (приоритет для взвешенного расчёта) */
   myCriterionOrder?: number[] | null
+  /** Дефолтная цепочка неравенств от организатора между соседними позициями */
+  defaultCriteriaInequalities: Array<'gt' | 'eq' | 'gte'>
+  /** Индивидуальная цепочка неравенств текущего жюри между соседними позициями */
+  myCriteriaInequalities: Array<'gt' | 'eq' | 'gte'> | null
   participants: IParticipant[]
   myScores: IScoreItem[]
   myComments: IParticipantCommentItem[]

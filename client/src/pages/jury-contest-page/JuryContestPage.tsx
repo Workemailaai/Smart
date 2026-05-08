@@ -10,6 +10,11 @@ import { sortCriteriaRows } from '@/shared/lib/weightedScores'
 import styles from './JuryContestPage.module.css'
 
 const COMMENT_LIMIT = 500
+const INEQUALITY_OPTIONS: Array<{ value: 'gt' | 'eq' | 'gte'; label: string }> = [
+  { value: 'gt', label: '>' },
+  { value: 'eq', label: '=' },
+  { value: 'gte', label: '>=' },
+]
 
 function getInitials(name: string) {
   return name
@@ -133,45 +138,68 @@ export const JuryContestPage = observer(() => {
             const isDragging = priorityDragFrom === index
             const isOver = priorityDragOver === index && priorityDragFrom !== null && priorityDragFrom !== index
             return (
-              <div
-                className={`${styles.priorityRow} ${isDragging ? styles.priorityRowDragging : ''} ${
-                  isOver ? styles.priorityRowDragOver : ''
-                }`}
-                draggable
-                key={criterionId}
-                onDragEnd={() => {
-                  setPriorityDragFrom(null)
-                  setPriorityDragOver(null)
-                }}
-                onDragOver={(event) => {
-                  if (priorityDragFrom === null) return
-                  event.preventDefault()
-                  event.dataTransfer.dropEffect = 'move'
-                  setPriorityDragOver(index)
-                }}
-                onDragStart={(event) => {
-                  event.dataTransfer.setData('text/plain', String(index))
-                  event.dataTransfer.effectAllowed = 'move'
-                  setPriorityDragFrom(index)
-                }}
-                onDrop={(event) => {
-                  event.preventDefault()
-                  const raw = event.dataTransfer.getData('text/plain')
-                  const from = Number.parseInt(raw, 10)
-                  if (Number.isNaN(from)) {
+              <div key={criterionId}>
+                <div
+                  className={`${styles.priorityRow} ${isDragging ? styles.priorityRowDragging : ''} ${
+                    isOver ? styles.priorityRowDragOver : ''
+                  }`}
+                  draggable
+                  onDragEnd={() => {
                     setPriorityDragFrom(null)
                     setPriorityDragOver(null)
-                    return
-                  }
-                  juryContestStore.movePriorityCriterion(from, index)
-                  setPriorityDragFrom(null)
-                  setPriorityDragOver(null)
-                }}
-              >
-                <div className={styles.priorityIndexBadge}>{index + 1}</div>
-                <div className={styles.priorityNamePlate}>
-                  <span className={styles.priorityNameText}>{criterion.name}</span>
+                  }}
+                  onDragOver={(event) => {
+                    if (priorityDragFrom === null) return
+                    event.preventDefault()
+                    event.dataTransfer.dropEffect = 'move'
+                    setPriorityDragOver(index)
+                  }}
+                  onDragStart={(event) => {
+                    event.dataTransfer.setData('text/plain', String(index))
+                    event.dataTransfer.effectAllowed = 'move'
+                    setPriorityDragFrom(index)
+                  }}
+                  onDrop={(event) => {
+                    event.preventDefault()
+                    const raw = event.dataTransfer.getData('text/plain')
+                    const from = Number.parseInt(raw, 10)
+                    if (Number.isNaN(from)) {
+                      setPriorityDragFrom(null)
+                      setPriorityDragOver(null)
+                      return
+                    }
+                    juryContestStore.movePriorityCriterion(from, index)
+                    setPriorityDragFrom(null)
+                    setPriorityDragOver(null)
+                  }}
+                >
+                  <div className={styles.priorityIndexBadge}>{index + 1}</div>
+                  <div className={styles.priorityNamePlate}>
+                    <span className={styles.priorityNameText}>{criterion.name}</span>
+                  </div>
                 </div>
+                {index < juryContestStore.priorityDraftIds.length - 1 ? (
+                  <div className={styles.priorityInequalityRow}>
+                    <span className={styles.priorityInequalityText}>
+                      {index + 1} и {index + 2}
+                    </span>
+                    <select
+                      aria-label={`Оператор между приоритетами ${index + 1} и ${index + 2}`}
+                      className={styles.priorityInequalitySelect}
+                      onChange={(event) => {
+                        const nextValue = event.target.value as 'gt' | 'eq' | 'gte'
+                        juryContestStore.setPriorityInequality(index, nextValue)
+                      }}
+                      value={juryContestStore.priorityDraftInequalities[index] ?? 'gt'}
+                    >
+                      {INEQUALITY_OPTIONS.map((option) => (
+                        <option key={option.value} value={option.value}>
+                          {option.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                ) : null}
               </div>
             )
           })}

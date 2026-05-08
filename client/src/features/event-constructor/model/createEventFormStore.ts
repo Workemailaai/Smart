@@ -27,6 +27,7 @@ function newLocalId() {
 }
 
 export type DraftCriterion = { localId: string; name: string; minScore: number; maxScore: number }
+export type CriteriaInequalityOperator = 'gt' | 'eq' | 'gte'
 
 export type DraftParticipant = {
   localId: string
@@ -54,8 +55,27 @@ export type EventTemplateSnapshot = {
   useCriteriaWeights: boolean
   juryPreferencesEnabled: boolean
   criteria: { name: string; minScore: number; maxScore: number }[]
+  criteriaInequalities: CriteriaInequalityOperator[]
   participants: { fullName: string; extraInfo: string | null; country: string | null; photoUrl: string | null }[]
   jury: { fullName: string; phone: string; position: string | null; password: string; photoUrl: string | null }[]
+}
+
+function buildDefaultCriteriaInequalities(criteriaCount: number): CriteriaInequalityOperator[] {
+  if (criteriaCount <= 1) return []
+  return Array.from({ length: criteriaCount - 1 }, () => 'gt')
+}
+
+function resizeCriteriaInequalities(
+  currentOperators: CriteriaInequalityOperator[],
+  criteriaCount: number,
+): CriteriaInequalityOperator[] {
+  const expectedLength = Math.max(criteriaCount - 1, 0)
+  if (currentOperators.length === expectedLength) return [...currentOperators]
+  if (currentOperators.length > expectedLength) return currentOperators.slice(0, expectedLength)
+  return [
+    ...currentOperators,
+    ...Array.from({ length: expectedLength - currentOperators.length }, () => 'gt' as const),
+  ]
 }
 
 class CreateEventFormStore {
@@ -63,6 +83,7 @@ class CreateEventFormStore {
   description = ''
   contestType = 'creative'
   criteria: DraftCriterion[] = []
+  criteriaInequalities: CriteriaInequalityOperator[] = []
   participants: DraftParticipant[] = []
   jury: DraftJury[] = []
   coverFile: File | null = null
@@ -92,6 +113,7 @@ class CreateEventFormStore {
     this.description = ''
     this.contestType = 'creative'
     this.criteria = []
+    this.criteriaInequalities = []
     this.participants = []
     this.jury = []
     this.coverFile = null
@@ -149,10 +171,12 @@ class CreateEventFormStore {
       maxScore = 10
     }
     this.criteria.push({ localId: newLocalId(), name, minScore, maxScore })
+    this.criteriaInequalities = resizeCriteriaInequalities(this.criteriaInequalities, this.criteria.length)
   }
 
   removeCriterion(localId: string) {
     this.criteria = this.criteria.filter((c) => c.localId !== localId)
+    this.criteriaInequalities = resizeCriteriaInequalities(this.criteriaInequalities, this.criteria.length)
   }
 
   /** Перестановка показателей (порядок = значимость при взвешенном расчёте) */
@@ -164,6 +188,11 @@ class CreateEventFormStore {
     const [item] = next.splice(fromIndex, 1)
     next.splice(toIndex, 0, item)
     this.criteria = next
+  }
+
+  setCriteriaInequality(atIndex: number, operator: CriteriaInequalityOperator) {
+    if (atIndex < 0 || atIndex >= this.criteriaInequalities.length) return
+    this.criteriaInequalities[atIndex] = operator
   }
 
   updateCriterion(
@@ -251,11 +280,22 @@ class CreateEventFormStore {
     }))
     if (!rows.length) {
       this.criteria = []
+      this.criteriaInequalities = []
     } else {
       /* Одни границы для всех показателей — выравниваем по первому критерию */
       const unifiedMin = rows[0].minScore
       const unifiedMax = rows[0].maxScore
       this.criteria = rows.map((r) => ({ ...r, minScore: unifiedMin, maxScore: unifiedMax }))
+      const snapshotInequalities = snapshot?.criteriaInequalities
+      if (
+        Array.isArray(snapshotInequalities) &&
+        snapshotInequalities.length === Math.max(this.criteria.length - 1, 0) &&
+        snapshotInequalities.every((operator) => operator === 'gt' || operator === 'eq' || operator === 'gte')
+      ) {
+        this.criteriaInequalities = [...snapshotInequalities]
+      } else {
+        this.criteriaInequalities = buildDefaultCriteriaInequalities(this.criteria.length)
+      }
     }
     this.participants = (snapshot?.participants ?? []).map((participant) => ({
       localId: newLocalId(),
@@ -319,6 +359,7 @@ class CreateEventFormStore {
         minScore: Math.round(Number(c.minScore)),
         maxScore: Math.round(Number(c.maxScore)),
       })),
+      criteriaInequalities: this.criteriaInequalities,
       participants: this.participants.map((p) => ({
         fullName: p.fullName.trim(),
         extraInfo: p.extraInfo.trim() || null,
@@ -368,6 +409,7 @@ class CreateEventFormStore {
         minScore: Math.round(Number(c.minScore)),
         maxScore: Math.round(Number(c.maxScore)),
       })),
+      criteriaInequalities: this.criteriaInequalities,
       participants: this.participants.map((participant) => ({
         fullName: participant.fullName.trim(),
         extraInfo: participant.extraInfo.trim() || null,

@@ -171,49 +171,28 @@ function resolveAverageWeightsWithFallback({ parametersNumber, filterConditions,
   throw new Error("Не удалось подобрать шаг для расчета весов");
 }
 
-/**
- * Ограничения на веса по позициям в упорядоченном списке приоритетов.
- * При 6+ показателях: позиции 1–3 — равные (максимальные), позиция 4 — отдельная,
- * позиции 5–6 — равные (ниже 4), далее строго по одному.
- * При 5 и менее показателях — цепочка строгих неравенств между соседними позициями.
- */
-function buildWeightFilterConditionsFromSortedIndices(sortedIndices) {
-  // число показателей в порядке убывания значимости (после сортировки по priority)
+function mapInequalityOperatorToComparisonCode(operator) {
+  if (operator === "gt") return 1;
+  if (operator === "eq") return 5;
+  if (operator === "gte") return 3;
+  throw new Error(`Неизвестный оператор неравенства: ${operator}`);
+}
+
+function buildWeightFilterConditionsFromInequalities(sortedIndices, criteriaInequalities) {
   const orderedCount = sortedIndices.length;
-  // условия для getGradesWithWeights (операторы 1 — «>», 5 — «==»)
   const conditions = [];
-  if (orderedCount < 2) {
-    return conditions;
+  if (orderedCount < 2) return conditions;
+  if (!Array.isArray(criteriaInequalities) || criteriaInequalities.length !== orderedCount - 1) {
+    throw new Error("Некорректная длина цепочки неравенств");
   }
-  // группировка позиций применяется только при шести и более показателях
-  const useGroupedTiers = orderedCount >= 6;
-  if (!useGroupedTiers) {
-    for (let rankIndex = 0; rankIndex < orderedCount - 1; rankIndex++) {
-      conditions.push([sortedIndices[rankIndex], 1, sortedIndices[rankIndex + 1]]);
-    }
-    return conditions;
-  }
-  // индексы строк матрицы оценок для позиций 1–3 (одинаковый вес, максимальный приоритет)
-  const topFirst = sortedIndices[0];
-  const topSecond = sortedIndices[1];
-  const topThird = sortedIndices[2];
-  // позиция 4 — отдельный вес ниже первой тройки
-  const fourthRank = sortedIndices[3];
-  // индексы для позиций 5–6 (одинаковый вес, ниже позиции 4)
-  const fifthRank = sortedIndices[4];
-  const sixthRank = sortedIndices[5];
-  conditions.push([topFirst, 5, topSecond]);
-  conditions.push([topSecond, 5, topThird]);
-  conditions.push([fifthRank, 5, sixthRank]);
-  conditions.push([topFirst, 1, fourthRank]);
-  conditions.push([fourthRank, 1, fifthRank]);
-  for (let rankIndex = 5; rankIndex < orderedCount - 1; rankIndex++) {
-    conditions.push([sortedIndices[rankIndex], 1, sortedIndices[rankIndex + 1]]);
+  for (let rankIndex = 0; rankIndex < orderedCount - 1; rankIndex++) {
+    const comparisonCode = mapInequalityOperatorToComparisonCode(criteriaInequalities[rankIndex]);
+    conditions.push([sortedIndices[rankIndex], comparisonCode, sortedIndices[rankIndex + 1]]);
   }
   return conditions;
 }
 
-function evaluateObjects({ grades, priorities, maxScale = 10 }) {
+function evaluateObjects({ grades, priorities, maxScale = 10, criteriaInequalities = [] }) {
   const parametersNumber = grades.length;
 
   const sortedIndices = priorities
@@ -221,7 +200,7 @@ function evaluateObjects({ grades, priorities, maxScale = 10 }) {
     .sort((a, b) => a.p - b.p)
     .map((x) => x.i);
 
-  const filterConditions = buildWeightFilterConditionsFromSortedIndices(sortedIndices);
+  const filterConditions = buildWeightFilterConditionsFromInequalities(sortedIndices, criteriaInequalities);
 
   const { averageWeights, usedAccuracy } = resolveAverageWeightsWithFallback({
     parametersNumber,

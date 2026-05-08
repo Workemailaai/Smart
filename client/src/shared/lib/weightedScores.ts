@@ -40,10 +40,12 @@ function sumIndicatorScores(
 
 function weightedTotalsForJury({
   criteriaSorted,
+  criteriaInequalities,
   participantsSorted,
   getRawScore,
 }: {
   criteriaSorted: CriterionRow[]
+  criteriaInequalities: Array<'gt' | 'eq' | 'gte'>
   participantsSorted: ParticipantRow[]
   getRawScore: (criterionId: number, participantId: number) => number | null | undefined
 }) {
@@ -73,7 +75,12 @@ function weightedTotalsForJury({
   }
 
   const priorities = criteriaSorted.map((_, index) => index + 1)
-  const { indicators, weightsGridStep } = evaluateObjects({ grades, priorities, maxScale: 10 })
+  const { indicators, weightsGridStep } = evaluateObjects({
+    grades,
+    priorities,
+    maxScale: 10,
+    criteriaInequalities,
+  })
   const totals = sumIndicatorScores(indicators, participantCount)
   const weights = indicators.map((indicator) => indicator.weight)
   return { totals, weights, weightsGridStep }

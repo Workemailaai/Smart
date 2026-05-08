@@ -63,6 +63,11 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.BOOLEAN,
         allowNull: false,
         defaultValue: false
+      },
+      defaultCriteriaInequalities: {
+        type: DataTypes.JSON,
+        allowNull: false,
+        defaultValue: []
       }
     },
     {

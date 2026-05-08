@@ -52,9 +52,17 @@ export const getJuryContestView = async (
 export const putJuryCriteriaOrder = async (
   contestId: number,
   orderedCriterionIds: number[],
-): Promise<ServerResponseType<{ criteria: ICriterion[]; myCriterionOrder: number[] }>> => {
+  criteriaInequalities: Array<'gt' | 'eq' | 'gte'>,
+): Promise<
+  ServerResponseType<{
+    criteria: ICriterion[]
+    myCriterionOrder: number[]
+    myCriteriaInequalities: Array<'gt' | 'eq' | 'gte'>
+  }>
+> => {
   const response = await axiosInstance.put(`/contests/${contestId}/criteria-order`, {
     orderedCriterionIds,
+    criteriaInequalities,
   })
   return response.data
 }

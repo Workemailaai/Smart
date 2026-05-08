@@ -132,10 +132,12 @@ class ContestController {
         throw new ApiError(403, "Только жюри может менять порядок показателей");
       }
       const orderedCriterionIds = req.body?.orderedCriterionIds;
+      const criteriaInequalities = req.body?.criteriaInequalities;
       const data = await ContestService.reorderCriteriaByJury({
         contestId: Number(req.params.id),
         userId: req.user.id,
-        orderedCriterionIds
+        orderedCriterionIds,
+        criteriaInequalities
       });
       return res.status(200).json(formatResponse(200, "Порядок показателей обновлён", data));
     } catch (error) {

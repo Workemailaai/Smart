@@ -115,6 +115,32 @@
   line-height: 20px;
 }
 
+.juryPriorityInequalityRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 4px 4px 10px;
+}
+
+.juryPriorityInequalityText {
+  color: #0a0f15;
+  opacity: 0.7;
+  font-size: 12px;
+  line-height: 14px;
+}
+
+.juryPriorityInequalitySelect {
+  width: 72px;
+  height: 32px;
+  border: none;
+  border-radius: 10px;
+  background: #fff;
+  color: #0a0f15;
+  font-size: 14px;
+  text-align: center;
+}
+
 .juryPriorityDragHandle {
   padding-left: 12px;
   color: rgb(60 60 67 / 30%);

@@ -22,6 +22,7 @@
   display: flex;
   flex-direction: column;
   min-height: calc(100vh - 80px);
+  justify-content: space-between;
 }
 
 /* Блок «Создать мероприятие»: по макету 1152×432, скругление 24, колонка по центру, gap 12 */

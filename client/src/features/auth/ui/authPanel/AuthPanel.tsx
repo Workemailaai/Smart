@@ -54,6 +54,7 @@ type SignUpPasswordFieldKey = 'password' | 'repeatPassword'
 export const AuthPanel = observer(({ mode }: AuthPanelProps) => {
   const navigate = useNavigate()
   const { signUpForm, signInOrgForm, signInJuryForm } = authFormStore
+  const authFormId = `auth-panel-form-${mode}`
 
   const [signUpPasswordVisibility, setSignUpPasswordVisibility] = useState<Record<SignUpPasswordFieldKey, boolean>>({
     password: false,
@@ -354,6 +355,7 @@ export const AuthPanel = observer(({ mode }: AuthPanelProps) => {
           </div>
 
           <form
+            id={authFormId}
             className={styles.form}
             onSubmit={(event) => {
               event.preventDefault()
@@ -367,8 +369,8 @@ export const AuthPanel = observer(({ mode }: AuthPanelProps) => {
             <button
               className={styles.primaryButton}
               disabled={authFormStore.isLoading}
-              onClick={() => void handleSubmit()}
-              type="button"
+              form={authFormId}
+              type="submit"
             >
               {authFormStore.isLoading ? 'Подождите...' : currentView.submitText}
             </button>

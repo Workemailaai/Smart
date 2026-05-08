@@ -99,6 +99,8 @@ export const CreateEventForm = observer(function CreateEventForm() {
   /** DnD: индекс перетаскиваемой строки и подсветка цели */
   const [criterionDragFrom, setCriterionDragFrom] = useState<number | null>(null)
   const [criterionDragOver, setCriterionDragOver] = useState<number | null>(null)
+  const [participantDragFrom, setParticipantDragFrom] = useState<number | null>(null)
+  const [participantDragOver, setParticipantDragOver] = useState<number | null>(null)
 
   useEffect(() => {
     createEventFormStore.reset()
@@ -605,23 +607,67 @@ export const CreateEventForm = observer(function CreateEventForm() {
               <div className={styles.listBlockEmpty}>Нет участников</div>
             ) : (
               <div className={styles.listBlockScroll}>
-                {store.participants.map((p) => (
-                  <div className={styles.personRow} key={p.localId}>
-                    {p.previewUrl ? (
-                      <img alt="" className={styles.avatarSm} src={resolveMediaUrl(p.previewUrl) ?? undefined} />
+                {store.participants.map((participant, participantIndex) => (
+                  <div
+                    className={`${styles.personRow} ${
+                      participantDragOver === participantIndex && participantDragFrom !== participantIndex
+                        ? styles.personRowDragOver
+                        : ''
+                    } ${participantDragFrom === participantIndex ? styles.personRowDragging : ''}`}
+                    draggable={store.participants.length >= 2}
+                    key={participant.localId}
+                    onDragEnd={() => {
+                      setParticipantDragFrom(null)
+                      setParticipantDragOver(null)
+                    }}
+                    onDragOver={(event) => {
+                      if (participantDragFrom === null) return
+                      event.preventDefault()
+                      event.dataTransfer.dropEffect = 'move'
+                      setParticipantDragOver(participantIndex)
+                    }}
+                    onDragStart={(event) => {
+                      const dragTargetElement = event.target as HTMLElement
+                      if (dragTargetElement.closest('button')) {
+                        event.preventDefault()
+                        return
+                      }
+                      event.dataTransfer.setData('text/plain', String(participantIndex))
+                      event.dataTransfer.effectAllowed = 'move'
+                      setParticipantDragFrom(participantIndex)
+                    }}
+                    onDrop={(event) => {
+                      event.preventDefault()
+                      const fromIndexRaw = event.dataTransfer.getData('text/plain')
+                      const fromIndex = Number.parseInt(fromIndexRaw, 10)
+
+                      if (Number.isNaN(fromIndex) || fromIndex === participantIndex) {
+                        setParticipantDragFrom(null)
+                        setParticipantDragOver(null)
+                        return
+                      }
+
+                      store.moveParticipant(fromIndex, participantIndex)
+                      setParticipantDragFrom(null)
+                      setParticipantDragOver(null)
+                    }}
+                    title={store.participants.length >= 2 ? 'Перетащите строку, чтобы изменить порядок участников' : undefined}
+                  >
+                    {participant.previewUrl ? (
+                      <img alt="" className={styles.avatarSm} src={resolveMediaUrl(participant.previewUrl) ?? undefined} />
                     ) : (
                       <div className={styles.avatarSm} />
                     )}
                     <div className={styles.personMeta}>
-                      <p className={styles.personName}>{p.fullName || 'Без имени'}</p>
+                      <p className={styles.personName}>{participant.fullName || 'Без имени'}</p>
                       <p className={styles.personSub}>
-                        {p.extraInfo?.trim() ? p.extraInfo.trim() : '—'} · {p.country || '—'}
+                        {participant.extraInfo?.trim() ? participant.extraInfo.trim() : '—'} · {participant.country || '—'}
                       </p>
                     </div>
                     <div className={styles.personRowActions}>
                       <button
                         className={styles.personEditBtn}
-                        onClick={() => openEditParticipant(p)}
+                        onClick={() => openEditParticipant(participant)}
                         type="button"
                         aria-label="Изменить"
                       >
@@ -630,7 +676,7 @@ export const CreateEventForm = observer(function CreateEventForm() {
                       <div className={styles.personDeleteWrap}>
                         <button
                           className={styles.personDeleteStripe}
-                          onClick={() => store.removeParticipant(p.localId)}
+                          onClick={() => store.removeParticipant(participant.localId)}
                           type="button"
                           aria-label="Удалить"
                         >

@@ -200,6 +200,17 @@ class CreateEventFormStore {
     this.participants = this.participants.filter((x) => x.localId !== localId)
   }
 
+  moveParticipant(fromIndex: number, toIndex: number) {
+    if (fromIndex === toIndex) return
+    const participantsCount = this.participants.length
+    if (fromIndex < 0 || toIndex < 0 || fromIndex >= participantsCount || toIndex >= participantsCount) return
+
+    const reorderedParticipants = [...this.participants]
+    const [movedParticipant] = reorderedParticipants.splice(fromIndex, 1)
+    reorderedParticipants.splice(toIndex, 0, movedParticipant)
+    this.participants = reorderedParticipants
+  }
+
   addJuryMember(draft: Omit<DraftJury, 'localId'>) {
     this.jury.push({ ...draft, localId: newLocalId() })
   }

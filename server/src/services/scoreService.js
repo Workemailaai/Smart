@@ -5,8 +5,7 @@ const {
   Jury,
   Participant,
   Score,
-  JuryParticipantComment,
-  JuryParticipantFavorite
+  JuryParticipantComment
 } = require("../db/models");
 const ApiError = require("../utils/ApiError");
 const MAX_COMMENT_LENGTH = 500;
@@ -59,13 +58,6 @@ class ScoreService {
     }
   }
 
-  static async assertParticipantFavoritePayload({ contestId, participantId }) {
-    const participant = await Participant.findByPk(participantId);
-    if (!participant || participant.contestId !== Number(contestId)) {
-      throw new ApiError(400, "Участник не относится к этому мероприятию");
-    }
-  }
-
   /** Сохранение оценки членом жюри */
   static async putScore({ userId, contestId, participantId, criterionId, value }) {
     const { jury } = await ScoreService.resolveJuryAssignment({ contestId, userId });
@@ -85,17 +77,13 @@ class ScoreService {
   }
 
   /** Пакетное сохранение оценок жюри */
-  static async putScoresBatch({ userId, contestId, scores, comments = [], participantFavorites = [] }) {
+  static async putScoresBatch({ userId, contestId, scores, comments = [] }) {
     if (!Array.isArray(scores) || scores.length === 0) {
       throw new ApiError(422, "Передайте непустой массив оценок");
     }
     if (!Array.isArray(comments)) {
       throw new ApiError(422, "Поле comments должно быть массивом");
     }
-    if (!Array.isArray(participantFavorites)) {
-      throw new ApiError(422, "Поле participantFavorites должно быть массивом");
-    }
-
     const { jury } = await ScoreService.resolveJuryAssignment({ contestId, userId });
     const t = await sequelize.transaction();
     try {
@@ -134,31 +122,6 @@ class ScoreService {
           { transaction: t }
         );
       }
-
-      const uniqueParticipantFavoriteIds = [...new Set(participantFavorites.map((id) => Number(id)))];
-      for (const participantId of uniqueParticipantFavoriteIds) {
-        if (!Number.isInteger(participantId)) {
-          throw new ApiError(400, "Некорректный id участника в избранном");
-        }
-        await ScoreService.assertParticipantFavoritePayload({ contestId, participantId });
-      }
-
-      await JuryParticipantFavorite.destroy({
-        where: { contestId, juryId: jury.id },
-        transaction: t
-      });
-
-      if (uniqueParticipantFavoriteIds.length > 0) {
-        await JuryParticipantFavorite.bulkCreate(
-          uniqueParticipantFavoriteIds.map((participantId) => ({
-            contestId,
-            juryId: jury.id,
-            participantId
-          })),
-          { transaction: t }
-        );
-      }
-
       await t.commit();
     } catch (error) {
       await t.rollback();

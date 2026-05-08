@@ -7,7 +7,6 @@ const {
   Participant,
   Score,
   JuryParticipantComment,
-  JuryParticipantFavorite,
   User
 } = require("../db/models");
 const ApiError = require("../utils/ApiError");
@@ -88,7 +87,6 @@ class ContestService {
         juryMembers: contest.juryMembers
       });
       await JuryParticipantComment.destroy({ where: { contestId }, transaction: t });
-      await JuryParticipantFavorite.destroy({ where: { contestId }, transaction: t });
       await Score.destroy({ where: { contestId }, transaction: t });
       await Jury.destroy({ where: { contestId }, transaction: t });
       await Participant.destroy({ where: { contestId }, transaction: t });
@@ -240,10 +238,6 @@ class ContestService {
       where: { contestId, juryId: myAssignment.id },
       attributes: ["participantId", "comment"]
     });
-    const myParticipantFavorites = await JuryParticipantFavorite.findAll({
-      where: { contestId, juryId: myAssignment.id },
-      attributes: ["participantId"]
-    });
     const criteriaCount = contest.criteria.length;
     const useWeights = Boolean(contest.useCriteriaWeights);
 
@@ -295,6 +289,13 @@ class ContestService {
         participantId: scoreItem.participantId,
         criterionId: scoreItem.criterionId
       }));
+    const criterionLikesCountByParticipantId = new Map();
+    for (const scoreItem of myCriterionFavorites) {
+      criterionLikesCountByParticipantId.set(
+        scoreItem.participantId,
+        Number(criterionLikesCountByParticipantId.get(scoreItem.participantId) || 0) + 1
+      );
+    }
 
     return {
       contest: contest.get({ plain: true }),
@@ -303,7 +304,10 @@ class ContestService {
       participants: contest.participants,
       myScores,
       myComments,
-      myParticipantFavorites: myParticipantFavorites.map((favoriteItem) => favoriteItem.participantId),
+      myCriterionLikesCountByParticipant: contest.participants.map((participant) => ({
+        participantId: participant.id,
+        likesCount: Number(criterionLikesCountByParticipantId.get(participant.id) || 0)
+      })),
       myCriterionFavorites,
       averageByParticipant,
       mySubmitted
@@ -454,10 +458,6 @@ class ContestService {
       where: { contestId },
       attributes: ["juryId", "participantId", "comment"]
     });
-    const participantFavorites = await JuryParticipantFavorite.findAll({
-      where: { contestId },
-      attributes: ["juryId", "participantId"]
-    });
     const scoreMap = new Map();
     for (const row of scores) {
       scoreMap.set(`${row.juryId}_${row.participantId}_${row.criterionId}`, {
@@ -469,12 +469,13 @@ class ContestService {
     for (const row of comments) {
       commentMap.set(`${row.juryId}_${row.participantId}`, String(row.comment || ""));
     }
-    const participantFavoriteCountByParticipantId = new Map();
-    for (const favoriteItem of participantFavorites) {
-      const participantId = Number(favoriteItem.participantId);
-      participantFavoriteCountByParticipantId.set(
+    const criteriaLikeCountByParticipantId = new Map();
+    for (const row of scores) {
+      if (!row.isFavorite) continue;
+      const participantId = Number(row.participantId);
+      criteriaLikeCountByParticipantId.set(
         participantId,
-        Number(participantFavoriteCountByParticipantId.get(participantId) || 0) + 1
+        Number(criteriaLikeCountByParticipantId.get(participantId) || 0) + 1
       );
     }
 
@@ -545,7 +546,7 @@ class ContestService {
           juryCards,
           overallTotal,
           overallAverage,
-          likesCount: Number(participantFavoriteCountByParticipantId.get(participant.id) || 0)
+          criteriaLikesCount: Number(criteriaLikeCountByParticipantId.get(participant.id) || 0)
         };
       });
     } else {
@@ -595,7 +596,7 @@ class ContestService {
           juryCards,
           overallTotal: participantCount > 0 ? Number(participantSum.toFixed(2)) : 0,
           overallAverage: participantCount > 0 ? Number((participantSum / participantCount).toFixed(2)) : 0,
-          likesCount: Number(participantFavoriteCountByParticipantId.get(participant.id) || 0)
+          criteriaLikesCount: Number(criteriaLikeCountByParticipantId.get(participant.id) || 0)
         };
       });
     }

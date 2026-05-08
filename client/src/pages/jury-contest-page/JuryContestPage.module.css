@@ -331,7 +331,35 @@
   gap: 4px;
 }
 
-.favoriteButton {
+.participantLikesIndicator {
+  min-width: 48px;
+  height: 48px;
+  padding: 0;
+  margin-left: 4px;
+  border: none;
+  background: transparent;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  color: #0a0f15;
+  font-size: 24px;
+  font-weight: 500;
+  line-height: 24px;
+  flex-shrink: 0;
+}
+
+.participantLikesIndicator img {
+  width: 48px;
+  height: 48px;
+  display: block;
+}
+
+.participantLikesIndicator:disabled {
+  opacity: 1;
+}
+
+.criterionLikeButton {
   width: 24px;
   height: 24px;
   padding: 0;
@@ -344,13 +372,13 @@
   flex-shrink: 0;
 }
 
-.favoriteButton img {
+.criterionLikeButton img {
   width: 24px;
   height: 24px;
   display: block;
 }
 
-.favoriteButton:disabled {
+.criterionLikeButton:disabled {
   opacity: 0.5;
 }
 

@@ -177,12 +177,14 @@ export const OrganizerContestPage = observer(() => {
                             </span>
                             <span className={styles.participantCountry}>{participant.country || 'Страна не указана'}</span>
                           </div>
-                          {participant.likesCount > 0 ? (
-                            <div className={styles.participantLikes} aria-label={`Лайков: ${participant.likesCount}`}>
-                              <img src="/heart-big-active.svg" alt="" aria-hidden />
-                              <span>{participant.likesCount}</span>
-                            </div>
-                          ) : null}
+                          <div className={styles.participantLikes} aria-label={`Лайков: ${participant.criteriaLikesCount}`}>
+                            <img
+                              src={participant.criteriaLikesCount > 0 ? '/heart-big-active.svg' : '/heart-big-no-active.svg'}
+                              alt=""
+                              aria-hidden
+                            />
+                            {participant.criteriaLikesCount > 0 ? <span>{participant.criteriaLikesCount}</span> : null}
+                          </div>
                         </div>
                         <div className={styles.scoreRankCluster}>
                           <div className={styles.scorePill}>

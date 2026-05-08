@@ -63,7 +63,7 @@ export interface IJuryContestView {
   participants: IParticipant[]
   myScores: IScoreItem[]
   myComments: IParticipantCommentItem[]
-  myParticipantFavorites: number[]
+  myCriterionLikesCountByParticipant: { participantId: number; likesCount: number }[]
   myCriterionFavorites: { participantId: number; criterionId: number }[]
   averageByParticipant: { participantId: number; average: number }[]
   mySubmitted: boolean
@@ -96,7 +96,7 @@ export interface IOrganizerParticipantView extends IParticipant {
   juryCards: IOrganizerJuryCard[]
   overallTotal: number
   overallAverage: number
-  likesCount: number
+  criteriaLikesCount: number
 }
 
 export interface IOrganizerContestView {

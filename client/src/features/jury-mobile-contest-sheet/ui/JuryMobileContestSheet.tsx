@@ -181,30 +181,23 @@ export const JuryMobileContestSheet = observer(function JuryMobileContestSheet(p
                         <span className={styles.juryScoreParticipantCountry}>{participant.country || 'Страна не указана'}</span>
                       </div>
                       <button
-                        className={styles.favoriteButton}
+                        className={styles.participantLikesIndicator}
                         type="button"
-                        disabled={isScoreEditingLocked}
-                        aria-pressed={juryContestStore.isParticipantFavorite(participant.id)}
-                        aria-label={
-                          juryContestStore.isParticipantFavorite(participant.id)
-                            ? 'Убрать участника из избранного'
-                            : 'Добавить участника в избранное'
-                        }
-                        onClick={(event) => {
-                          event.preventDefault()
-                          event.stopPropagation()
-                          juryContestStore.toggleParticipantFavorite(participant.id)
-                        }}
+                        disabled
+                        aria-label={`Лайков показателей: ${juryContestStore.getParticipantCriterionLikesCount(participant.id)}`}
                       >
                         <img
                           src={
-                            juryContestStore.isParticipantFavorite(participant.id)
+                            juryContestStore.getParticipantCriterionLikesCount(participant.id) > 0
                               ? '/heart-big-active.svg'
                               : '/heart-big-no-active.svg'
                           }
                           alt=""
                           aria-hidden
                         />
+                        {juryContestStore.getParticipantCriterionLikesCount(participant.id) > 0 ? (
+                          <span>{juryContestStore.getParticipantCriterionLikesCount(participant.id)}</span>
+                        ) : null}
                       </button>
                     </div>
                     <strong className={styles.juryScoreAverageBadge}>{juryContestStore.getParticipantAverage(participant.id)} / 10</strong>
@@ -222,7 +215,7 @@ export const JuryMobileContestSheet = observer(function JuryMobileContestSheet(p
                         <div className={styles.juryScoreCriterionRow} key={criterion.id}>
                           <div className={styles.juryScoreCriterionHead}>                            
                             <button
-                              className={styles.favoriteButton}
+                              className={styles.criterionLikeButton}
                               type="button"
                               disabled={isScoreEditingLocked}
                               aria-pressed={juryContestStore.isCriterionFavorite(participant.id, criterion.id)}

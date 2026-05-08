@@ -290,30 +290,23 @@ export const JuryContestPage = observer(() => {
                             <span className={styles.participantCountry}>{participant.country || 'Страна не указана'}</span>
                           </div>
                           <button
-                            className={styles.favoriteButton}
+                            className={styles.participantLikesIndicator}
                             type="button"
-                            disabled={isScoreEditingLocked}
-                            aria-pressed={juryContestStore.isParticipantFavorite(participant.id)}
-                            aria-label={
-                              juryContestStore.isParticipantFavorite(participant.id)
-                                ? 'Убрать участника из избранного'
-                                : 'Добавить участника в избранное'
-                            }
-                            onClick={(event) => {
-                              event.preventDefault()
-                              event.stopPropagation()
-                              juryContestStore.toggleParticipantFavorite(participant.id)
-                            }}
+                            disabled
+                            aria-label={`Лайков показателей: ${juryContestStore.getParticipantCriterionLikesCount(participant.id)}`}
                           >
                             <img
                               src={
-                                juryContestStore.isParticipantFavorite(participant.id)
+                                juryContestStore.getParticipantCriterionLikesCount(participant.id) > 0
                                   ? '/heart-big-active.svg'
                                   : '/heart-big-no-active.svg'
                               }
                               alt=""
                               aria-hidden
                             />
+                            {juryContestStore.getParticipantCriterionLikesCount(participant.id) > 0 ? (
+                              <span>{juryContestStore.getParticipantCriterionLikesCount(participant.id)}</span>
+                            ) : null}
                           </button>
                         </div>
                         <strong className={styles.averageBadge}>{juryContestStore.getParticipantAverage(participant.id)} / 10</strong>
@@ -331,7 +324,7 @@ export const JuryContestPage = observer(() => {
                             <div className={styles.criterionRow} key={criterion.id}>
                               <div className={styles.criterionHead}>                                
                                 <button
-                                  className={styles.favoriteButton}
+                                  className={styles.criterionLikeButton}
                                   type="button"
                                   disabled={isScoreEditingLocked}
                                   aria-pressed={juryContestStore.isCriterionFavorite(participant.id, criterion.id)}

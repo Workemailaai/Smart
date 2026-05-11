@@ -135,10 +135,20 @@
   height: 32px;
   border: none;
   border-radius: 10px;
-  background: #fff;
+  background-color: #fff;
+  background-image: url('/cabinet-page/arrow-down.svg');
+  background-repeat: no-repeat;
+  background-position: right 8px center;
+  background-size: 14px 14px;
   color: #0a0f15;
   font-size: 14px;
   text-align: center;
+  text-align-last: center;
+  line-height: 14px;
+  padding: 0 24px 0 10px;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
 }
 
 .juryPriorityDragHandle {

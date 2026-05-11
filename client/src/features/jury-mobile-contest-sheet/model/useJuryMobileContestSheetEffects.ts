@@ -22,7 +22,6 @@ export function useJuryMobileContestSheetEffects(params: UseJuryMobileContestShe
   } = params
 
   const hasAutoScrolledPriorityReference = useRef(false)
-  const priorityDraftCount = juryContestStore.priorityDraftIds.length
   const hasJuryContestView = Boolean(juryContestStore.view)
 
   useEffect(() => {
@@ -32,7 +31,7 @@ export function useJuryMobileContestSheetEffects(params: UseJuryMobileContestShe
     }
 
     const shouldShowPriorityStep = hasJuryContestView && juryContestStore.shouldShowCriteriaPriorityStep(userId)
-    if (!shouldShowPriorityStep || priorityDraftCount <= 5) {
+    if (!shouldShowPriorityStep) {
       hasAutoScrolledPriorityReference.current = false
       return
     }
@@ -48,14 +47,19 @@ export function useJuryMobileContestSheetEffects(params: UseJuryMobileContestShe
     }
 
     requestAnimationFrame(() => {
-      const nextScrollTop = Math.max(
-        0,
-        saveButtonElement.offsetTop - contentElement.clientHeight + saveButtonElement.offsetHeight + 12,
-      )
-      contentElement.scrollTo({ top: nextScrollTop, behavior: 'auto' })
-      hasAutoScrolledPriorityReference.current = true
+      requestAnimationFrame(() => {
+        const buttonBottom = saveButtonElement.offsetTop + saveButtonElement.offsetHeight
+        const visibleBottom = contentElement.scrollTop + contentElement.clientHeight
+
+        if (buttonBottom > visibleBottom - 12) {
+          const nextScrollTop = Math.max(0, buttonBottom - contentElement.clientHeight + 12)
+          contentElement.scrollTo({ top: nextScrollTop, behavior: 'auto' })
+        }
+
+        hasAutoScrolledPriorityReference.current = true
+      })
     })
-  }, [userId, isJuryContestModalOpen, isMobileViewport, hasJuryContestView, priorityDraftCount])
+  }, [userId, isJuryContestModalOpen, isMobileViewport, hasJuryContestView])
 
   useEffect(() => {
     const onBeforeUnload = (event: BeforeUnloadEvent) => {

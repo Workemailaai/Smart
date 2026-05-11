@@ -107,6 +107,7 @@ export const CreateEventForm = observer(function CreateEventForm() {
   const [criterionDragOver, setCriterionDragOver] = useState<number | null>(null)
   const [participantDragFrom, setParticipantDragFrom] = useState<number | null>(null)
   const [participantDragOver, setParticipantDragOver] = useState<number | null>(null)
+  const [openedToggleTooltip, setOpenedToggleTooltip] = useState<'weights' | 'jury' | null>(null)
 
   useEffect(() => {
     createEventFormStore.reset()
@@ -325,6 +326,10 @@ export const CreateEventForm = observer(function CreateEventForm() {
     setPendingUnsafeAction(null)
   }
 
+  const toggleTooltip = (tooltipId: 'weights' | 'jury') => {
+    setOpenedToggleTooltip((previousTooltipId) => (previousTooltipId === tooltipId ? null : tooltipId))
+  }
+
   return (
     <div className={styles.wrap}>
       <div className={styles.grid2}>
@@ -378,7 +383,26 @@ export const CreateEventForm = observer(function CreateEventForm() {
           </div>
           <div className={styles.optionsCard}>
             <div className={styles.toggleRow}>
-              <span className={styles.toggleLabel}>Значимость показателей</span>
+              <div className={styles.toggleLabelGroup}>
+                <button
+                  aria-expanded={openedToggleTooltip === 'weights'}
+                  aria-label="Показать подсказку для значимости показателей"
+                  className={styles.toggleInfoButton}
+                  onBlur={() => setOpenedToggleTooltip((previousTooltipId) => (previousTooltipId === 'weights' ? null : previousTooltipId))}
+                  onClick={() => toggleTooltip('weights')}
+                  type="button"
+                >
+                  <img alt="" className={styles.toggleInfoIcon} src="/info-circle.svg" />
+                </button>
+                <span className={styles.toggleLabel}>Значимость показателей</span>
+                <div
+                  className={`${styles.toggleTooltip} ${openedToggleTooltip === 'weights' ? styles.toggleTooltipOpen : ''}`}
+                  role="tooltip"
+                >
+                  Если функция отключена, итоговая оценка рассчитывается как среднее арифметическое всех показателей.
+                  Включите её, если отдельные критерии имеют разную значимость и должны влиять на результат в разной степени.
+                </div>
+              </div>
               <button
                 aria-label="Переключить значимость показателей"
                 aria-pressed={store.useCriteriaWeights}
@@ -393,7 +417,25 @@ export const CreateEventForm = observer(function CreateEventForm() {
               </button>
             </div>
             <div className={styles.toggleRow}>
-              <span className={styles.toggleLabel}>Учитывать предпочтения жюри</span>
+              <div className={styles.toggleLabelGroup}>
+                <button
+                  aria-expanded={openedToggleTooltip === 'jury'}
+                  aria-label="Показать подсказку для учёта предпочтений жюри"
+                  className={styles.toggleInfoButton}
+                  onBlur={() => setOpenedToggleTooltip((previousTooltipId) => (previousTooltipId === 'jury' ? null : previousTooltipId))}
+                  onClick={() => toggleTooltip('jury')}
+                  type="button"
+                >
+                  <img alt="" className={styles.toggleInfoIcon} src="/info-circle.svg" />
+                </button>
+                <span className={styles.toggleLabel}>Учитывать предпочтения жюри</span>
+                <div
+                  className={`${styles.toggleTooltip} ${openedToggleTooltip === 'jury' ? styles.toggleTooltipOpen : ''}`}
+                  role="tooltip"
+                >
+                  Включите, чтобы жюри могли задавать различную степень влияния показателей на итоговую оценку.
+                </div>
+              </div>
               <button
                 aria-label="Переключить учет предпочтений жюри"
                 aria-pressed={store.juryPreferencesEnabled}

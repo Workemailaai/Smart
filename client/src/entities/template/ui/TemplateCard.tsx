@@ -25,25 +25,32 @@ const formatDate = (date: string) =>
     year: 'numeric',
   })
 
+const getTemplateInitial = (templateName: string) => {
+  const normalizedTemplateName = templateName.trim()
+  return normalizedTemplateName ? normalizedTemplateName[0].toUpperCase() : 'Ш'
+}
+
 export function TemplateCard({ template, isDeleting = false, onDelete }: TemplateCardProps) {
   const typeLabel = template.contestType ? TYPE_LABELS[template.contestType] || template.contestType : null
+  const templateCoverImageUrl = template.snapshot?.coverImageUrl ?? null
+  const templateInitial = getTemplateInitial(template.name)
+
   return (
     <article className={styles.card}>
-      {onDelete ? (
-        <button
-          className={styles.deleteButton}
-          type="button"
-          aria-label={`Удалить шаблон ${template.name}`}
-          disabled={isDeleting}
-          onClick={(event) => {
-            event.stopPropagation()
-            onDelete()
-          }}
-        >
-          ×
-        </button>
-      ) : null}
-      <div className={styles.coverPlaceholder} />
+      <div className={styles.coverPlaceholder}>
+        {templateCoverImageUrl ? (
+          <img
+            className={styles.coverImage}
+            src={templateCoverImageUrl}
+            alt={`Обложка шаблона ${template.name}`}
+            loading="lazy"
+          />
+        ) : (
+          <span className={styles.coverInitial} aria-hidden>
+            {templateInitial}
+          </span>
+        )}
+      </div>
       <p className={styles.date}>{formatDate(template.updatedAt || template.createdAt)}</p>
       <div className={styles.bottomRow}>
         <div>
@@ -52,9 +59,18 @@ export function TemplateCard({ template, isDeleting = false, onDelete }: Templat
           </p>
           {typeLabel ? <p className={styles.typeLine}>{typeLabel}</p> : null}
         </div>
-        <span aria-hidden className={styles.arrow}>
-          →
-        </span>
+        {onDelete ? (
+          <button
+            className={styles.deleteButton}
+            type="button"
+            aria-label={`Удалить шаблон ${template.name}`}
+            disabled={isDeleting}
+            onClick={(event) => {
+              event.stopPropagation()
+              onDelete()
+            }}
+          />
+        ) : null}
       </div>
     </article>
   )

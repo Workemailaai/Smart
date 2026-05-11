@@ -170,7 +170,7 @@ export const ContestResultsPage = observer(() => {
                 <div className={styles.mobileJuryContestMeta}>
                   <p className={styles.mobileJuryContestDate}>{contestDateText}</p>
                   <h1 className={styles.mobileJuryContestTitle}>{view.contest.title}</h1>
-                  <p className={styles.mobileJuryContestSubtitle}>Оценка конкурса</p>
+                  <p className={styles.mobileJuryContestSubtitle}>Оцените объекты</p>
                 </div>
               </div>
 

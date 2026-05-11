@@ -71,7 +71,7 @@ export const JuryMobileContestSheet = observer(function JuryMobileContestSheet(p
             </p>
             <p className={styles.juryPriorityContestTitle}>{juryContestStore.view.contest.title}</p>
             <p className={styles.juryPriorityContestSubtitle}>
-              {juryContestStore.view.contest.description || 'Оценка конкурса'}
+              {juryContestStore.view.contest.description || 'Оцените объекты'}
             </p>
           </article>
 
@@ -183,7 +183,7 @@ export const JuryMobileContestSheet = observer(function JuryMobileContestSheet(p
           <article className={styles.juryPriorityContestCard}>
             <p className={styles.juryPriorityContestDate}>{formatDate(juryContestStore.view.contest.createdAt)}</p>
             <p className={styles.juryPriorityContestTitle}>{juryContestStore.view.contest.title}</p>
-            <p className={styles.juryPriorityContestSubtitle}>{juryContestStore.view.contest.description || 'Оценка конкурса'}</p>
+            <p className={styles.juryPriorityContestSubtitle}>{juryContestStore.view.contest.description || 'Оцените объекты'}</p>
           </article>
 
           <div className={styles.juryScoreParticipantList}>

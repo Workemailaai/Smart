@@ -133,7 +133,7 @@ export const OrganizerContestPage = observer(() => {
                 <div className={styles.contestInfo}>
                   <p className={styles.contestDate}>{formatDate(view.contest.createdAt)}</p>
                   <p className={styles.contestTitle}>{view.contest.title}</p>
-                  <p className={styles.contestSubtitle}>{view.contest.description || 'Оценка конкурса'}</p>
+                  <p className={styles.contestSubtitle}>{view.contest.description || 'Оцените объекты'}</p>
                 </div>
                 <div className={styles.votedBadge}>
                   <span className={styles.votedLabel}>Проголосовало:</span>

@@ -124,7 +124,7 @@ export const JuryContestPage = observer(() => {
         <article className={styles.contestCard}>
           <p className={styles.contestDate}>{formatDate(view.contest.createdAt)}</p>
           <p className={styles.contestTitle}>{view.contest.title}</p>
-          <p className={styles.contestSubtitle}>{view.contest.description || 'Оценка конкурса'}</p>
+          <p className={styles.contestSubtitle}>{view.contest.description || 'Оцените объекты'}</p>
         </article>
 
         <div className={styles.priorityPanel}>
@@ -292,7 +292,7 @@ export const JuryContestPage = observer(() => {
               <article className={styles.contestCard}>
                 <p className={styles.contestDate}>{formatDate(view.contest.createdAt)}</p>
                 <p className={styles.contestTitle}>{view.contest.title}</p>
-                <p className={styles.contestSubtitle}>{view.contest.description || 'Оценка конкурса'}</p>
+                <p className={styles.contestSubtitle}>{view.contest.description || 'Оцените объекты'}</p>
               </article>
 
               <div className={styles.participantList}>

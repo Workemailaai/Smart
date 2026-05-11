@@ -62,6 +62,13 @@ class AuthFormStore {
     }
   }
 
+  private getRoleMismatchError = (expectedRole: SignInPayload['role']) => {
+    if (expectedRole === 'organizer') {
+      return 'Этот аккаунт относится к роли жюри. Войдите через страницу жюри.'
+    }
+    return 'Этот аккаунт относится к роли организатора. Войдите через страницу организатора.'
+  }
+
   signUpOrganizer = async (payload: SignUpPayload) => {
     this.resetStatus()
     this.isLoading = true
@@ -89,6 +96,14 @@ class AuthFormStore {
 
     try {
       const response = await signIn(payload)
+      if (response.data.user.role !== payload.role) {
+        runInAction(() => {
+          setAccessToken('')
+          userStore.user = null
+          this.error = this.getRoleMismatchError(payload.role)
+        })
+        return
+      }
       runInAction(() => {
         setAccessToken(response.data.accessToken)
         userStore.user = response.data.user
@@ -110,6 +125,14 @@ class AuthFormStore {
 
     try {
       const response = await signIn(payload)
+      if (response.data.user.role !== payload.role) {
+        runInAction(() => {
+          setAccessToken('')
+          userStore.user = null
+          this.error = this.getRoleMismatchError(payload.role)
+        })
+        return
+      }
       runInAction(() => {
         setAccessToken(response.data.accessToken)
         userStore.user = response.data.user

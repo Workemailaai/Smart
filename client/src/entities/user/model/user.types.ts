@@ -14,6 +14,7 @@ export interface ISignUpData {
 export interface ISignInData {
     phone: string
     password: string
+    role: 'organizer' | 'jury'
 }
 
 export interface IAuthResponseData {

@@ -148,6 +148,7 @@ export const AuthPanel = observer(({ mode }: AuthPanelProps) => {
       await authFormStore.signInOrganizer({
         phone: normalizePhoneDigits(signInOrgForm.phone),
         password: signInOrgForm.password,
+        role: 'organizer',
       })
       if (userStore.user) {
         navigate('/cabinet/events')
@@ -163,6 +164,7 @@ export const AuthPanel = observer(({ mode }: AuthPanelProps) => {
     await authFormStore.signInJury({
       phone: normalizePhoneDigits(signInJuryForm.phone),
       password: signInJuryForm.password,
+      role: 'jury',
     })
     if (userStore.user) {
       navigate('/cabinet/events')

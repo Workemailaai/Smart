@@ -10,6 +10,7 @@ export type SignUpPayload = {
 export type SignInPayload = {
   phone: string
   password: string
+  role: 'organizer' | 'jury'
 }
 
 export type SignUpForm = {

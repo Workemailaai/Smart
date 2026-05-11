@@ -8,6 +8,7 @@ const process = require("process");
 
 /** Роли с доступом в личный кабинет (вход на сайт) */
 const CABINET_ROLES = ["organizer", "jury"];
+const SIGN_IN_ROLES = ["organizer", "jury"];
 
 class AuthController {
   /** Обновление сессии по refresh в cookie */
@@ -167,7 +168,7 @@ class AuthController {
 
   /** Вход организатора и членов жюри */
   static async signIn(req, res) {
-    const { phone, password } = req.body;
+    const { phone, password, role } = req.body;
 
     const { isValid, error } = User.validateSignInData({
       phone,
@@ -176,6 +177,18 @@ class AuthController {
 
     if (!isValid) {
       return res.status(422).json(formatResponse(422, error, null, error));
+    }
+    if (!SIGN_IN_ROLES.includes(role)) {
+      return res
+        .status(422)
+        .json(
+          formatResponse(
+            422,
+            "Некорректная роль для входа",
+            null,
+            "Некорректная роль для входа"
+          )
+        );
     }
 
     const normalizedPhone = User.normalizePhone(phone);
@@ -220,6 +233,17 @@ class AuthController {
               null,
               "Вход в личный кабинет для этой роли недоступен"
             )
+          );
+      }
+      if (userFound.role !== role) {
+        const roleMismatchMessage =
+          role === "organizer"
+            ? "Этот аккаунт не относится к организатору"
+            : "Этот аккаунт не относится к жюри";
+        return res
+          .status(403)
+          .json(
+            formatResponse(403, roleMismatchMessage, null, roleMismatchMessage)
           );
       }
 

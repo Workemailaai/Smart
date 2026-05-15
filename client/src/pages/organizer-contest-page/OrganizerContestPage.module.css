@@ -163,6 +163,30 @@
   flex-shrink: 0;
 }
 
+.expandAllDetailsButton {
+  flex-shrink: 0;
+  padding: 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+}
+
+.expandAllDetailsButton:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.expandAllDetailsIcon {
+  display: block;
+  width: 48px;
+  height: 48px;
+  transition: transform 0.2s ease;
+}
+
+.expandAllDetailsIconExpanded {
+  transform: rotate(-90deg);
+}
+
 .votedLabel {
   margin: 0;
   opacity: 0.8;
@@ -743,6 +767,12 @@
 
   .juryCards {
     justify-content: center;
+  }
+}
+
+@media (max-width: 450px) {
+  .expandAllDetailsButton {
+    display: none;
   }
 }
 

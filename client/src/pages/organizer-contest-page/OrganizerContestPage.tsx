@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react'
 import { Navigate, useNavigate, useParams } from 'react-router'
 import { userStore } from '@/entities/user'
 import { organizerContestStore } from '@/features/organizer-contest/model/organizerContestStore'
-import { resolveMediaUrl } from '@/shared'
+import { resolveMediaUrl, useToggleAllParticipantDetails } from '@/shared'
 import { formatRuPhoneMask } from '@/shared/lib/ruPhone'
 import { OrganizerCabinetSidebar } from '@/widgets/organizer-cabinet-sidebar/OrganizerCabinetSidebar'
 import styles from './OrganizerContestPage.module.css'
@@ -58,6 +58,11 @@ export const OrganizerContestPage = observer(() => {
   const numericContestId = Number(contestId)
   const [expandedComments, setExpandedComments] = useState<Record<string, boolean>>({})
   const [isCompleteContestModalOpen, setIsCompleteContestModalOpen] = useState(false)
+  const {
+    participantSectionsRef,
+    areAllParticipantDetailsExpanded,
+    toggleAllParticipantDetails,
+  } = useToggleAllParticipantDetails(numericContestId)
 
   useEffect(() => {
     if (Number.isFinite(numericContestId)) {
@@ -149,9 +154,30 @@ export const OrganizerContestPage = observer(() => {
                     <span className={styles.votedCountTotal}>{totalJuryCount}</span>
                   </div>
                 </div>
+                <button
+                  type="button"
+                  className={styles.expandAllDetailsButton}
+                  aria-expanded={areAllParticipantDetailsExpanded}
+                  aria-label={
+                    areAllParticipantDetailsExpanded
+                      ? 'Свернуть всех участников'
+                      : 'Развернуть всех участников'
+                  }
+                  disabled={view.participants.length === 0}
+                  onClick={toggleAllParticipantDetails}
+                >
+                  <img
+                    alt=""
+                    aria-hidden
+                    className={`${styles.expandAllDetailsIcon} ${
+                      areAllParticipantDetailsExpanded ? styles.expandAllDetailsIconExpanded : ''
+                    }`}
+                    src="/contest-details-arrow-down.svg"
+                  />
+                </button>
               </article>
 
-              <div className={styles.participantSections}>
+              <div className={styles.participantSections} ref={participantSectionsRef}>
                 {[...view.participants]
                   .sort((a, b) => scoreForSort(b.overallAverage) - scoreForSort(a.overallAverage))
                   .map((participant, index) => {

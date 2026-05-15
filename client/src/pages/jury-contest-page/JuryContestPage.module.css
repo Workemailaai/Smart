@@ -241,11 +241,45 @@
   padding: 24px;
 }
 
+.pageHeadingRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
 .pageHeading {
+  margin: 0;
+  flex: 1;
+  min-width: 0;
   color: #0a0f15;
   font-size: 36px;
   font-weight: 500;
   line-height: 39.6px;
+}
+
+.expandAllDetailsButton {
+  flex-shrink: 0;
+  padding: 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+}
+
+.expandAllDetailsButton:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.expandAllDetailsIcon {
+  display: block;
+  width: 48px;
+  height: 48px;
+  transition: transform 0.2s ease;
+}
+
+.expandAllDetailsIconExpanded {
+  transform: rotate(-90deg);
 }
 
 .contestCard {
@@ -941,6 +975,10 @@
 }
 
 @media (max-width: 450px) {
+  .expandAllDetailsButton {
+    display: none;
+  }
+
   .page {
     display: block;
     min-height: 100svh;

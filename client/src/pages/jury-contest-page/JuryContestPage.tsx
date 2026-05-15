@@ -4,7 +4,7 @@ import { Navigate, useNavigate, useParams } from 'react-router'
 import { contestStore } from '@/entities/contest'
 import { userStore } from '@/entities/user'
 import { juryContestStore } from '@/features/jury-contest/model/juryContestStore'
-import { resolveMediaUrl } from '@/shared'
+import { resolveMediaUrl, useToggleAllParticipantDetails } from '@/shared'
 import { JuryCabinetSidebar } from '@/widgets/jury-cabinet-sidebar/JuryCabinetSidebar'
 import { sortCriteriaRows } from '@/shared/lib/weightedScores'
 import styles from './JuryContestPage.module.css'
@@ -52,6 +52,11 @@ export const JuryContestPage = observer(() => {
   const [priorityDragOver, setPriorityDragOver] = useState<number | null>(null)
   const [isPriorityConfirmOpen, setIsPriorityConfirmOpen] = useState(false)
   const [isLeaveConfirmOpen, setIsLeaveConfirmOpen] = useState(false)
+  const {
+    participantSectionsRef,
+    areAllParticipantDetailsExpanded,
+    toggleAllParticipantDetails,
+  } = useToggleAllParticipantDetails(numericContestId)
 
   const view = juryContestStore.view
   const isCompletedContest = view?.contest.status === 'completed'
@@ -280,7 +285,34 @@ export const JuryContestPage = observer(() => {
         </header>
 
         <div className={styles.main}>
-          {!showCriteriaPriorityStep ? <h3 className={styles.pageHeading}>Оцените участников</h3> : null}
+          {!showCriteriaPriorityStep ? (
+            <div className={styles.pageHeadingRow}>
+              <h3 className={styles.pageHeading}>Оцените участников</h3>
+              {view ? (
+                <button
+                  type="button"
+                  className={styles.expandAllDetailsButton}
+                  aria-expanded={areAllParticipantDetailsExpanded}
+                  aria-label={
+                    areAllParticipantDetailsExpanded
+                      ? 'Свернуть всех участников'
+                      : 'Развернуть всех участников'
+                  }
+                  disabled={view.participants.length === 0}
+                  onClick={toggleAllParticipantDetails}
+                >
+                  <img
+                    alt=""
+                    aria-hidden
+                    className={`${styles.expandAllDetailsIcon} ${
+                      areAllParticipantDetailsExpanded ? styles.expandAllDetailsIconExpanded : ''
+                    }`}
+                    src="/contest-details-arrow-down.svg"
+                  />
+                </button>
+              ) : null}
+            </div>
+          ) : null}
 
           {juryContestStore.isLoading ? <p className={styles.infoText}>Загрузка мероприятия...</p> : null}
           {juryContestStore.error ? <p className={styles.errorText}>{juryContestStore.error}</p> : null}
@@ -295,7 +327,7 @@ export const JuryContestPage = observer(() => {
                 <p className={styles.contestSubtitle}>{view.contest.description || 'Оцените объекты'}</p>
               </article>
 
-              <div className={styles.participantList}>
+              <div className={styles.participantList} ref={participantSectionsRef}>
                 {view.participants.map((participant) => {
                   const photoUrl = resolveMediaUrl(participant.photoUrl)
                   const isCommentSaving = juryContestStore.isCommentSaving(participant.id)

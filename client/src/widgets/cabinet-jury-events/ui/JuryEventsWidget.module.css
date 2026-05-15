@@ -97,7 +97,7 @@
   border-radius: 16px;
   padding: 12px 16px;
   display: grid;
-  grid-template-columns: 96px minmax(220px, 1fr) 184px 276px;
+  grid-template-columns: 96px minmax(220px, 1fr) 184px 276px 160px;
   align-items: center;
   gap: 16px;
   color: rgba(10, 15, 21, 0.5);
@@ -128,7 +128,7 @@
 
 @media (max-width: 1400px) {
   .tableHeader {
-    grid-template-columns: 84px minmax(200px, 1fr) 150px 220px;
+    grid-template-columns: 84px minmax(200px, 1fr) 150px 220px 130px;
     gap: 10px;
     font-size: 14px;
   }

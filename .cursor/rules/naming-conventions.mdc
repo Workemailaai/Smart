@@ -1,0 +1,15 @@
+---
+description: Именование переменных, функций и констант
+globs: "{client,server}/**/*.{ts,tsx,js,jsx,mjs,cjs}"
+alwaysApply: false
+---
+
+# Именование
+
+- **camelCase** — переменные и функции; **PascalCase** — классы и типы; **UPPER_SNAKE_CASE** — константы.
+- Булевы: префиксы `is`, `has`, `can`, `should` (`isActive`, `hasAccess`).
+- Функции — глаголы (`getUser`, `calculateTotal`); переменные — существительные (`orderList`).
+- Избегай: `data`, `value`, `item`, `temp`, однобуквенных имён (кроме `i`, `j` в циклах).
+- Не дублируй смысл: `userName`, не `userUserName`.
+- Термины предметной области: contest, jury, organizer, participant, criterion, template.
+- Сокращения только общепринятые: `id`, `url`, `api`.

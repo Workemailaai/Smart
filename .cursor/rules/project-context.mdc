@@ -1,0 +1,24 @@
+---
+description: Стек и структура репозитория beautyEvents
+alwaysApply: true
+---
+
+# Контекст проекта
+
+Монорепозиторий платформы beauty-событий (конкурсы, жюри, организаторы).
+
+| Часть | Путь | Стек |
+|-------|------|------|
+| Фронт | `client/` | React, TypeScript, Vite, CSS Modules |
+| Бэк | `server/` | Express, Sequelize, PostgreSQL |
+| Сборка | `server/public/dist/` | Vite собирает клиент в dist сервера |
+
+**Архитектура клиента:** `app/`, `pages/`, `widgets/`, `features/`, `entities/`, `shared/`.
+
+**Переменные окружения:** три режима (development / test / production). План — `.cursor/plans/environment-variables.md`.
+
+**CI/CD и деплой:** ветки `test` / `main`, GitHub Actions, Docker. План — `.cursor/plans/ci-cd-docker-deploy.md`.
+
+**API:** axios с `import.meta.env.VITE_API` на клиенте; JWT на сервере (`SECRET_ACCESS_TOKEN`, `SECRET_REFRESH_TOKEN`).
+
+**Миграции:** `server/src/db/migrations/`, конфиг Sequelize — `server/src/db/config/database.json`.

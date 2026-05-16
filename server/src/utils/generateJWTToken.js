@@ -1,8 +1,5 @@
-const path = require("path");
 const jwt = require("jsonwebtoken");
-const process = require("process");
 const jwtConfig = require("../config/jwtConfig");
-require("dotenv").config({ path: path.resolve(process.cwd(), ".env") });
 
 /** Формирует payload { user } для access/refresh JWT */
 function buildUserPayload(user) {

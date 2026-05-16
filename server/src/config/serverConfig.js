@@ -7,7 +7,7 @@ const cookieParser = require("cookie-parser");
 const removeHeader = require("../middleware/removeHeader");
 
 const corsOptions = {
-  origin: [process.env.CLIENT_URL],
+  origin: [process.env.CLIENT_URL, 'http://localhost:5173'], 
   credentials: true,
 };
 

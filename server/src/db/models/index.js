@@ -4,9 +4,7 @@ const fs = require("fs");
 const path = require("path");
 const process = require("process");
 const MODELS_DIR = path.resolve(process.cwd(), "src", "db", "models");
-require("dotenv").config({
-  path: path.resolve(process.cwd(), ".env")
-});
+require("../../config/loadEnv")();
 const Sequelize = require("sequelize");
 
 const basename = "index.js";

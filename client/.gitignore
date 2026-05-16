@@ -12,6 +12,11 @@ dist
 dist-ssr
 *.local
 
+# Переменные окружения (шаблон .env.example — в git)
+.env
+.env.local
+.env.*.local
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

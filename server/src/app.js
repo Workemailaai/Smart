@@ -1,14 +1,14 @@
-require("dotenv").config();
-const express = require("express");
 const path = require("path");
-const process = require("process");
+
+require("./config/loadEnv")();
+
+const express = require("express");
 const serverConfig = require("./config/serverConfig");
 const apiRoutes = require("./routes/api.routes");
 const errorMiddleware = require("./middleware/errorMiddleware");
 const responseLogger = require("./middleware/responseLogger");
-require("dotenv").config({ path: path.resolve(process.cwd(), ".env") });
 
-const { PORT } = process.env || 3000;
+const port = Number(process.env.PORT) || 3000;
 
 const app = express();
 serverConfig(app);
@@ -43,6 +43,6 @@ app.use((req, res) => {
 
 app.use(errorMiddleware);
 
-app.listen(PORT, () => {
-  console.log(`Сервер запущен, порт ${PORT}`);
+app.listen(port, () => {
+  console.log(`Сервер запущен, порт ${port}`);
 });

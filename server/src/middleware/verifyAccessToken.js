@@ -1,7 +1,4 @@
-const path = require("path");
 const jwt = require("jsonwebtoken");
-const process = require("process");
-require("dotenv").config({ path: path.resolve(process.cwd(), ".env") });
 const formatResponse = require("../utils/formatResponse");
 
 /** Проверка Bearer access-токена, пользователь в req.user для контроллеров */

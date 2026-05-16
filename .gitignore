@@ -1,0 +1,21 @@
+# Зависимости и сборки
+node_modules/
+**/dist/
+
+# Секреты
+.env
+.env.local
+.env.*.local
+!**/.env.example
+
+# Локальные планы / черновики
+.cursor/plans/
+
+# Cursor — локальные переопределения
+.cursor/*.local
+.cursor/**/.local/
+
+# OS / IDE
+.DS_Store
+Thumbs.db
+*.log

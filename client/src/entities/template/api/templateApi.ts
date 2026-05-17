@@ -32,6 +32,21 @@ export const createTemplate = async (formData: FormData): Promise<ServerResponse
   }
 }
 
+export const updateTemplate = async (
+  id: number,
+  formData: FormData,
+): Promise<ServerResponseType<ITemplate>> => {
+  try {
+    const response = await axiosInstance.put(`/templates/${id}`, formData)
+    return response.data
+  } catch (error) {
+    const msg =
+      (error as { response?: { data?: { error?: string } } })?.response?.data?.error ||
+      (error as Error)?.message
+    throw new Error(msg || 'Ошибка при обновлении шаблона')
+  }
+}
+
 export const deleteTemplateById = async (id: number): Promise<ServerResponseType<{ id: number }>> => {
   try {
     const response = await axiosInstance.delete(`/templates/${id}`)

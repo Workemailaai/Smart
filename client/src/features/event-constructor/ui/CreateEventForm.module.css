@@ -972,12 +972,63 @@
   }
 }
 
+.loadingText {
+  padding: 24px;
+  color: #566074;
+  font-size: 16px;
+}
+
 .footerBar {
   display: flex;
   gap: 8px;
   align-items: center;
   justify-content: flex-end;
   margin-top: 16px;
+}
+
+.footerBarEdit {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 16px;
+}
+
+.footerBarEditBack {
+  flex-shrink: 0;
+  padding: 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+}
+
+.footerBarEditActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-end;
+  margin-left: auto;
+}
+
+.btnEditFooter {
+  width: auto;
+  min-width: 160px;
+  max-width: 100%;
+  padding-left: 20px;
+  padding-right: 20px;
+}
+
+@media (max-width: 900px) {
+  .footerBarEditActions {
+    width: 100%;
+    margin-left: 0;
+  }
+
+  .footerBarEditActions .btnEditFooter {
+    flex: 1 1 140px;
+    min-width: 0;
+  }
 }
 
 .btnDanger {

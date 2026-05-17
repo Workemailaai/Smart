@@ -1,3 +1,4 @@
+const { Op } = require("sequelize");
 const { EventTemplate, sequelize } = require("../db/models");
 const ApiError = require("../utils/ApiError");
 const { CONTEST_TYPES } = require("../constants/contestTypes");
@@ -160,32 +161,31 @@ class TemplateService {
     };
   }
 
-  /** Создание шаблона мероприятия (каркас) */
-  static async createTemplate({
-    name,
-    criteria,
-    organizerId,
-    contestType,
-    snapshot,
-    coverFile,
-    filesByField
-  }) {
-    const title = name != null ? String(name).trim() : "";
-    if (!title) {
+  /** Проверка уникальности названия карточки шаблона у организатора */
+  static async assertTemplateNameAvailable(organizerId, name, excludeTemplateId = null) {
+    const normalizedName = String(name || "").trim();
+    if (!normalizedName) {
       throw new ApiError(400, "Укажите название шаблона");
     }
-    const type = contestType != null ? String(contestType) : "creative";
-    if (!CONTEST_TYPES.includes(type)) {
-      throw new ApiError(400, "Некорректный тип конкурса в шаблоне");
+    const where = {
+      organizerId,
+      name: { [Op.iLike]: normalizedName }
+    };
+    if (excludeTemplateId != null) {
+      where.id = { [Op.ne]: Number(excludeTemplateId) };
     }
+    const duplicate = await EventTemplate.findOne({ where });
+    if (duplicate) {
+      throw new ApiError(409, "Шаблон с таким названием уже существует");
+    }
+    return normalizedName;
+  }
+
+  /** Применяет загруженные файлы к нормализованному snapshot */
+  static applyUploadedFilesToSnapshot(normalizedSnapshot, coverFile, filesByField) {
     if (coverFile && !String(coverFile.mimetype || "").startsWith("image/")) {
       throw new ApiError(400, "Обложка шаблона должна быть изображением");
     }
-    const normalizedSnapshot = TemplateService.normalizeTemplateSnapshot(
-      snapshot,
-      type,
-      criteria
-    );
     const coverImageUrl = coverFile ? `/media/contests/${coverFile.filename}` : null;
     if (coverImageUrl) {
       normalizedSnapshot.coverImageUrl = coverImageUrl;
@@ -212,6 +212,30 @@ class TemplateService {
         photoUrl: `/media/jury/${juryPhotoFile.filename}`
       };
     });
+    return normalizedSnapshot;
+  }
+
+  /** Создание шаблона мероприятия (каркас) */
+  static async createTemplate({
+    name,
+    criteria,
+    organizerId,
+    contestType,
+    snapshot,
+    coverFile,
+    filesByField
+  }) {
+    const title = await TemplateService.assertTemplateNameAvailable(organizerId, name);
+    const type = contestType != null ? String(contestType) : "creative";
+    if (!CONTEST_TYPES.includes(type)) {
+      throw new ApiError(400, "Некорректный тип конкурса в шаблоне");
+    }
+    const normalizedSnapshot = TemplateService.normalizeTemplateSnapshot(
+      snapshot,
+      type,
+      criteria
+    );
+    TemplateService.applyUploadedFilesToSnapshot(normalizedSnapshot, coverFile, filesByField);
     const normalizedCriteria = normalizedSnapshot.criteria;
     const mediaPaths = MediaFileService.collectTemplateSnapshotMediaPaths(normalizedSnapshot);
     const transaction = await sequelize.transaction();
@@ -252,6 +276,64 @@ class TemplateService {
       throw new ApiError(404, "Шаблон не найден");
     }
     return t;
+  }
+
+  /** Обновление snapshot шаблона (название карточки не меняется) */
+  static async updateTemplate({
+    id,
+    organizerId,
+    criteria,
+    contestType,
+    snapshot,
+    coverFile,
+    filesByField
+  }) {
+    const template = await TemplateService.getTemplateById(id, organizerId);
+    const type = contestType != null ? String(contestType) : template.contestType || "creative";
+    if (!CONTEST_TYPES.includes(type)) {
+      throw new ApiError(400, "Некорректный тип конкурса в шаблоне");
+    }
+    const normalizedSnapshot = TemplateService.normalizeTemplateSnapshot(
+      snapshot,
+      type,
+      criteria
+    );
+    TemplateService.applyUploadedFilesToSnapshot(normalizedSnapshot, coverFile, filesByField);
+    const normalizedCriteria = normalizedSnapshot.criteria;
+    const oldMediaPaths = MediaFileService.collectTemplateSnapshotMediaPaths(template.snapshot);
+    const newMediaPaths = MediaFileService.collectTemplateSnapshotMediaPaths(normalizedSnapshot);
+    const oldMediaPathSet = new Set(oldMediaPaths);
+    const newMediaPathSet = new Set(newMediaPaths);
+    const pathsToDecrement = oldMediaPaths.filter((mediaPath) => !newMediaPathSet.has(mediaPath));
+    const pathsToIncrement = newMediaPaths.filter((mediaPath) => !oldMediaPathSet.has(mediaPath));
+    const transaction = await sequelize.transaction();
+    let removableMediaPaths = [];
+    try {
+      await template.update(
+        {
+          criteria: normalizedCriteria,
+          contestType: type,
+          snapshot: normalizedSnapshot
+        },
+        { transaction }
+      );
+      if (pathsToDecrement.length) {
+        removableMediaPaths = await MediaFileService.decrementReferences(
+          pathsToDecrement,
+          transaction
+        );
+      }
+      if (pathsToIncrement.length) {
+        await MediaFileService.incrementReferences(pathsToIncrement, transaction);
+      }
+      await transaction.commit();
+    } catch (error) {
+      await transaction.rollback();
+      throw error;
+    }
+    MediaFileService.cleanupFiles(removableMediaPaths);
+    await template.reload();
+    return template;
   }
 
   /** Удаление шаблона (только владелец) */

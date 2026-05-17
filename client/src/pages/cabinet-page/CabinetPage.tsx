@@ -209,7 +209,7 @@ export const CabinetPage = observer(({ section }: CabinetPageProps) => {
   }
 
   const onTemplateOpen = (templateId: number) => {
-    navigate(`/cabinet/constructor/new?templateId=${templateId}`)
+    navigate(`/cabinet/constructor/edit/${templateId}`)
   }
 
   const onTemplateDelete = async (templateId: number, templateName: string) => {

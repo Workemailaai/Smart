@@ -31,6 +31,17 @@ class TemplateStore {
     }
   }
 
+  upsertTemplate = (template: ITemplate) => {
+    const index = this.templates.findIndex((item) => item.id === template.id)
+    if (index === -1) {
+      this.templates = [template, ...this.templates]
+      return
+    }
+    const nextTemplates = [...this.templates]
+    nextTemplates[index] = template
+    this.templates = nextTemplates
+  }
+
   deleteTemplate = async (templateId: number) => {
     this.deletingTemplateId = templateId
     this.error = null

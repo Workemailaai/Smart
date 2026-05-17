@@ -1,8 +1,9 @@
 import { observer } from 'mobx-react-lite'
 import { useEffect, useMemo, useState } from 'react'
-import { useNavigate, useSearchParams } from 'react-router'
+import { useLocation, useNavigate, useParams } from 'react-router'
 import { contestStore, createContestFull, getContestTypes } from '@/entities/contest'
-import { createTemplate, getTemplateById, templateStore } from '@/entities/template'
+import { createTemplate, getTemplateById, templateStore, updateTemplate } from '@/entities/template'
+import { ConfirmDialog, toastStore } from '@/shared'
 import type { IContestTypeOption } from '@/entities/contest'
 import { resolveMediaUrl } from '@/shared'
 import { formatRuPhoneMask } from '@/shared/lib/ruPhone'
@@ -80,9 +81,14 @@ function getClampedBoundsFromStrings(
   return { minScore: m, maxScore: M }
 }
 
+type UnsafeFormAction = 'create' | 'saveTemplate' | 'saveChanges' | 'saveAsNew' | 'createContest'
+
 export const CreateEventForm = observer(function CreateEventForm() {
   const navigate = useNavigate()
-  const [searchParams] = useSearchParams()
+  const location = useLocation()
+  const { templateId: templateIdParam } = useParams()
+  const isEditMode = location.pathname.includes('/constructor/edit/')
+  const parsedTemplateId = templateIdParam ? Number.parseInt(templateIdParam, 10) : Number.NaN
   const store = createEventFormStore
   const [typeOptions, setTypeOptions] = useState<IContestTypeOption[]>([])
   const [participantModalOpen, setParticipantModalOpen] = useState(false)
@@ -101,7 +107,10 @@ export const CreateEventForm = observer(function CreateEventForm() {
   /** Черновик названия для следующей строки показателя (добавление только после ввода + галка) */
   const [newCriterionDraftName, setNewCriterionDraftName] = useState('')
   const [isUnsavedCriterionConfirmOpen, setIsUnsavedCriterionConfirmOpen] = useState(false)
-  const [pendingUnsafeAction, setPendingUnsafeAction] = useState<'create' | 'saveTemplate' | null>(null)
+  const [pendingUnsafeAction, setPendingUnsafeAction] = useState<UnsafeFormAction | null>(null)
+  const [isTemplateLoading, setIsTemplateLoading] = useState(false)
+  const [isExitEditConfirmOpen, setIsExitEditConfirmOpen] = useState(false)
+  const [isCreateContestConfirmOpen, setIsCreateContestConfirmOpen] = useState(false)
   /** DnD: индекс перетаскиваемой строки и подсветка цели */
   const [criterionDragFrom, setCriterionDragFrom] = useState<number | null>(null)
   const [criterionDragOver, setCriterionDragOver] = useState<number | null>(null)
@@ -110,8 +119,39 @@ export const CreateEventForm = observer(function CreateEventForm() {
   const [openedToggleTooltip, setOpenedToggleTooltip] = useState<'weights' | 'jury' | null>(null)
 
   useEffect(() => {
-    createEventFormStore.reset()
-  }, [])
+    if (isEditMode) {
+      if (!Number.isFinite(parsedTemplateId)) {
+        navigate('/cabinet/constructor', { replace: true })
+        return
+      }
+      createEventFormStore.reset()
+      setIsTemplateLoading(true)
+      void getTemplateById(parsedTemplateId)
+        .then((response) => {
+          if (response.data) {
+            createEventFormStore.beginEditSession(response.data)
+            return
+          }
+          navigate('/cabinet/constructor', { replace: true })
+        })
+        .catch(() => {
+          createEventFormStore.templateMessage = 'Не удалось загрузить шаблон'
+          navigate('/cabinet/constructor', { replace: true })
+        })
+        .finally(() => {
+          setIsTemplateLoading(false)
+        })
+      return
+    }
+
+    const preserveForm = Boolean((location.state as { preserveForm?: boolean } | null)?.preserveForm)
+    if (!preserveForm) {
+      createEventFormStore.reset()
+    } else {
+      navigate(location.pathname, { replace: true, state: {} })
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- preserveForm читается только при монтировании /new
+  }, [isEditMode, parsedTemplateId])
 
   useEffect(() => {
     const c = store.criteria[0]
@@ -182,16 +222,6 @@ export const CreateEventForm = observer(function CreateEventForm() {
     return primary.length ? primary : FALLBACK_CONTEST_TYPES
   }, [typeOptions, store.contestType])
 
-  useEffect(() => {
-    const tid = searchParams.get('templateId')
-    if (!tid) return
-    const id = Number(tid)
-    if (!Number.isFinite(id)) return
-    void getTemplateById(id).then((res) => {
-      if (res.data) store.applyTemplate(res.data)
-    })
-  }, [searchParams, store])
-
   const openNewParticipant = () => {
     setParticipantDraft(null)
     setParticipantModalKey((k) => k + 1)
@@ -245,77 +275,165 @@ export const CreateEventForm = observer(function CreateEventForm() {
     }
   }
 
-  const handleSaveTemplate = async () => {
+  const validateTemplatePayload = () => {
     store.templateMessage = null
-    const err = store.validate()
-    if (err) {
-      store.templateMessage = err
-      return
+    const validationError = store.validate()
+    if (validationError) {
+      store.templateMessage = validationError
+      return false
     }
     const snapshot = store.getSnapshotForTemplate()
     if (snapshot.criteria.length === 0) {
       store.templateMessage = 'Добавьте критерии с названиями для шаблона'
-      return
+      return false
     }
+    return true
+  }
+
+  const handleSaveTemplate = async () => {
+    if (!validateTemplatePayload()) return
     const name = window.prompt('Название шаблона')
     if (!name || !name.trim()) return
     store.isSavingTemplate = true
     try {
-      const formData = new FormData()
-      formData.append(
-        'payload',
-        JSON.stringify({
-          name: name.trim(),
-          contestType: snapshot.contestType,
-          criteria: snapshot.criteria,
-          snapshot,
-        }),
-      )
-      if (store.coverFile) {
-        formData.append('cover', store.coverFile)
-      }
-      store.participants.forEach((participant, index) => {
-        if (participant.file) {
-          formData.append(`participantPhoto_${index}`, participant.file)
-        }
-      })
-      store.jury.forEach((juryMember, index) => {
-        if (juryMember.file) {
-          formData.append(`juryPhoto_${index}`, juryMember.file)
-        }
-      })
-      await createTemplate(formData)
+      await createTemplate(store.buildTemplateFormData(name.trim()))
       store.templateMessage = 'Шаблон сохранён'
       void templateStore.fetchTemplates()
-    } catch (e) {
-      store.templateMessage = (e as Error)?.message || 'Ошибка сохранения шаблона'
+    } catch (error) {
+      store.templateMessage = (error as Error)?.message || 'Ошибка сохранения шаблона'
     } finally {
       store.isSavingTemplate = false
     }
   }
 
+  const handleSaveChanges = async (): Promise<boolean> => {
+    if (!store.editingTemplateId || !validateTemplatePayload()) return false
+    store.isUpdatingTemplate = true
+    try {
+      const response = await updateTemplate(store.editingTemplateId, store.buildTemplateFormData())
+      if (response.data) {
+        templateStore.upsertTemplate(response.data)
+        store.beginEditSession(response.data)
+        toastStore.show('Изменения сохранены')
+        return true
+      }
+      store.templateMessage = response.error || response.message || 'Не удалось сохранить шаблон'
+      return false
+    } catch (error) {
+      store.templateMessage = (error as Error)?.message || 'Ошибка сохранения шаблона'
+      return false
+    } finally {
+      store.isUpdatingTemplate = false
+    }
+  }
+
+  const handleSaveAsNewTemplate = async () => {
+    if (!validateTemplatePayload()) return
+    const name = window.prompt('Название шаблона')
+    if (!name || !name.trim()) return
+    store.isSavingTemplate = true
+    try {
+      await createTemplate(store.buildTemplateFormData(name.trim()))
+      store.templateMessage = 'Шаблон сохранён'
+      void templateStore.fetchTemplates()
+    } catch (error) {
+      store.templateMessage = (error as Error)?.message || 'Ошибка сохранения шаблона'
+    } finally {
+      store.isSavingTemplate = false
+    }
+  }
+
+  const enterCreateContestMode = () => {
+    store.clearEditSession()
+    navigate('/cabinet/constructor/new', { replace: true, state: { preserveForm: true } })
+  }
+
+  const handleCreateContestFromEdit = () => {
+    store.submitError = null
+    const validationError = store.validate()
+    if (validationError) {
+      store.submitError = validationError
+      return
+    }
+    if (store.isEditDirty()) {
+      setIsCreateContestConfirmOpen(true)
+      return
+    }
+    enterCreateContestMode()
+  }
+
+  const onConfirmCreateContestWithoutSave = () => {
+    setIsCreateContestConfirmOpen(false)
+    enterCreateContestMode()
+  }
+
+  const onConfirmSaveAndCreateContest = async () => {
+    const isSaved = await handleSaveChanges()
+    if (!isSaved) return
+    setIsCreateContestConfirmOpen(false)
+    enterCreateContestMode()
+  }
+
+  const handleEditBack = () => {
+    if (store.isEditDirty()) {
+      setIsExitEditConfirmOpen(true)
+      return
+    }
+    navigate('/cabinet/constructor')
+  }
+
+  const onConfirmExitEdit = () => {
+    setIsExitEditConfirmOpen(false)
+    navigate('/cabinet/constructor')
+  }
+
   const hasUnsavedCriterionDraft = Boolean(newCriterionDraftName.trim())
 
-  const runWithUnsavedCriterionGuard = (action: 'create' | 'saveTemplate') => {
+  const dispatchUnsafeAction = (action: UnsafeFormAction) => {
+    if (action === 'create') {
+      void handleCreate()
+      return
+    }
+    if (action === 'saveTemplate') {
+      void handleSaveTemplate()
+      return
+    }
+    if (action === 'saveChanges') {
+      void handleSaveChanges()
+      return
+    }
+    if (action === 'saveAsNew') {
+      void handleSaveAsNewTemplate()
+      return
+    }
+    handleCreateContestFromEdit()
+  }
+
+  const runWithUnsavedCriterionGuard = (action: UnsafeFormAction) => {
     if (hasUnsavedCriterionDraft) {
       setPendingUnsafeAction(action)
       setIsUnsavedCriterionConfirmOpen(true)
       return
     }
+    dispatchUnsafeAction(action)
+  }
 
-    if (action === 'create') {
-      void handleCreate()
-      return
+  const getUnsafeCriterionProceedLabel = () => {
+    if (pendingUnsafeAction === 'saveTemplate' || pendingUnsafeAction === 'saveAsNew') {
+      return 'Всё равно сохранить шаблон'
     }
-
-    void handleSaveTemplate()
+    if (pendingUnsafeAction === 'saveChanges') {
+      return 'Всё равно сохранить изменения'
+    }
+    if (pendingUnsafeAction === 'createContest') {
+      return 'Всё равно создать конкурс'
+    }
+    return 'Всё равно создать мероприятие'
   }
 
   const onConfirmUnsafeAction = () => {
-    if (pendingUnsafeAction === 'create') {
-      void handleCreate()
-    } else if (pendingUnsafeAction === 'saveTemplate') {
-      void handleSaveTemplate()
+    if (pendingUnsafeAction) {
+      dispatchUnsafeAction(pendingUnsafeAction)
     }
     setIsUnsavedCriterionConfirmOpen(false)
     setPendingUnsafeAction(null)
@@ -328,6 +446,10 @@ export const CreateEventForm = observer(function CreateEventForm() {
 
   const toggleTooltip = (tooltipId: 'weights' | 'jury') => {
     setOpenedToggleTooltip((previousTooltipId) => (previousTooltipId === tooltipId ? null : tooltipId))
+  }
+
+  if (isEditMode && isTemplateLoading) {
+    return <p className={styles.loadingText}>Загрузка шаблона...</p>
   }
 
   return (
@@ -826,27 +948,89 @@ export const CreateEventForm = observer(function CreateEventForm() {
       {store.submitError ? <p className={styles.error}>{store.submitError}</p> : null}
       {store.templateMessage ? <p className={store.templateMessage.includes('Ошибка') ? styles.error : styles.success}>{store.templateMessage}</p> : null}
 
-      <div className={styles.footerBar}>
-        <button className={styles.btnDanger} onClick={() => navigate('/cabinet/constructor')} type="button">
-          Отмена
-        </button>
-        <button
-          className={styles.btnSecondary}
-          disabled={store.isSavingTemplate}
-          onClick={() => runWithUnsavedCriterionGuard('saveTemplate')}
-          type="button"
-        >
-          Сохранить как шаблон
-        </button>
-        <button
-          className={styles.btnPrimary}
-          disabled={store.isSubmitting}
-          onClick={() => runWithUnsavedCriterionGuard('create')}
-          type="button"
-        >
-          {store.isSubmitting ? 'Создание…' : 'Создать'}
-        </button>
-      </div>
+      {isEditMode ? (
+        <div className={styles.footerBarEdit}>
+          <button
+            className={styles.footerBarEditBack}
+            type="button"
+            aria-label="Назад к списку шаблонов"
+            onClick={handleEditBack}
+          >
+            <img src="/exit-arrow-edit-template.svg" alt="" width={48} height={48} />
+          </button>
+          <div className={styles.footerBarEditActions}>
+            <button
+              className={`${styles.btnSecondary} ${styles.btnEditFooter}`}
+              disabled={store.isSavingTemplate}
+              onClick={() => runWithUnsavedCriterionGuard('saveAsNew')}
+              type="button"
+            >
+              Сохранить как новый шаблон
+            </button>
+            <button
+              className={`${styles.btnSecondary} ${styles.btnEditFooter}`}
+              disabled={store.isSubmitting}
+              onClick={() => runWithUnsavedCriterionGuard('createContest')}
+              type="button"
+            >
+              Создать конкурс
+            </button>
+            <button
+              className={`${styles.btnPrimary} ${styles.btnEditFooter}`}
+              disabled={store.isUpdatingTemplate}
+              onClick={() => runWithUnsavedCriterionGuard('saveChanges')}
+              type="button"
+            >
+              {store.isUpdatingTemplate ? 'Сохранение…' : 'Сохранить изменения'}
+            </button>
+          </div>
+        </div>
+      ) : (
+        <div className={styles.footerBar}>
+          <button className={styles.btnDanger} onClick={() => navigate('/cabinet/constructor')} type="button">
+            Удалить
+          </button>
+          <button
+            className={styles.btnSecondary}
+            disabled={store.isSavingTemplate}
+            onClick={() => runWithUnsavedCriterionGuard('saveTemplate')}
+            type="button"
+          >
+            Сохранить как шаблон
+          </button>
+          <button
+            className={styles.btnPrimary}
+            disabled={store.isSubmitting}
+            onClick={() => runWithUnsavedCriterionGuard('create')}
+            type="button"
+          >
+            {store.isSubmitting ? 'Создание…' : 'Создать'}
+          </button>
+        </div>
+      )}
+
+      {isExitEditConfirmOpen ? (
+        <ConfirmDialog
+          title="Вы точно хотите выйти из редактирования шаблона?"
+          subtitle="Изменения в шаблоне не сохранятся"
+          acceptLabel="Выйти без сохранения"
+          stayLabel="Остаться"
+          onAccept={onConfirmExitEdit}
+          onStay={() => setIsExitEditConfirmOpen(false)}
+        />
+      ) : null}
+
+      {isCreateContestConfirmOpen ? (
+        <ConfirmDialog
+          title="Вы не сохранили изменения в шаблоне"
+          subtitle="Перейти в создание мероприятия без сохранения?"
+          acceptLabel="Создать"
+          stayLabel="Сохранить и создать"
+          onAccept={onConfirmCreateContestWithoutSave}
+          onStay={onConfirmSaveAndCreateContest}
+          isStayDisabled={store.isUpdatingTemplate}
+        />
+      ) : null}
 
       {isUnsavedCriterionConfirmOpen ? (
         <div className={styles.unsavedCriterionConfirmOverlay} onClick={onStayInConstructor}>
@@ -861,7 +1045,7 @@ export const CreateEventForm = observer(function CreateEventForm() {
                   className={styles.unsavedCriterionConfirmProceedButton}
                   onClick={onConfirmUnsafeAction}
                 >
-                  {pendingUnsafeAction === 'saveTemplate' ? 'Всё равно сохранить шаблон' : 'Всё равно создать мероприятие'}
+                  {getUnsafeCriterionProceedLabel()}
                 </button>
                 <button
                   type="button"

@@ -63,6 +63,10 @@ export const routerConfig = createBrowserRouter([
             element: <CreateEventPage />,
           },
           {
+            path: 'constructor/edit/:templateId',
+            element: <CreateEventPage />,
+          },
+          {
             path: 'settings',
             element: <CabinetPage section="settings" />,
           },

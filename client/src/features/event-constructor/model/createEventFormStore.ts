@@ -92,6 +92,11 @@ class CreateEventFormStore {
   isSubmitting = false
   templateMessage: string | null = null
   isSavingTemplate = false
+  isUpdatingTemplate = false
+  editingTemplateId: number | null = null
+  editingTemplateName = ''
+  /** JSON baseline для определения несохранённых изменений в режиме редактирования */
+  editBaselineJson: string | null = null
   /** Учитывать значимость показателей (взвешенный расчёт на сервере) */
   useCriteriaWeights = false
   /** Учитывать предпочтения жюри (экран приоритетов + смена порядка показателей) */
@@ -120,8 +125,42 @@ class CreateEventFormStore {
     this.coverPreviewUrl = null
     this.submitError = null
     this.templateMessage = null
+    this.isUpdatingTemplate = false
     this.useCriteriaWeights = false
     this.juryPreferencesEnabled = false
+    this.clearEditSession()
+  }
+
+  clearEditSession() {
+    this.editingTemplateId = null
+    this.editingTemplateName = ''
+    this.editBaselineJson = null
+  }
+
+  /** Зафиксировать состояние формы как «сохранённое» для dirty-check */
+  captureEditBaseline(): string {
+    return JSON.stringify({
+      snapshotJson: JSON.stringify(this.getSnapshotForTemplate()),
+      hasCoverFile: Boolean(this.coverFile),
+      hasParticipantFiles: this.participants.some((participant) => Boolean(participant.file)),
+      hasJuryFiles: this.jury.some((juryMember) => Boolean(juryMember.file)),
+    })
+  }
+
+  commitEditBaseline() {
+    this.editBaselineJson = this.captureEditBaseline()
+  }
+
+  isEditDirty(): boolean {
+    if (!this.editBaselineJson) return false
+    return this.captureEditBaseline() !== this.editBaselineJson
+  }
+
+  beginEditSession(template: ITemplate) {
+    this.applyTemplate(template)
+    this.editingTemplateId = template.id
+    this.editingTemplateName = template.name
+    this.commitEditBaseline()
   }
 
   setUseCriteriaWeights(v: boolean) {
@@ -394,6 +433,35 @@ class CreateEventFormStore {
       if (j.file) fd.append(`juryPhoto_${i}`, j.file)
     })
     return fd
+  }
+
+  /** FormData для создания или обновления шаблона */
+  buildTemplateFormData(templateName?: string): FormData {
+    const snapshot = this.getSnapshotForTemplate()
+    const formData = new FormData()
+    const payload: Record<string, unknown> = {
+      contestType: snapshot.contestType,
+      criteria: snapshot.criteria,
+      snapshot,
+    }
+    if (templateName) {
+      payload.name = templateName.trim()
+    }
+    formData.append('payload', JSON.stringify(payload))
+    if (this.coverFile) {
+      formData.append('cover', this.coverFile)
+    }
+    this.participants.forEach((participant, index) => {
+      if (participant.file) {
+        formData.append(`participantPhoto_${index}`, participant.file)
+      }
+    })
+    this.jury.forEach((juryMember, index) => {
+      if (juryMember.file) {
+        formData.append(`juryPhoto_${index}`, juryMember.file)
+      }
+    })
+    return formData
   }
 
   getSnapshotForTemplate(): EventTemplateSnapshot {

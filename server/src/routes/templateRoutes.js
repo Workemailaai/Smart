@@ -10,6 +10,7 @@ router.use(verifyAccessToken);
 router.post("/", uploadContestAssets.any(), TemplateController.createTemplate);
 router.get("/", TemplateController.getTemplates);
 router.get("/:id", TemplateController.getTemplateById);
+router.put("/:id", uploadContestAssets.any(), TemplateController.updateTemplate);
 router.delete("/:id", TemplateController.deleteTemplate);
 
 module.exports = router;

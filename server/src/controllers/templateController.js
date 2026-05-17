@@ -78,6 +78,43 @@ class TemplateController {
     }
   }
 
+  /** Обновить шаблон (snapshot, без смены name) */
+  static async updateTemplate(req, res, next) {
+    try {
+      TemplateController.ensureOrganizer(req);
+      let body = req.body || {};
+      if (typeof req.body?.payload === "string") {
+        try {
+          body = JSON.parse(req.body.payload);
+        } catch {
+          throw new ApiError(400, "Поле payload должно быть корректным JSON");
+        }
+      }
+      requireFields(body, ["criteria"]);
+      const filesByField = {};
+      for (const file of req.files || []) {
+        if (filesByField[file.fieldname]) {
+          throw new ApiError(400, `Дублируется файл в поле ${file.fieldname}`);
+        }
+        filesByField[file.fieldname] = file;
+      }
+      const template = await TemplateService.updateTemplate({
+        id: req.params.id,
+        organizerId: req.user.id,
+        criteria: body.criteria,
+        contestType: body.contestType,
+        snapshot: body.snapshot,
+        coverFile: filesByField.cover,
+        filesByField
+      });
+      return res
+        .status(200)
+        .json(formatResponse(200, "Шаблон обновлён", template));
+    } catch (error) {
+      return next(error);
+    }
+  }
+
   /** Удалить шаблон */
   static async deleteTemplate(req, res, next) {
     try {

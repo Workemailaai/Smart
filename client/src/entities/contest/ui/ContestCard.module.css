@@ -13,7 +13,27 @@
 }
 
 .cardWithOrganizerActions {
-  grid-template-columns: 96px minmax(220px, 1fr) 184px 276px 160px minmax(0, 1fr);
+  grid-template-columns: 96px minmax(220px, 1fr) 184px 276px 160px 88px;
+}
+
+.organizerActionsCell {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 8px;
+}
+
+.organizerEditButton {
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  border: none;
+  background: transparent url('/edit-contest-button.svg') center / 36px 36px no-repeat;
+  cursor: pointer;
+}
+
+.organizerEditButton:hover {
+  background-image: url('/edit-contest-button-hover.svg');
 }
 
 .cardClickable {
@@ -177,10 +197,10 @@
 .organizerDeleteButton {
   width: 36px;
   height: 36px;
+  flex-shrink: 0;
   border: none;
   background: transparent url('/delete-contest-button.svg') center / 36px 36px no-repeat;
   cursor: pointer;
-  justify-self: end;
 }
 
 .organizerDeleteButton:hover {
@@ -267,7 +287,7 @@
   }
 
   .cardWithOrganizerActions {
-    grid-template-columns: 84px minmax(200px, 1fr) 150px 220px 130px minmax(0, 1fr);
+    grid-template-columns: 84px minmax(200px, 1fr) 150px 220px 130px 80px;
   }
 
   .coverImage,

@@ -110,7 +110,7 @@
 }
 
 .tableHeaderWithAction {
-  grid-template-columns: 96px minmax(220px, 1fr) 184px 276px 160px minmax(0, 1fr);
+  grid-template-columns: 96px minmax(220px, 1fr) 184px 276px 160px 88px;
 }
 
 .tableHeaderVotes {
@@ -146,7 +146,7 @@
   }
 
   .tableHeaderWithAction {
-    grid-template-columns: 84px minmax(200px, 1fr) 150px 220px 130px minmax(0, 1fr);
+    grid-template-columns: 84px minmax(200px, 1fr) 150px 220px 130px 80px;
   }
 }
 

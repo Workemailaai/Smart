@@ -107,6 +107,43 @@ class ContestController {
     }
   }
 
+  /** Обновление состава мероприятия (участники и жюри) */
+  static async updateContestRoster(req, res, next) {
+    try {
+      if (req.user.role !== "organizer") {
+        throw new ApiError(403, "Только организатор может менять состав мероприятия");
+      }
+      const raw = req.body?.payload;
+      if (!raw || typeof raw !== "string") {
+        throw new ApiError(400, "Передайте поле payload (JSON-строка с изменениями состава)");
+      }
+      let payload;
+      try {
+        payload = JSON.parse(raw);
+      } catch {
+        throw new ApiError(400, "Поле payload должно быть корректным JSON");
+      }
+      const filesByField = {};
+      for (const file of req.files || []) {
+        if (filesByField[file.fieldname]) {
+          throw new ApiError(400, `Дублируется файл в поле ${file.fieldname}`);
+        }
+        filesByField[file.fieldname] = file;
+      }
+      const contest = await ContestService.updateContestRoster({
+        contestId: Number(req.params.id),
+        organizerId: req.user.id,
+        payload,
+        filesByField
+      });
+      return res
+        .status(200)
+        .json(formatResponse(200, "Состав мероприятия обновлён", contest));
+    } catch (error) {
+      return next(error);
+    }
+  }
+
   /** Детальная страница мероприятия для организатора */
   static async getOrganizerContestView(req, res, next) {
     try {

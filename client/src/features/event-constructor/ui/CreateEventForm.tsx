@@ -1,7 +1,14 @@
 import { observer } from 'mobx-react-lite'
 import { useEffect, useMemo, useState } from 'react'
 import { useLocation, useNavigate, useParams } from 'react-router'
-import { contestStore, createContestFull, getContestTypes } from '@/entities/contest'
+import {
+  contestStore,
+  createContestFull,
+  getContestTypes,
+  getOrganizerContestView,
+  updateContestRoster,
+} from '@/entities/contest'
+import { contestRosterEditStore } from '@/features/contest-roster-edit'
 import { createTemplate, getTemplateById, templateStore, updateTemplate } from '@/entities/template'
 import { ConfirmDialog, toastStore } from '@/shared'
 import type { IContestTypeOption } from '@/entities/contest'
@@ -83,13 +90,29 @@ function getClampedBoundsFromStrings(
 
 type UnsafeFormAction = 'create' | 'saveTemplate' | 'saveChanges' | 'saveAsNew' | 'createContest'
 
-export const CreateEventForm = observer(function CreateEventForm() {
+const CONTEST_TYPE_LABELS: Record<string, string> = {
+  creative: 'Творческий конкурс',
+  sports: 'Спортивный конкурс',
+  designers: 'Конкурс дизайнеров',
+  rating_objects: 'Построение рейтинга объектов',
+  student_work: 'Оценка студенческих работ',
+  other: 'Другое',
+}
+
+type CreateEventFormProps = {
+  mode?: 'create' | 'rosterEdit'
+}
+
+export const CreateEventForm = observer(function CreateEventForm({ mode = 'create' }: CreateEventFormProps) {
   const navigate = useNavigate()
   const location = useLocation()
-  const { templateId: templateIdParam } = useParams()
-  const isEditMode = location.pathname.includes('/constructor/edit/')
+  const { templateId: templateIdParam, contestId: contestIdParam } = useParams()
+  const isRosterEdit = mode === 'rosterEdit'
+  const isEditMode = !isRosterEdit && location.pathname.includes('/constructor/edit/')
   const parsedTemplateId = templateIdParam ? Number.parseInt(templateIdParam, 10) : Number.NaN
+  const parsedContestId = contestIdParam ? Number.parseInt(contestIdParam, 10) : Number.NaN
   const store = createEventFormStore
+  const rosterStore = contestRosterEditStore
   const [typeOptions, setTypeOptions] = useState<IContestTypeOption[]>([])
   const [participantModalOpen, setParticipantModalOpen] = useState(false)
   const [participantDraft, setParticipantDraft] = useState<DraftParticipant | null>(null)
@@ -110,6 +133,9 @@ export const CreateEventForm = observer(function CreateEventForm() {
   const [pendingUnsafeAction, setPendingUnsafeAction] = useState<UnsafeFormAction | null>(null)
   const [isTemplateLoading, setIsTemplateLoading] = useState(false)
   const [isExitEditConfirmOpen, setIsExitEditConfirmOpen] = useState(false)
+  const [isExitRosterConfirmOpen, setIsExitRosterConfirmOpen] = useState(false)
+  const [isRosterLoading, setIsRosterLoading] = useState(isRosterEdit)
+  const [rosterLoadError, setRosterLoadError] = useState<string | null>(null)
   const [isCreateContestConfirmOpen, setIsCreateContestConfirmOpen] = useState(false)
   /** DnD: индекс перетаскиваемой строки и подсветка цели */
   const [criterionDragFrom, setCriterionDragFrom] = useState<number | null>(null)
@@ -119,6 +145,59 @@ export const CreateEventForm = observer(function CreateEventForm() {
   const [openedToggleTooltip, setOpenedToggleTooltip] = useState<'weights' | 'jury' | null>(null)
 
   useEffect(() => {
+    if (!isRosterEdit) return
+
+    if (!Number.isFinite(parsedContestId)) {
+      navigate('/cabinet/events', { replace: true })
+      return
+    }
+
+    rosterStore.reset()
+    store.reset()
+    setIsRosterLoading(true)
+    setRosterLoadError(null)
+
+    void Promise.all([getOrganizerContestView(parsedContestId), getContestTypes()])
+      .then(([viewResponse, typesResponse]) => {
+        if (!viewResponse.data) {
+          setRosterLoadError('Мероприятие не найдено')
+          return
+        }
+        const status = viewResponse.data.contest.status
+        if (status !== 'in_progress' && status !== 'judging_completed') {
+          setRosterLoadError('Состав мероприятия нельзя редактировать на этом этапе')
+          return
+        }
+        const typeLabel =
+          typesResponse.data?.find((typeOption) => typeOption.id === viewResponse.data?.contest.contestType)
+            ?.label ||
+          CONTEST_TYPE_LABELS[viewResponse.data.contest.contestType || ''] ||
+          viewResponse.data.contest.contestType ||
+          ''
+        rosterStore.loadFromOrganizerView(viewResponse.data, typeLabel)
+        store.applyOrganizerContestDisplay(viewResponse.data)
+        const firstCriterion = viewResponse.data.criteria[0]
+        if (firstCriterion) {
+          setBoundaryMinStr(String(firstCriterion.minScore ?? 0))
+          setBoundaryMaxStr(String(firstCriterion.maxScore))
+        }
+      })
+      .catch(() => {
+        setRosterLoadError('Не удалось загрузить мероприятие')
+      })
+      .finally(() => {
+        setIsRosterLoading(false)
+      })
+
+    return () => {
+      rosterStore.reset()
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- загрузка только при смене contestId
+  }, [isRosterEdit, parsedContestId])
+
+  useEffect(() => {
+    if (isRosterEdit) return
+
     if (isEditMode) {
       if (!Number.isFinite(parsedTemplateId)) {
         navigate('/cabinet/constructor', { replace: true })
@@ -151,7 +230,7 @@ export const CreateEventForm = observer(function CreateEventForm() {
       navigate(location.pathname, { replace: true, state: {} })
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps -- preserveForm читается только при монтировании /new
-  }, [isEditMode, parsedTemplateId])
+  }, [isEditMode, isRosterEdit, parsedTemplateId])
 
   useEffect(() => {
     const c = store.criteria[0]
@@ -178,7 +257,9 @@ export const CreateEventForm = observer(function CreateEventForm() {
     }
   }
 
-  const canReorderCriteria = store.useCriteriaWeights && store.criteria.length >= 2
+  const canReorderCriteria = !isRosterEdit && store.useCriteriaWeights && store.criteria.length >= 2
+  const activeParticipants = isRosterEdit ? rosterStore.participants : store.participants
+  const activeJury = isRosterEdit ? rosterStore.jury : store.jury
 
   const commitBoundaryInputs = () => {
     const c0 = store.criteria[0]
@@ -229,6 +310,7 @@ export const CreateEventForm = observer(function CreateEventForm() {
   }
 
   const openEditParticipant = (p: DraftParticipant) => {
+    if (isRosterEdit) return
     setParticipantDraft(p)
     setParticipantModalOpen(true)
   }
@@ -240,8 +322,90 @@ export const CreateEventForm = observer(function CreateEventForm() {
   }
 
   const openEditJury = (j: DraftJury) => {
+    if (isRosterEdit) return
     setJuryDraft(j)
     setJuryModalOpen(true)
+  }
+
+  const handleRosterBack = () => {
+    if (rosterStore.isDirty()) {
+      setIsExitRosterConfirmOpen(true)
+      return
+    }
+    navigate('/cabinet/events')
+  }
+
+  const handleRosterSave = async () => {
+    rosterStore.errorMessage = null
+    const validationError = rosterStore.validateForSave()
+    if (validationError) {
+      rosterStore.errorMessage = validationError
+      toastStore.show(validationError, 'error')
+      return
+    }
+    if (!rosterStore.contestId) return
+    rosterStore.isSaving = true
+    try {
+      const response = await updateContestRoster(rosterStore.contestId, rosterStore.buildRosterFormData())
+      if (response.data) {
+        void contestStore.fetchContests()
+        const viewResponse = await getOrganizerContestView(rosterStore.contestId)
+        if (viewResponse.data) {
+          rosterStore.loadFromOrganizerView(viewResponse.data, rosterStore.contestTypeLabel)
+          store.applyOrganizerContestDisplay(viewResponse.data)
+          const firstCriterion = viewResponse.data.criteria[0]
+          if (firstCriterion) {
+            setBoundaryMinStr(String(firstCriterion.minScore ?? 0))
+            setBoundaryMaxStr(String(firstCriterion.maxScore))
+          }
+        } else {
+          rosterStore.commitBaseline()
+        }
+        toastStore.show('Конкурс успешно обновлён')
+        return
+      }
+      const message = response.error || response.message || 'Не удалось сохранить изменения'
+      rosterStore.errorMessage = message
+      toastStore.show(message, 'error')
+    } catch (error) {
+      const message = (error as Error)?.message || 'Ошибка при сохранении состава'
+      rosterStore.errorMessage = message
+      toastStore.show(message, 'error')
+    } finally {
+      rosterStore.isSaving = false
+    }
+  }
+
+  const removeActiveParticipant = (localId: string) => {
+    if (isRosterEdit) {
+      if (!rosterStore.removeParticipant(localId)) {
+        rosterStore.errorMessage = 'В мероприятии должен остаться хотя бы один участник'
+      } else {
+        rosterStore.errorMessage = null
+      }
+      return
+    }
+    store.removeParticipant(localId)
+  }
+
+  const removeActiveJuryMember = (localId: string) => {
+    if (isRosterEdit) {
+      if (!rosterStore.removeJuryMember(localId)) {
+        rosterStore.errorMessage = 'В мероприятии должно остаться хотя бы одно жюри'
+      } else {
+        rosterStore.errorMessage = null
+      }
+      return
+    }
+    store.removeJuryMember(localId)
+  }
+
+  const moveActiveParticipant = (fromIndex: number, toIndex: number) => {
+    if (isRosterEdit) {
+      rosterStore.moveParticipant(fromIndex, toIndex)
+      return
+    }
+    store.moveParticipant(fromIndex, toIndex)
   }
 
   const onCoverPick = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -448,6 +612,21 @@ export const CreateEventForm = observer(function CreateEventForm() {
     setOpenedToggleTooltip((previousTooltipId) => (previousTooltipId === tooltipId ? null : tooltipId))
   }
 
+  if (isRosterEdit && isRosterLoading) {
+    return <p className={styles.loadingText}>Загрузка мероприятия...</p>
+  }
+
+  if (isRosterEdit && rosterLoadError) {
+    return (
+      <div className={styles.wrap}>
+        <p className={styles.error}>{rosterLoadError}</p>
+        <button className={styles.btnSecondary} type="button" onClick={() => navigate('/cabinet/events')}>
+          К списку мероприятий
+        </button>
+      </div>
+    )
+  }
+
   if (isEditMode && isTemplateLoading) {
     return <p className={styles.loadingText}>Загрузка шаблона...</p>
   }
@@ -465,6 +644,7 @@ export const CreateEventForm = observer(function CreateEventForm() {
               id="evt-title"
               onChange={(e) => store.setTitle(e.target.value)}
               placeholder="Введите название мероприятия"
+              readOnly={isRosterEdit}
               type="text"
               value={store.title}
             />
@@ -490,6 +670,7 @@ export const CreateEventForm = observer(function CreateEventForm() {
                 <select
                   aria-label="Тип конкурса"
                   className={styles.typeSelectOverlay}
+                  disabled={isRosterEdit}
                   id="evt-type"
                   onChange={(e) => store.setContestType(e.target.value)}
                   value={store.contestType}
@@ -528,8 +709,9 @@ export const CreateEventForm = observer(function CreateEventForm() {
               <button
                 aria-label="Переключить значимость показателей"
                 aria-pressed={store.useCriteriaWeights}
-                className={styles.switchButton}
+                className={`${styles.switchButton} ${isRosterEdit ? styles.switchButtonReadOnly : ''}`}
                 data-property-1={store.useCriteriaWeights ? 'Active' : 'Inactive'}
+                disabled={isRosterEdit}
                 onClick={handleToggleCriteriaWeights}
                 type="button"
               >
@@ -561,8 +743,9 @@ export const CreateEventForm = observer(function CreateEventForm() {
               <button
                 aria-label="Переключить учет предпочтений жюри"
                 aria-pressed={store.juryPreferencesEnabled}
-                className={styles.switchButton}
+                className={`${styles.switchButton} ${isRosterEdit ? styles.switchButtonReadOnly : ''}`}
                 data-property-1={store.juryPreferencesEnabled ? 'Active' : 'Inactive'}
+                disabled={isRosterEdit}
                 onClick={handleToggleJuryPreferences}
                 type="button"
               >
@@ -577,17 +760,30 @@ export const CreateEventForm = observer(function CreateEventForm() {
           <div className={styles.cardHeader}>
             <h3 className={styles.cardTitle}>Обложка</h3>
           </div>
-          <label className={styles.coverBox}>
-            {store.coverPreviewUrl ? (
-              <img alt="" className={styles.coverImg} src={resolveMediaUrl(store.coverPreviewUrl) ?? undefined} />
-            ) : (
-              <div className={styles.coverHint}>
-                <div className={styles.coverPlus}>+</div>
-                <div>1920 × 1080</div>
-              </div>
-            )}
-            <input accept="image/*" className={styles.hidden} onChange={onCoverPick} type="file" />
-          </label>
+          {isRosterEdit ? (
+            <div className={styles.coverBox}>
+              {store.coverPreviewUrl ? (
+                <img alt="" className={styles.coverImg} src={resolveMediaUrl(store.coverPreviewUrl) ?? undefined} />
+              ) : (
+                <div className={styles.coverHint}>
+                  <div className={styles.coverPlus}>+</div>
+                  <div>1920 × 1080</div>
+                </div>
+              )}
+            </div>
+          ) : (
+            <label className={styles.coverBox}>
+              {store.coverPreviewUrl ? (
+                <img alt="" className={styles.coverImg} src={resolveMediaUrl(store.coverPreviewUrl) ?? undefined} />
+              ) : (
+                <div className={styles.coverHint}>
+                  <div className={styles.coverPlus}>+</div>
+                  <div>1920 × 1080</div>
+                </div>
+              )}
+              <input accept="image/*" className={styles.hidden} onChange={onCoverPick} type="file" />
+            </label>
+          )}
         </section>
       </div>
 
@@ -601,11 +797,12 @@ export const CreateEventForm = observer(function CreateEventForm() {
               aria-label="Нижняя граница оценки"
               className={styles.criteriaPanelBoundaryInput}
               inputMode="numeric"
-              onBlur={commitBoundaryInputs}
+              onBlur={isRosterEdit ? undefined : commitBoundaryInputs}
               onChange={(e) => setBoundaryMinStr(e.target.value)}
               onKeyDown={(e) => {
                 if (e.key === 'Enter') (e.target as HTMLInputElement).blur()
               }}
+              readOnly={isRosterEdit}
               type="text"
               value={boundaryMinStr}
             />
@@ -615,11 +812,12 @@ export const CreateEventForm = observer(function CreateEventForm() {
               aria-label="Верхняя граница оценки"
               className={styles.criteriaPanelBoundaryInput}
               inputMode="numeric"
-              onBlur={commitBoundaryInputs}
+              onBlur={isRosterEdit ? undefined : commitBoundaryInputs}
               onChange={(e) => setBoundaryMaxStr(e.target.value)}
               onKeyDown={(e) => {
                 if (e.key === 'Enter') (e.target as HTMLInputElement).blur()
               }}
+              readOnly={isRosterEdit}
               type="text"
               value={boundaryMaxStr}
             />
@@ -627,12 +825,14 @@ export const CreateEventForm = observer(function CreateEventForm() {
         </div>
         <div className={styles.criteriaPanelIntro}>
           <h3 className={styles.criteriaPanelIntroTitle}>Показатели оценивания</h3>
-          <p className={styles.criteriaPanelIntroSubtitle}>
-            Укажите показатели с учетом их значимости
-            {store.useCriteriaWeights && store.criteria.length >= 2
-              ? ' Порядок сверху вниз задаёт приоритет при расчёте — перетаскивайте белую плашку с названием.'
-              : ''}
-          </p>
+          {!isRosterEdit ? (
+            <p className={styles.criteriaPanelIntroSubtitle}>
+              Укажите показатели с учетом их значимости
+              {store.useCriteriaWeights && store.criteria.length >= 2
+                ? ' Порядок сверху вниз задаёт приоритет при расчёте — перетаскивайте белую плашку с названием.'
+                : ''}
+            </p>
+          ) : null}
         </div>
         <div className={styles.criteriaPanelList}>
           {store.criteria.map((c, index) => (
@@ -693,18 +893,21 @@ export const CreateEventForm = observer(function CreateEventForm() {
                   draggable={false}
                   onChange={(e) => store.updateCriterion(c.localId, { name: e.target.value })}
                   placeholder="Название показателя"
+                  readOnly={isRosterEdit}
                   type="text"
                   value={c.name}
                 />
-                <button
-                  aria-label="Удалить критерий"
-                  className={styles.criteriaPanelDeleteControl}
-                  draggable={false}
-                  onClick={() => store.removeCriterion(c.localId)}
-                  type="button"
-                >
-                  <span className={styles.criteriaPanelDeleteIcon} aria-hidden />
-                </button>
+                {!isRosterEdit ? (
+                  <button
+                    aria-label="Удалить критерий"
+                    className={styles.criteriaPanelDeleteControl}
+                    draggable={false}
+                    onClick={() => store.removeCriterion(c.localId)}
+                    type="button"
+                  >
+                    <span className={styles.criteriaPanelDeleteIcon} aria-hidden />
+                  </button>
+                ) : null}
               </div>
             </div>
           ))}
@@ -717,6 +920,7 @@ export const CreateEventForm = observer(function CreateEventForm() {
                   <select
                     aria-label={`Неравенство между показателями ${operatorIndex + 1} и ${operatorIndex + 2}`}
                     className={styles.criteriaPanelInequalitySelect}
+                    disabled={isRosterEdit}
                     onChange={(event) => {
                       const nextOperator = event.target.value as 'gt' | 'eq' | 'gte'
                       store.setCriteriaInequality(operatorIndex, nextOperator)
@@ -732,7 +936,7 @@ export const CreateEventForm = observer(function CreateEventForm() {
                 </div>
               ))
             : null}
-          {/* Строка добавления: имя вводится в поле, зелёная галка — только при непустом названии */}
+          {!isRosterEdit ? (
           <div className={styles.criteriaPanelAddCriterionRow}>
             <div className={styles.criteriaPanelOrderBadge}>
               <span className={styles.criteriaPanelTemplateBadgeDigit}>{store.criteria.length + 1}</span>
@@ -780,6 +984,7 @@ export const CreateEventForm = observer(function CreateEventForm() {
               </button>
             </div>
           </div>
+          ) : null}
         </div>
       </section>
 
@@ -797,18 +1002,18 @@ export const CreateEventForm = observer(function CreateEventForm() {
             </button>
           </div>
           <div className={styles.listBlockBody}>
-            {store.participants.length === 0 ? (
+            {activeParticipants.length === 0 ? (
               <div className={styles.listBlockEmpty}>Нет участников</div>
             ) : (
               <div className={styles.listBlockScroll}>
-                {store.participants.map((participant, participantIndex) => (
+                {activeParticipants.map((participant, participantIndex) => (
                   <div
                     className={`${styles.personRow} ${
                       participantDragOver === participantIndex && participantDragFrom !== participantIndex
                         ? styles.personRowDragOver
                         : ''
                     } ${participantDragFrom === participantIndex ? styles.personRowDragging : ''}`}
-                    draggable={store.participants.length >= 2}
+                    draggable={activeParticipants.length >= 2}
                     key={participant.localId}
                     onDragEnd={() => {
                       setParticipantDragFrom(null)
@@ -841,11 +1046,11 @@ export const CreateEventForm = observer(function CreateEventForm() {
                         return
                       }
 
-                      store.moveParticipant(fromIndex, participantIndex)
+                      moveActiveParticipant(fromIndex, participantIndex)
                       setParticipantDragFrom(null)
                       setParticipantDragOver(null)
                     }}
-                    title={store.participants.length >= 2 ? 'Перетащите строку, чтобы изменить порядок участников' : undefined}
+                    title={activeParticipants.length >= 2 ? 'Перетащите строку, чтобы изменить порядок участников' : undefined}
                   >
                     {participant.previewUrl ? (
                       <img alt="" className={styles.avatarSm} src={resolveMediaUrl(participant.previewUrl) ?? undefined} />
@@ -859,18 +1064,20 @@ export const CreateEventForm = observer(function CreateEventForm() {
                       </p>
                     </div>
                     <div className={styles.personRowActions}>
-                      <button
-                        className={styles.personEditBtn}
-                        onClick={() => openEditParticipant(participant)}
-                        type="button"
-                        aria-label="Изменить"
-                      >
-                        <img alt="" className={styles.personEditIcon} src="/card-edit.svg" width={24} height={24} />
-                      </button>
+                      {!isRosterEdit ? (
+                        <button
+                          className={styles.personEditBtn}
+                          onClick={() => openEditParticipant(participant)}
+                          type="button"
+                          aria-label="Изменить"
+                        >
+                          <img alt="" className={styles.personEditIcon} src="/card-edit.svg" width={24} height={24} />
+                        </button>
+                      ) : null}
                       <div className={styles.personDeleteWrap}>
                         <button
                           className={styles.personDeleteStripe}
-                          onClick={() => store.removeParticipant(participant.localId)}
+                          onClick={() => removeActiveParticipant(participant.localId)}
                           type="button"
                           aria-label="Удалить"
                         >
@@ -900,11 +1107,11 @@ export const CreateEventForm = observer(function CreateEventForm() {
             </button>
           </div>
           <div className={styles.listBlockBody}>
-            {store.jury.length === 0 ? (
+            {activeJury.length === 0 ? (
               <div className={styles.listBlockEmpty}>Нет жюри</div>
             ) : (
               <div className={styles.listBlockScroll}>
-                {store.jury.map((j) => (
+                {activeJury.map((j) => (
                   <div className={styles.personRow} key={j.localId}>
                     {j.previewUrl ? (
                       <img alt="" className={styles.avatarSm} src={resolveMediaUrl(j.previewUrl) ?? undefined} />
@@ -916,13 +1123,15 @@ export const CreateEventForm = observer(function CreateEventForm() {
                       <p className={styles.personSub}>{j.phone ? formatRuPhoneMask(j.phone) : '—'}</p>
                     </div>
                     <div className={styles.personRowActions}>
-                      <button className={styles.personEditBtn} onClick={() => openEditJury(j)} type="button" aria-label="Изменить">
-                        <img alt="" className={styles.personEditIcon} src="/card-edit.svg" width={24} height={24} />
-                      </button>
+                      {!isRosterEdit ? (
+                        <button className={styles.personEditBtn} onClick={() => openEditJury(j)} type="button" aria-label="Изменить">
+                          <img alt="" className={styles.personEditIcon} src="/card-edit.svg" width={24} height={24} />
+                        </button>
+                      ) : null}
                       <div className={styles.personDeleteWrap}>
                         <button
                           className={styles.personDeleteStripe}
-                          onClick={() => store.removeJuryMember(j.localId)}
+                          onClick={() => removeActiveJuryMember(j.localId)}
                           type="button"
                           aria-label="Удалить"
                         >
@@ -945,10 +1154,32 @@ export const CreateEventForm = observer(function CreateEventForm() {
         </section>
       </div>
 
-      {store.submitError ? <p className={styles.error}>{store.submitError}</p> : null}
-      {store.templateMessage ? <p className={store.templateMessage.includes('Ошибка') ? styles.error : styles.success}>{store.templateMessage}</p> : null}
+      {isRosterEdit && rosterStore.errorMessage ? <p className={styles.error}>{rosterStore.errorMessage}</p> : null}
+      {!isRosterEdit && store.submitError ? <p className={styles.error}>{store.submitError}</p> : null}
+      {!isRosterEdit && store.templateMessage ? (
+        <p className={store.templateMessage.includes('Ошибка') ? styles.error : styles.success}>{store.templateMessage}</p>
+      ) : null}
 
-      {isEditMode ? (
+      {isRosterEdit ? (
+        <div className={styles.footerBarEdit}>
+          <button
+            className={styles.footerBarEditBack}
+            type="button"
+            aria-label="Назад к списку мероприятий"
+            onClick={handleRosterBack}
+          >
+            <img src="/exit-arrow-edit-template.svg" alt="" width={48} height={48} />
+          </button>
+          <button
+            className={`${styles.btnPrimary} ${styles.btnEditFooter}`}
+            disabled={rosterStore.isSaving}
+            onClick={() => void handleRosterSave()}
+            type="button"
+          >
+            {rosterStore.isSaving ? 'Сохранение…' : 'Сохранить изменения'}
+          </button>
+        </div>
+      ) : isEditMode ? (
         <div className={styles.footerBarEdit}>
           <button
             className={styles.footerBarEditBack}
@@ -1009,6 +1240,20 @@ export const CreateEventForm = observer(function CreateEventForm() {
         </div>
       )}
 
+      {isExitRosterConfirmOpen ? (
+        <ConfirmDialog
+          title="Вы точно хотите выйти без сохранения?"
+          subtitle="Изменения состава мероприятия не сохранятся"
+          acceptLabel="Выйти без сохранения"
+          stayLabel="Остаться"
+          onAccept={() => {
+            setIsExitRosterConfirmOpen(false)
+            navigate('/cabinet/events')
+          }}
+          onStay={() => setIsExitRosterConfirmOpen(false)}
+        />
+      ) : null}
+
       {isExitEditConfirmOpen ? (
         <ConfirmDialog
           title="Вы точно хотите выйти из редактирования шаблона?"
@@ -1066,6 +1311,10 @@ export const CreateEventForm = observer(function CreateEventForm() {
           initial={participantDraft}
           onClose={() => setParticipantModalOpen(false)}
           onSave={(draft) => {
+            if (isRosterEdit) {
+              rosterStore.addParticipant(draft)
+              return
+            }
             if (participantDraft) {
               store.updateParticipant(participantDraft.localId, draft)
             } else {
@@ -1077,12 +1326,16 @@ export const CreateEventForm = observer(function CreateEventForm() {
       {juryModalOpen ? (
         <JuryProfileModal
           key={juryDraft ? juryDraft.localId : `new-${juryModalKey}`}
-          existingPhoneNumbers={store.jury
+          existingPhoneNumbers={activeJury
             .filter((juryMember) => juryMember.localId !== juryDraft?.localId)
             .map((juryMember) => juryMember.phone)}
           initial={juryDraft}
           onClose={() => setJuryModalOpen(false)}
           onSave={(draft) => {
+            if (isRosterEdit) {
+              rosterStore.addJuryMember(draft)
+              return
+            }
             if (juryDraft) {
               store.updateJuryMember(juryDraft.localId, draft)
             } else {

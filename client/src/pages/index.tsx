@@ -1,6 +1,7 @@
 export { MainPage } from "./main-page/MainPage";
 export { CabinetPage } from './cabinet-page/CabinetPage'
 export { CreateEventPage } from './create-event-page/CreateEventPage'
+export { EditContestPage } from './edit-contest-page/EditContestPage'
 export { ContestResultsPage } from './contest-results-page/ContestResultsPage'
 export { JuryContestPage } from './jury-contest-page/JuryContestPage'
 export { OrganizerContestPage } from './organizer-contest-page/OrganizerContestPage'

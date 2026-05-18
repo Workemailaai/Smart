@@ -23,6 +23,7 @@ export {
   revokeJurySubmission,
   completeContest,
   deleteContest,
+  updateContestRoster,
 } from './api/contestApi'
 export { contestStore } from './model/contestStore'
 export { ContestCard } from './ui/ContestCard'

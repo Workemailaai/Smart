@@ -1,4 +1,5 @@
 import { makeAutoObservable, runInAction } from 'mobx'
+import type { IOrganizerContestView } from '@/entities/contest'
 import type { ITemplate } from '@/entities/template'
 import { normalizeTemplateCriteria } from '@/entities/template'
 import { normalizePhoneDigits } from '@/shared/lib/ruPhone'
@@ -181,6 +182,28 @@ class CreateEventFormStore {
 
   setContestType(v: string) {
     this.contestType = v
+  }
+
+  /** Только отображение: поля конструктора из organizer-view (режим редактирования состава) */
+  applyOrganizerContestDisplay(
+    view: Pick<IOrganizerContestView, 'contest' | 'criteria' | 'defaultCriteriaInequalities'>,
+  ) {
+    this.title = view.contest.title
+    this.contestType = view.contest.contestType || 'creative'
+    if (this.coverPreviewUrl?.startsWith('blob:')) {
+      URL.revokeObjectURL(this.coverPreviewUrl)
+    }
+    this.coverFile = null
+    this.coverPreviewUrl = view.contest.coverImageUrl
+    this.useCriteriaWeights = Boolean(view.contest.useCriteriaWeights)
+    this.juryPreferencesEnabled = Boolean(view.contest.juryPreferencesEnabled)
+    this.criteria = view.criteria.map((criterion) => ({
+      localId: `criterion-${criterion.id}`,
+      name: criterion.name,
+      minScore: criterion.minScore ?? 0,
+      maxScore: criterion.maxScore,
+    }))
+    this.criteriaInequalities = [...view.defaultCriteriaInequalities]
   }
 
   setCover(file: File | null) {

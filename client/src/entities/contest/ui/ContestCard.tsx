@@ -19,6 +19,7 @@ type ContestCardProps = {
   juryCabinetCompact?: boolean
   /** Список организатора: строка таблицы + удаление + клик по всей карточке */
   organizerLayout?: boolean
+  onEdit?: () => void
   onDelete?: () => void
   onOpen?: () => void
 }
@@ -36,6 +37,7 @@ export function ContestCard({
   withAlertStripe = false,
   juryCabinetCompact = false,
   organizerLayout = false,
+  onEdit,
   onDelete,
   onOpen,
 }: ContestCardProps) {
@@ -88,15 +90,28 @@ export function ContestCard({
           <span className={styles.organizerVotedDivider}>/</span>
           <span className={styles.organizerVotedTotal}>{totalJuryCount}</span>
         </div>
-        <button
-          className={`${styles.organizerDeleteButton} ${isAllJurySubmitted ? styles.organizerDeleteButtonComplete : ''}`}
-          type="button"
-          aria-label="Удалить мероприятие"
-          onClick={(event) => {
-            event.stopPropagation()
-            void onDelete?.()
-          }}
-        />
+        <div className={styles.organizerActionsCell}>
+          {onEdit ? (
+            <button
+              className={styles.organizerEditButton}
+              type="button"
+              aria-label="Редактировать состав мероприятия"
+              onClick={(event) => {
+                event.stopPropagation()
+                onEdit()
+              }}
+            />
+          ) : null}
+          <button
+            className={`${styles.organizerDeleteButton} ${isAllJurySubmitted ? styles.organizerDeleteButtonComplete : ''}`}
+            type="button"
+            aria-label="Удалить мероприятие"
+            onClick={(event) => {
+              event.stopPropagation()
+              void onDelete?.()
+            }}
+          />
+        </div>
       </article>
     )
   }

@@ -121,6 +121,7 @@ export const CabinetEventsSection = observer(function CabinetEventsSection(props
                     contest={contest}
                     key={contest.id}
                     organizerLayout
+                    onEdit={() => navigate(`/cabinet/events/${contest.id}/edit`)}
                     onDelete={() => contestStore.deleteContest(contest.id)}
                     onOpen={() => navigate(`/cabinet/events/${contest.id}/organizer`)}
                   />
@@ -182,6 +183,7 @@ export const CabinetEventsSection = observer(function CabinetEventsSection(props
                     contest={contest}
                     key={contest.id}
                     organizerLayout
+                    onEdit={() => navigate(`/cabinet/events/${contest.id}/edit`)}
                     onDelete={() => contestStore.deleteContest(contest.id)}
                     onOpen={() => navigate(`/cabinet/events/${contest.id}/organizer`)}
                   />

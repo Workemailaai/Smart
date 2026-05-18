@@ -40,6 +40,11 @@ module.exports = (sequelize, DataTypes) => {
       country: {
         type: DataTypes.STRING(120),
         allowNull: true
+      },
+      sortOrder: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        defaultValue: 0
       }
     },
     {

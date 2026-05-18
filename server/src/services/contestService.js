@@ -147,7 +147,10 @@ class ContestService {
           model: Participant,
           as: "participants",
           separate: true,
-          order: [["id", "ASC"]]
+          order: [
+            ["sortOrder", "ASC"],
+            ["id", "ASC"]
+          ]
         },
         {
           model: Jury,
@@ -664,8 +667,15 @@ class ContestService {
       expectedScoreCount
     });
 
+    const criteriaPlain = contest.criteria.map((criterion) => criterion.get({ plain: true }));
+
     return {
       contest: contest.get({ plain: true }),
+      criteria: criteriaPlain,
+      defaultCriteriaInequalities: ContestService.normalizeCriteriaInequalities(
+        contest.defaultCriteriaInequalities,
+        criteriaPlain.length
+      ),
       participants,
       canComplete:
         contest.status === ContestService.contestStatuses.judgingCompleted &&
@@ -823,6 +833,329 @@ class ContestService {
     const contest = await Contest.findByPk(id);
     if (!contest) throw new ApiError(404, "Contest not found");
     return contest;
+  }
+
+  static parseRosterPayload(payload) {
+    if (!payload || typeof payload !== "object") {
+      throw new ApiError(400, "Некорректный JSON в поле payload");
+    }
+    const participantOrder = Array.isArray(payload.participantOrder)
+      ? payload.participantOrder.map((id) => Number(id)).filter((id) => Number.isInteger(id) && id > 0)
+      : [];
+    const participantSlots = Array.isArray(payload.participantSlots) ? payload.participantSlots : [];
+    const removedParticipantIds = Array.isArray(payload.removedParticipantIds)
+      ? payload.removedParticipantIds.map((id) => Number(id)).filter((id) => Number.isInteger(id) && id > 0)
+      : [];
+    const removedJuryIds = Array.isArray(payload.removedJuryIds)
+      ? payload.removedJuryIds.map((id) => Number(id)).filter((id) => Number.isInteger(id) && id > 0)
+      : [];
+    const addedParticipants = Array.isArray(payload.addedParticipants) ? payload.addedParticipants : [];
+    const addedJury = Array.isArray(payload.addedJury) ? payload.addedJury : [];
+    return {
+      participantOrder,
+      participantSlots,
+      removedParticipantIds,
+      removedJuryIds,
+      addedParticipants,
+      addedJury
+    };
+  }
+
+  static collectParticipantMediaPaths(participant) {
+    return MediaFileService.uniqMediaPaths([participant?.photoUrl]);
+  }
+
+  static collectJuryMediaPaths(juryMember) {
+    return MediaFileService.uniqMediaPaths([juryMember?.photoUrl]);
+  }
+
+  /**
+   * Обновление состава мероприятия: участники и жюри (добавление, удаление, порядок).
+   */
+  static async updateContestRoster({ contestId, organizerId, payload, filesByField }) {
+    const contest = await ContestService.getContestWithDependencies(contestId);
+    if (contest.organizerId !== organizerId) {
+      throw new ApiError(403, "Только организатор может менять состав мероприятия");
+    }
+    const editableStatuses = [
+      ContestService.contestStatuses.inProgress,
+      ContestService.contestStatuses.judgingCompleted
+    ];
+    if (!editableStatuses.includes(contest.status)) {
+      throw new ApiError(400, "Состав мероприятия нельзя менять на этом этапе");
+    }
+
+    const {
+      participantOrder,
+      participantSlots,
+      removedParticipantIds,
+      removedJuryIds,
+      addedParticipants,
+      addedJury
+    } = ContestService.parseRosterPayload(payload);
+
+    const currentParticipantIds = new Set(contest.participants.map((p) => Number(p.id)));
+    const currentJuryIds = new Set(contest.juryMembers.map((j) => Number(j.id)));
+
+    for (const removedId of removedParticipantIds) {
+      if (!currentParticipantIds.has(removedId)) {
+        throw new ApiError(400, `Участник ${removedId} не найден в мероприятии`);
+      }
+    }
+    for (const removedId of removedJuryIds) {
+      if (!currentJuryIds.has(removedId)) {
+        throw new ApiError(400, `Жюри ${removedId} не найдено в мероприятии`);
+      }
+    }
+
+    const remainingParticipantCount =
+      contest.participants.length - removedParticipantIds.length + addedParticipants.length;
+    const remainingJuryCount =
+      contest.juryMembers.length - removedJuryIds.length + addedJury.length;
+
+    if (remainingParticipantCount < 1) {
+      throw new ApiError(422, "В мероприятии должен остаться хотя бы один участник");
+    }
+    if (remainingJuryCount < 1) {
+      throw new ApiError(422, "В мероприятии должно остаться хотя бы одно жюри");
+    }
+
+    for (const addedParticipant of addedParticipants) {
+      const fullName = addedParticipant?.fullName != null ? String(addedParticipant.fullName).trim() : "";
+      if (!fullName) {
+        throw new ApiError(422, "У добавляемого участника укажите ФИО");
+      }
+    }
+    for (const addedJuryMember of addedJury) {
+      const fullName = addedJuryMember?.fullName != null ? String(addedJuryMember.fullName).trim() : "";
+      const phone = addedJuryMember?.phone != null ? String(addedJuryMember.phone) : "";
+      const password = addedJuryMember?.password != null ? String(addedJuryMember.password) : "";
+      if (!fullName) {
+        throw new ApiError(422, "У добавляемого жюри укажите ФИО");
+      }
+      if (!phone.trim()) {
+        throw new ApiError(422, "У добавляемого жюри укажите телефон");
+      }
+      if (!password || password.length < 6) {
+        throw new ApiError(422, "Пароль жюри не короче 6 символов");
+      }
+    }
+
+    const hasAddedParticipants = addedParticipants.length > 0;
+    const hasAddedJury = addedJury.length > 0;
+
+    const transaction = await sequelize.transaction();
+    let removableMediaPaths = [];
+    const createdParticipantIds = [];
+
+    try {
+      for (const participantId of removedParticipantIds) {
+        const participant = contest.participants.find((p) => Number(p.id) === participantId);
+        if (!participant) continue;
+        removableMediaPaths = removableMediaPaths.concat(
+          ContestService.collectParticipantMediaPaths(participant)
+        );
+        await Score.destroy({ where: { contestId, participantId }, transaction });
+        await JuryParticipantComment.destroy({ where: { contestId, participantId }, transaction });
+        await participant.destroy({ transaction });
+        currentParticipantIds.delete(participantId);
+      }
+
+      for (const juryId of removedJuryIds) {
+        const juryMember = contest.juryMembers.find((j) => Number(j.id) === juryId);
+        if (!juryMember) continue;
+        removableMediaPaths = removableMediaPaths.concat(
+          ContestService.collectJuryMediaPaths(juryMember)
+        );
+        await Score.destroy({ where: { contestId, juryId }, transaction });
+        await JuryParticipantComment.destroy({ where: { contestId, juryId }, transaction });
+        await juryMember.destroy({ transaction });
+        currentJuryIds.delete(juryId);
+      }
+
+      if (hasAddedParticipants || hasAddedJury) {
+        await contest.update({ status: ContestService.contestStatuses.inProgress }, { transaction });
+      }
+
+      if (hasAddedParticipants) {
+        for (const juryMember of contest.juryMembers) {
+          const juryId = Number(juryMember.id);
+          if (removedJuryIds.includes(juryId)) continue;
+          if (juryMember.isSubmitted) {
+            await juryMember.update({ isSubmitted: false }, { transaction });
+          }
+        }
+      }
+
+      const maxSortOrder = contest.participants.reduce(
+        (maxValue, participant) => Math.max(maxValue, Number(participant.sortOrder) || 0),
+        0
+      );
+      let nextSortOrder = maxSortOrder;
+
+      for (let index = 0; index < addedParticipants.length; index++) {
+        const addedParticipant = addedParticipants[index];
+        const clientKey =
+          addedParticipant?.clientKey != null ? String(addedParticipant.clientKey).trim() : `new-p-${index}`;
+        const photoFile = filesByField?.[`participantPhoto_${clientKey}`];
+        if (photoFile && !String(photoFile.mimetype || "").startsWith("image/")) {
+          throw new ApiError(400, `Файл участника должен быть изображением`);
+        }
+        const countryTrim =
+          addedParticipant.country != null && String(addedParticipant.country).trim() !== ""
+            ? String(addedParticipant.country).trim()
+            : null;
+        const extraInfoTrim =
+          addedParticipant.extraInfo != null && String(addedParticipant.extraInfo).trim() !== ""
+            ? String(addedParticipant.extraInfo).trim()
+            : null;
+        nextSortOrder += 1;
+        const photoUrl = photoFile ? `/media/participants/${photoFile.filename}` : null;
+        const createdParticipant = await Participant.create(
+          {
+            contestId,
+            fullName: String(addedParticipant.fullName).trim(),
+            extraInfo: extraInfoTrim,
+            country: countryTrim,
+            photoUrl,
+            sortOrder: nextSortOrder
+          },
+          { transaction }
+        );
+        createdParticipantIds.push(Number(createdParticipant.id));
+        if (photoUrl) {
+          await MediaFileService.incrementReferences([photoUrl], transaction);
+        }
+      }
+
+      for (let index = 0; index < addedJury.length; index++) {
+        const addedJuryMember = addedJury[index];
+        const clientKey =
+          addedJuryMember?.clientKey != null ? String(addedJuryMember.clientKey).trim() : `new-j-${index}`;
+        const photoFile = filesByField?.[`juryPhoto_${clientKey}`];
+        if (photoFile && !String(photoFile.mimetype || "").startsWith("image/")) {
+          throw new ApiError(400, `Файл жюри должен быть изображением`);
+        }
+        const photoUrl = photoFile ? `/media/jury/${photoFile.filename}` : null;
+        const juryRow = await JuryService.assignJuryToContest(
+          {
+            contestId,
+            organizerId,
+            fullName: addedJuryMember.fullName,
+            phone: addedJuryMember.phone,
+            password: addedJuryMember.password,
+            position: addedJuryMember.position,
+            photoUrl
+          },
+          transaction
+        );
+        if (photoUrl) {
+          await MediaFileService.incrementReferences([photoUrl], transaction);
+        }
+        currentJuryIds.add(Number(juryRow.id));
+      }
+
+      const clientKeyToParticipantId = new Map();
+      for (let index = 0; index < addedParticipants.length; index++) {
+        const clientKey =
+          addedParticipants[index]?.clientKey != null
+            ? String(addedParticipants[index].clientKey).trim()
+            : `new-p-${index}`;
+        const createdId = createdParticipantIds[index];
+        if (clientKey && createdId) {
+          clientKeyToParticipantId.set(clientKey, createdId);
+        }
+      }
+
+      const resolvedParticipantOrder = [];
+      if (participantSlots.length > 0) {
+        for (const slot of participantSlots) {
+          if (slot?.participantId != null) {
+            const participantId = Number(slot.participantId);
+            if (!Number.isInteger(participantId) || participantId <= 0) {
+              throw new ApiError(400, "Некорректный participantId в participantSlots");
+            }
+            resolvedParticipantOrder.push(participantId);
+            continue;
+          }
+          const clientKey = slot?.clientKey != null ? String(slot.clientKey).trim() : "";
+          if (!clientKey) {
+            throw new ApiError(400, "Укажите participantId или clientKey в participantSlots");
+          }
+          const createdParticipantId = clientKeyToParticipantId.get(clientKey);
+          if (!createdParticipantId) {
+            throw new ApiError(400, `Не найден новый участник с ключом ${clientKey}`);
+          }
+          resolvedParticipantOrder.push(createdParticipantId);
+        }
+      } else if (participantOrder.length > 0) {
+        resolvedParticipantOrder.push(...participantOrder, ...createdParticipantIds);
+      } else {
+        resolvedParticipantOrder.push(
+          ...[...currentParticipantIds].filter((id) => !removedParticipantIds.includes(id)),
+          ...createdParticipantIds
+        );
+      }
+
+      const expectedParticipantIds = new Set([
+        ...[...currentParticipantIds].filter((id) => !removedParticipantIds.includes(id)),
+        ...createdParticipantIds
+      ]);
+
+      if (resolvedParticipantOrder.length !== expectedParticipantIds.size) {
+        throw new ApiError(400, "Порядок участников должен содержать всех участников мероприятия ровно один раз");
+      }
+      for (const participantId of resolvedParticipantOrder) {
+        if (!expectedParticipantIds.has(participantId)) {
+          throw new ApiError(400, `Участник ${participantId} отсутствует в мероприятии или указан лишний раз`);
+        }
+      }
+
+      for (let orderIndex = 0; orderIndex < resolvedParticipantOrder.length; orderIndex++) {
+        const participantId = resolvedParticipantOrder[orderIndex];
+        await Participant.update(
+          { sortOrder: orderIndex + 1 },
+          { where: { id: participantId, contestId }, transaction }
+        );
+      }
+
+      await transaction.commit();
+    } catch (error) {
+      await transaction.rollback();
+      unlinkUploadedFiles(filesByField);
+      throw error;
+    }
+
+    if (removableMediaPaths.length) {
+      const decrementTransaction = await sequelize.transaction();
+      try {
+        const removedPaths = await MediaFileService.decrementReferences(
+          removableMediaPaths,
+          decrementTransaction
+        );
+        await decrementTransaction.commit();
+        MediaFileService.cleanupFiles(removedPaths);
+      } catch (mediaError) {
+        await decrementTransaction.rollback();
+        console.error("[Конкурс] Ошибка очистки медиа после изменения состава:", mediaError?.message || mediaError);
+      }
+    }
+
+    const updatedContest = await ContestService.getContestWithDependencies(contestId);
+    const activeJury = updatedContest.juryMembers.filter((juryMember) => Boolean(juryMember));
+    const allSubmitted =
+      activeJury.length > 0 && activeJury.every((juryMember) => Boolean(juryMember.isSubmitted));
+
+    if (allSubmitted && updatedContest.status === ContestService.contestStatuses.inProgress) {
+      await updatedContest.update({ status: ContestService.contestStatuses.judgingCompleted });
+    }
+
+    const contests = await ContestService.listContests({ id: organizerId, role: "organizer" });
+    const contestSummary = contests.find((item) => Number(item.id) === Number(contestId));
+    if (!contestSummary) {
+      throw new ApiError(404, "Мероприятие не найдено после обновления");
+    }
+    return contestSummary;
   }
 
   /** Валидация тела создания мероприятия из конструктора */
@@ -1040,7 +1373,8 @@ class ContestService {
             fullName: String(p.fullName).trim(),
             extraInfo: extraInfoTrim,
             country: countryTrim,
-            photoUrl
+            photoUrl,
+            sortOrder: i + 1
           },
           { transaction: t }
         );
@@ -1112,7 +1446,10 @@ class ContestService {
             model: Participant,
             as: "participants",
             separate: true,
-            order: [["id", "ASC"]]
+            order: [
+              ["sortOrder", "ASC"],
+              ["id", "ASC"]
+            ]
           },
           {
             model: Jury,

@@ -5,6 +5,7 @@ import {
   CabinetPage,
   ContestResultsPage,
   CreateEventPage,
+  EditContestPage,
   JuryContestPage,
   MainPage,
   OrganizerContestPage,
@@ -65,6 +66,10 @@ export const routerConfig = createBrowserRouter([
           {
             path: 'constructor/edit/:templateId',
             element: <CreateEventPage />,
+          },
+          {
+            path: 'events/:contestId/edit',
+            element: <EditContestPage />,
           },
           {
             path: 'settings',

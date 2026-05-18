@@ -105,6 +105,8 @@ export interface IOrganizerParticipantView extends IParticipant {
 
 export interface IOrganizerContestView {
   contest: IContest
+  criteria: ICriterion[]
+  defaultCriteriaInequalities: Array<'gt' | 'eq' | 'gte'>
   participants: IOrganizerParticipantView[]
   canComplete: boolean
   submittedJuryCount: number

@@ -102,7 +102,11 @@ function orderCriteriaForJury(criteria, criterionOrderIds) {
 }
 
 function sortParticipantsRows(participants) {
-  return [...participants].sort((a, b) => a.id - b.id);
+  return [...participants].sort((a, b) => {
+    const sortOrderDiff = (a.sortOrder ?? 0) - (b.sortOrder ?? 0);
+    if (sortOrderDiff !== 0) return sortOrderDiff;
+    return a.id - b.id;
+  });
 }
 
 module.exports = {
